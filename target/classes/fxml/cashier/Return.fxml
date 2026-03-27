@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.minimartpos.controller.cashier.ReturnController"
+      styleClass="card" prefWidth="560" prefHeight="580"
+      spacing="0" stylesheets="@../../css/main.css">
+
+    <HBox styleClass="card-header" alignment="CENTER_LEFT" spacing="8" style="-fx-padding:10 14;">
+        <Label text="🔁  Return / Refund" style="-fx-text-fill:white; -fx-font-weight:bold; -fx-font-size:14px;"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="✖" styleClass="btn-icon" onAction="#cancel"
+                style="-fx-text-fill:rgba(255,255,255,0.8); -fx-font-size:14px;"/>
+    </HBox>
+
+    <VBox spacing="12" style="-fx-padding:16;" VBox.vgrow="ALWAYS">
+
+        <!-- Step 1: Find original bill -->
+        <VBox spacing="6">
+            <Label text="STEP 1 — Find Original Bill" styleClass="label-form"/>
+            <HBox spacing="8">
+                <TextField fx:id="billSearchField" HBox.hgrow="ALWAYS"
+                           styleClass="text-field"
+                           promptText="Enter bill number (e.g. BILL-20240316-0001)"/>
+                <Button text="🔍 Search" styleClass="btn-primary, button"
+                        onAction="#searchBill"/>
+            </HBox>
+            <Label fx:id="billInfoLabel" text="" styleClass="text-secondary"
+                   style="-fx-font-size:11px;"/>
+        </VBox>
+
+        <!-- Step 2: Select items to return -->
+        <VBox fx:id="itemsSection" visible="false" managed="false" spacing="6" VBox.vgrow="ALWAYS">
+            <HBox alignment="CENTER_LEFT" spacing="8">
+                <Label text="STEP 2 — Select Items to Return" styleClass="label-form"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Select All" styleClass="btn-flat, button"
+                        style="-fx-font-size:11px;" onAction="#selectAll"/>
+                <Button text="Clear" styleClass="btn-flat, button"
+                        style="-fx-font-size:11px;" onAction="#clearSelection"/>
+            </HBox>
+            <TableView fx:id="itemsTable" VBox.vgrow="ALWAYS"
+                       style="-fx-border-color:-pos-border; -fx-background-color:white; -fx-border-radius:6;">
+                <columns>
+                    <TableColumn fx:id="colSelect"  text="Return" prefWidth="60"  style="-fx-alignment:CENTER;"/>
+                    <TableColumn fx:id="colItem"    text="Product" prefWidth="180"/>
+                    <TableColumn fx:id="colQtyOrig" text="Sold"    prefWidth="55"  style="-fx-alignment:CENTER;"/>
+                    <TableColumn fx:id="colQtyRet"  text="Return"  prefWidth="70"  style="-fx-alignment:CENTER;"/>
+                    <TableColumn fx:id="colUnit"    text="Price"   prefWidth="80"  style="-fx-alignment:CENTER_RIGHT;"/>
+                    <TableColumn fx:id="colRefund"  text="Refund"  prefWidth="85"  style="-fx-alignment:CENTER_RIGHT;"/>
+                </columns>
+                <placeholder>
+                    <Label text="Search for a bill above to load items"
+                           styleClass="text-secondary"/>
+                </placeholder>
+            </TableView>
+        </VBox>
+
+        <!-- Step 3: Reason and summary -->
+        <VBox fx:id="summarySection" visible="false" managed="false" spacing="8">
+            <VBox spacing="4">
+                <Label text="RETURN REASON" styleClass="label-form"/>
+                <ComboBox fx:id="reasonCombo" maxWidth="Infinity"/>
+            </VBox>
+
+            <VBox styleClass="card" spacing="6"
+                  style="-fx-background-color:-pos-surface-alt; -fx-border-color:-pos-border;">
+                <HBox>
+                    <Label text="Items to Return" styleClass="text-secondary"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="returnItemCountLabel" text="0" style="-fx-font-weight:bold;"/>
+                </HBox>
+                <Separator/>
+                <HBox>
+                    <Label text="REFUND AMOUNT" styleClass="h4"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="refundTotalLabel" text="Rs. 0.00" styleClass="pos-total-label"/>
+                </HBox>
+                <HBox>
+                    <Label text="Refund Method" styleClass="text-secondary"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <ComboBox fx:id="refundMethodCombo" prefWidth="160"/>
+                </HBox>
+            </VBox>
+        </VBox>
+
+        <Label fx:id="errorLabel" text="" styleClass="badge badge-danger"
+               wrapText="true" visible="false" managed="false"/>
+
+        <!-- Action buttons -->
+        <HBox spacing="10">
+            <Button text="Cancel" styleClass="btn-secondary, button"
+                    HBox.hgrow="ALWAYS" maxWidth="Infinity" onAction="#cancel"/>
+            <Button fx:id="processBtn" text="✔ Process Return"
+                    styleClass="btn-warning, button"
+                    HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                    onAction="#processReturn" disable="true"/>
+        </HBox>
+
+    </VBox>
+</VBox>

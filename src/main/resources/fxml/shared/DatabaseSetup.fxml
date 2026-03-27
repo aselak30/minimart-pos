@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.minimartpos.controller.shared.DatabaseSetupController"
+      stylesheets="@../../css/main.css" styleClass="login-container"
+      alignment="CENTER" spacing="0">
+    <VBox styleClass="login-card" alignment="CENTER" spacing="16">
+        <Label text="🗄️  Database Setup" styleClass="login-title"/>
+        <Label text="Could not connect to database. Please enter connection details."
+               styleClass="login-subtitle" wrapText="true" maxWidth="320" textAlignment="CENTER"/>
+        <VBox spacing="4">
+            <Label text="HOST" styleClass="label-form"/>
+            <TextField fx:id="hostField" styleClass="text-field" maxWidth="Infinity"/>
+        </VBox>
+        <HBox spacing="10">
+            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                <Label text="PORT" styleClass="label-form"/>
+                <TextField fx:id="portField" styleClass="text-field"/>
+            </VBox>
+            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                <Label text="DATABASE NAME" styleClass="label-form"/>
+                <TextField fx:id="dbNameField" styleClass="text-field"/>
+            </VBox>
+        </HBox>
+        <HBox spacing="10">
+            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                <Label text="USER" styleClass="label-form"/>
+                <TextField fx:id="userField" styleClass="text-field"/>
+            </VBox>
+            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                <Label text="PASSWORD" styleClass="label-form"/>
+                <PasswordField fx:id="passwordField" styleClass="password-field"/>
+            </VBox>
+        </HBox>
+        <Label fx:id="statusLabel" text="" wrapText="true" maxWidth="300"/>
+        <HBox spacing="10">
+            <Button text="Test Connection" styleClass="btn-secondary, button"
+                    HBox.hgrow="ALWAYS" maxWidth="Infinity" onAction="#testConnection"/>
+            <Button text="Continue →" styleClass="btn-primary, button"
+                    HBox.hgrow="ALWAYS" maxWidth="Infinity" onAction="#proceed"/>
+        </HBox>
+    </VBox>
+</VBox>

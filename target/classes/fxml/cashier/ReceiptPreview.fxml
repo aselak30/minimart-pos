@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox fx:id="root" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.minimartpos.controller.cashier.ReceiptPreviewController"
+      spacing="0" prefWidth="420"
+      style="-fx-background-color:-pos-bg;">
+
+    <!-- Title bar -->
+    <HBox style="-fx-background-color:-pos-primary; -fx-padding:14 18;"
+          alignment="CENTER_LEFT" spacing="10">
+        <Label text="🧾 Receipt" style="-fx-text-fill:white; -fx-font-size:15px; -fx-font-weight:bold;"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <VBox alignment="CENTER_RIGHT" spacing="2">
+            <Label fx:id="billNumberLabel" text="Bill #"
+                   style="-fx-text-fill:white; -fx-font-size:13px; -fx-font-weight:bold;"/>
+            <Label fx:id="totalLabel" text="Total:"
+                   style="-fx-text-fill:#BBDEFB; -fx-font-size:12px;"/>
+        </VBox>
+    </HBox>
+
+    <!-- Printer status -->
+    <HBox style="-fx-background-color:-pos-surface; -fx-padding:8 18; -fx-border-color:-pos-border; -fx-border-width:0 0 1 0;">
+        <Label fx:id="printerStatusLabel" text="Checking printer…"
+               style="-fx-font-size:11px;"/>
+    </HBox>
+
+    <!-- Receipt preview -->
+    <TextArea fx:id="receiptPreview" editable="false"
+              VBox.vgrow="ALWAYS"
+              prefHeight="360"
+              style="-fx-font-family:'Courier New', Courier, monospace;
+                     -fx-font-size:11px;
+                     -fx-background-color:#FAFAFA;
+                     -fx-border-color:-pos-border;
+                     -fx-padding:12;
+                     -fx-background-radius:0;
+                     -fx-border-radius:0;"/>
+
+    <!-- Print result feedback -->
+    <HBox style="-fx-padding:6 18 2 18;">
+        <Label fx:id="printResultLabel" text="" style="-fx-font-size:12px;"/>
+    </HBox>
+
+    <!-- Action buttons -->
+    <HBox spacing="10" alignment="CENTER"
+          style="-fx-padding:12 18 16 18; -fx-background-color:-pos-surface;
+                 -fx-border-color:-pos-border; -fx-border-width:1 0 0 0;">
+        <Button fx:id="skipBtn" text="⏭ Skip (No Print)"
+                onAction="#onSkip"
+                prefWidth="160"
+                style="-fx-background-color:-pos-surface-alt;
+                       -fx-text-fill:-pos-text-secondary;
+                       -fx-border-color:-pos-border; -fx-border-width:1;
+                       -fx-border-radius:6; -fx-background-radius:6;
+                       -fx-font-size:13px; -fx-padding:9 0; -fx-cursor:hand;"/>
+        <Button fx:id="printBtn" text="🖨 Print Receipt"
+                onAction="#onPrint"
+                prefWidth="180"
+                style="-fx-background-color:-pos-primary;
+                       -fx-text-fill:white; -fx-font-weight:bold;
+                       -fx-background-radius:6; -fx-border-radius:6;
+                       -fx-font-size:13px; -fx-padding:9 0; -fx-cursor:hand;"/>
+    </HBox>
+</VBox>

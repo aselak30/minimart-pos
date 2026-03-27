@@ -1,0 +1,486 @@
+/* =============================================================================
+   MiniMart POS Ultimate - Global Stylesheet
+   JavaFX CSS
+   ============================================================================= */
+
+/* ── Root / Variables ─────────────────────────────────────────────────────── */
+.root {
+    -fx-font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    -fx-font-size: 13px;
+
+    /* Brand colours */
+    -pos-primary:        #1976D2;
+    -pos-primary-dark:   #1565C0;
+    -pos-primary-light:  #BBDEFB;
+    -pos-accent:         #FF6F00;
+    -pos-accent-dark:    #E65100;
+    -pos-success:        #388E3C;
+    -pos-warning:        #F57C00;
+    -pos-danger:         #D32F2F;
+    -pos-info:           #0288D1;
+
+    /* Surfaces */
+    -pos-bg:             #F5F7FA;
+    -pos-surface:        #FFFFFF;
+    -pos-surface-alt:    #F0F4F8;
+    -pos-border:         #DDE3EA;
+
+    /* Text */
+    -pos-text-primary:   #1A2332;
+    -pos-text-secondary: #5A6A7A;
+    -pos-text-disabled:  #9AAAB8;
+    -pos-text-on-dark:   #FFFFFF;
+}
+
+/* ── Scene Background ─────────────────────────────────────────────────────── */
+.scene-bg {
+    -fx-background-color: -pos-bg;
+}
+
+/* ── Typography ───────────────────────────────────────────────────────────── */
+.h1 { -fx-font-size: 24px; -fx-font-weight: bold;   -fx-text-fill: -pos-text-primary; }
+.h2 { -fx-font-size: 20px; -fx-font-weight: bold;   -fx-text-fill: -pos-text-primary; }
+.h3 { -fx-font-size: 16px; -fx-font-weight: bold;   -fx-text-fill: -pos-text-primary; }
+.h4 { -fx-font-size: 14px; -fx-font-weight: bold;   -fx-text-fill: -pos-text-primary; }
+
+.text-secondary  { -fx-text-fill: -pos-text-secondary; }
+.text-muted      { -fx-text-fill: -pos-text-disabled; }
+.text-success    { -fx-text-fill: -pos-success; }
+.text-warning    { -fx-text-fill: -pos-warning; }
+.text-danger     { -fx-text-fill: -pos-danger; }
+.text-primary    { -fx-text-fill: -pos-primary; }
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+.button {
+    -fx-cursor: hand;
+    -fx-padding: 8 18 8 18;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-font-size: 13px;
+    -fx-font-weight: normal;
+}
+
+.btn-primary {
+    -fx-background-color: -pos-primary;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+.btn-primary:hover   { -fx-background-color: -pos-primary-dark; }
+.btn-primary:pressed { -fx-background-color: derive(-pos-primary-dark, -10%); }
+
+.btn-secondary {
+    -fx-background-color: -pos-surface;
+    -fx-text-fill: -pos-primary;
+    -fx-border-color: -pos-primary;
+    -fx-border-width: 1.5;
+}
+.btn-secondary:hover { -fx-background-color: -pos-primary-light; }
+
+.btn-success {
+    -fx-background-color: -pos-success;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+.btn-success:hover { -fx-background-color: derive(-pos-success, -15%); }
+
+.btn-danger {
+    -fx-background-color: -pos-danger;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+.btn-danger:hover  { -fx-background-color: derive(-pos-danger, -15%); }
+
+.btn-warning {
+    -fx-background-color: -pos-warning;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.btn-accent {
+    -fx-background-color: -pos-accent;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+.btn-accent:hover { -fx-background-color: -pos-accent-dark; }
+
+.btn-flat {
+    -fx-background-color: transparent;
+    -fx-text-fill: -pos-primary;
+}
+.btn-flat:hover { -fx-background-color: -pos-primary-light; }
+
+.btn-icon {
+    -fx-background-color: transparent;
+    -fx-padding: 6;
+    -fx-background-radius: 50%;
+}
+.btn-icon:hover { -fx-background-color: -pos-surface-alt; }
+
+/* Large POS numpad / quick-product buttons */
+.btn-numpad {
+    -fx-background-color: -pos-surface;
+    -fx-border-color: -pos-border;
+    -fx-border-width: 1;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-min-width: 64px;
+    -fx-min-height: 56px;
+}
+.btn-numpad:hover   { -fx-background-color: -pos-surface-alt; }
+.btn-numpad:pressed { -fx-background-color: -pos-primary-light; }
+
+/* ── Text Fields & Inputs ─────────────────────────────────────────────────── */
+.text-field, .password-field, .text-area, .combo-box {
+    -fx-background-color: -pos-surface;
+    -fx-border-color: -pos-border;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 7 10 7 10;
+    -fx-text-fill: -pos-text-primary;
+}
+.text-field:focused, .password-field:focused, .text-area:focused {
+    -fx-border-color: -pos-primary;
+    -fx-effect: dropshadow(gaussian, derive(-pos-primary, 50%), 4, 0, 0, 0);
+}
+
+.search-field {
+    -fx-background-color: -pos-surface;
+    -fx-border-color: -pos-border;
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    -fx-padding: 7 14 7 14;
+    -fx-font-size: 13px;
+}
+.search-field:focused { -fx-border-color: -pos-primary; }
+
+/* ── Labels ───────────────────────────────────────────────────────────────── */
+.label {
+    -fx-text-fill: -pos-text-primary;
+}
+.label-form {
+    -fx-font-weight: bold;
+    -fx-text-fill: -pos-text-secondary;
+    -fx-font-size: 12px;
+}
+
+/* ── Cards / Panels ───────────────────────────────────────────────────────── */
+.card {
+    -fx-background-color: -pos-surface;
+    -fx-background-radius: 10;
+    -fx-border-color: -pos-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);
+    -fx-padding: 16;
+}
+
+.card-header {
+    -fx-background-color: -pos-primary;
+    -fx-background-radius: 10 10 0 0;
+    -fx-padding: 12 16 12 16;
+}
+.card-header .label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+/* KPI / Stat cards */
+.kpi-card {
+    -fx-background-color: -pos-surface;
+    -fx-background-radius: 12;
+    -fx-border-color: -pos-border;
+    -fx-border-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 10, 0, 0, 3);
+    -fx-padding: 20 24 20 24;
+    -fx-min-width: 180;
+}
+.kpi-value {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -pos-primary;
+}
+.kpi-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: -pos-text-secondary;
+}
+
+/* ── Tables ───────────────────────────────────────────────────────────────── */
+.table-view {
+    -fx-background-color: -pos-surface;
+    -fx-border-color: -pos-border;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+.table-view .column-header-background {
+    -fx-background-color: -pos-surface-alt;
+}
+.table-view .column-header .label {
+    -fx-font-weight: bold;
+    -fx-text-fill: -pos-text-secondary;
+    -fx-font-size: 12px;
+}
+.table-row-cell:odd  { -fx-background-color: -pos-surface; }
+.table-row-cell:even { -fx-background-color: #FAFBFC; }
+.table-row-cell:selected {
+    -fx-background-color: -pos-primary-light;
+    -fx-text-fill: -pos-text-primary;
+}
+.table-row-cell:hover {
+    -fx-background-color: derive(-pos-primary-light, 30%);
+}
+
+/* ── Sidebar Navigation ───────────────────────────────────────────────────── */
+.sidebar {
+    -fx-background-color: #1A2332;
+    -fx-min-width: 220px;
+    -fx-pref-width: 220px;
+}
+.sidebar-logo {
+    -fx-padding: 20 16 16 16;
+    -fx-background-color: #111B27;
+}
+.sidebar-logo-text {
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+.sidebar-nav-item {
+    -fx-background-color: transparent;
+    -fx-text-fill: #9AAAB8;
+    -fx-padding: 10 16 10 16;
+    -fx-alignment: CENTER_LEFT;
+    -fx-cursor: hand;
+    -fx-font-size: 13px;
+    -fx-graphic-text-gap: 10;
+}
+.sidebar-nav-item:hover {
+    -fx-background-color: rgba(255,255,255,0.08);
+    -fx-text-fill: white;
+}
+.sidebar-nav-item.active {
+    -fx-background-color: -pos-primary;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+.sidebar-section-label {
+    -fx-text-fill: #5A6A7A;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 14 16 4 16;
+}
+
+/* ── Top Bar ──────────────────────────────────────────────────────────────── */
+.topbar {
+    -fx-background-color: -pos-surface;
+    -fx-border-color: -pos-border;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 10 20 10 20;
+    -fx-pref-height: 56px;
+}
+.topbar-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -pos-text-primary;
+}
+
+/* ── POS Terminal Specific ────────────────────────────────────────────────── */
+.pos-cart-panel {
+    -fx-background-color: -pos-surface;
+    -fx-border-color: -pos-border;
+    -fx-border-width: 0 1 0 0;
+}
+.pos-total-label {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -pos-primary;
+}
+.pos-payment-btn {
+    -fx-background-color: -pos-success;
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-min-height: 54px;
+    -fx-background-radius: 8;
+}
+.pos-payment-btn:hover { -fx-background-color: derive(-pos-success, -10%); }
+
+.pos-product-tile {
+    -fx-background-color: -pos-surface;
+    -fx-border-color: -pos-border;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-padding: 10;
+    -fx-alignment: CENTER;
+}
+.pos-product-tile:hover {
+    -fx-background-color: -pos-primary-light;
+    -fx-border-color: -pos-primary;
+}
+.pos-product-tile:pressed {
+    -fx-background-color: derive(-pos-primary-light, -10%);
+}
+
+/* ── Alerts / Badges ──────────────────────────────────────────────────────── */
+.badge {
+    -fx-background-radius: 10;
+    -fx-padding: 2 8 2 8;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+.badge-success { -fx-background-color: #E8F5E9; -fx-text-fill: -pos-success; }
+.badge-danger  { -fx-background-color: #FFEBEE; -fx-text-fill: -pos-danger;  }
+.badge-warning { -fx-background-color: #FFF3E0; -fx-text-fill: -pos-warning; }
+.badge-info    { -fx-background-color: #E3F2FD; -fx-text-fill: -pos-info;    }
+.badge-primary { -fx-background-color: -pos-primary-light; -fx-text-fill: -pos-primary; }
+
+/* ── Login Screen ─────────────────────────────────────────────────────────── */
+.login-container {
+    -fx-background-color: -pos-bg;
+}
+.login-card {
+    -fx-background-color: -pos-surface;
+    -fx-background-radius: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 20, 0, 0, 6);
+    -fx-padding: 40 48 40 48;
+    -fx-min-width: 380px;
+    -fx-max-width: 400px;
+}
+.login-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -pos-text-primary;
+}
+.login-subtitle {
+    -fx-font-size: 13px;
+    -fx-text-fill: -pos-text-secondary;
+}
+
+/* ── Separator ────────────────────────────────────────────────────────────── */
+.separator .line { -fx-border-color: -pos-border; }
+
+/* ── ScrollPane ───────────────────────────────────────────────────────────── */
+.scroll-pane { -fx-background-color: transparent; -fx-background: transparent; }
+.scroll-pane > .viewport { -fx-background-color: transparent; }
+
+/* ── Dialogs ──────────────────────────────────────────────────────────────── */
+.dialog-pane {
+    -fx-background-color: -pos-surface;
+    -fx-border-color: -pos-border;
+}
+.dialog-pane .header-panel { -fx-background-color: -pos-surface-alt; }
+
+/* ── Progress / Loading ───────────────────────────────────────────────────── */
+.progress-bar > .bar       { -fx-background-color: -pos-primary; }
+.progress-bar > .track     { -fx-background-color: -pos-border;  }
+.progress-indicator > .indicator { -fx-background-color: -pos-primary; }
+
+/* ── CheckBox / RadioButton ───────────────────────────────────────────────── */
+.check-box > .box {
+    -fx-background-color: -pos-surface;
+    -fx-border-color: -pos-border;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+.check-box:selected > .box { -fx-background-color: -pos-primary; -fx-border-color: -pos-primary; }
+.check-box:selected > .box > .mark { -fx-background-color: white; }
+
+/* ── Tab Pane ─────────────────────────────────────────────────────────────── */
+.tab-pane > .tab-header-area > .headers-region > .tab {
+    -fx-background-color: -pos-surface-alt;
+    -fx-background-radius: 6 6 0 0;
+    -fx-padding: 8 16;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab:selected {
+    -fx-background-color: -pos-surface;
+    -fx-border-color: -pos-primary;
+    -fx-border-width: 0 0 2 0;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab .tab-label {
+    -fx-text-fill: -pos-text-secondary;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab:selected .tab-label {
+    -fx-text-fill: -pos-primary;
+    -fx-font-weight: bold;
+}
+
+/* ── POS Terminal Additions ─────────────────────────────────────────────────── */
+
+/* Category pill — active state override */
+.category-pill-active {
+    -fx-background-color: -pos-primary;
+    -fx-text-fill: white;
+    -fx-border-color: -pos-primary;
+    -fx-background-radius: 20;
+    -fx-border-radius: 20;
+    -fx-padding: 4 14;
+    -fx-cursor: hand;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+/* Cart table — low stock row tint */
+.table-row-cell.low-stock {
+    -fx-background-color: #FFF8E1;
+}
+
+/* Cart table — price override indicator */
+.table-row-cell.price-override .table-cell {
+    -fx-text-fill: -pos-warning;
+    -fx-font-style: italic;
+}
+
+/* Quick product grid scrollpane */
+.quick-grid-scroll {
+    -fx-background: transparent;
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+/* Payment dialog total highlight */
+.payment-total-box {
+    -fx-background-color: -pos-surface-alt;
+    -fx-background-radius: 8;
+    -fx-border-color: -pos-border;
+    -fx-border-radius: 8;
+    -fx-padding: 12 16;
+}
+
+/* Change label — colour is set dynamically in controller */
+.change-label {
+    -fx-font-family: 'Courier New', monospace;
+    -fx-font-weight: bold;
+}
+
+/* Numpad button row in payment dialog */
+.quick-amt-btn {
+    -fx-background-color: white;
+    -fx-border-color: -pos-primary;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-font-size: 12px;
+}
+.quick-amt-btn:hover {
+    -fx-background-color: -pos-primary-light;
+}
+
+/* Out-of-stock product tile */
+.pos-product-tile.out-of-stock {
+    -fx-opacity: 0.42;
+}
+
+/* Low-stock product tile border */
+.pos-product-tile.low-stock {
+    -fx-border-color: -pos-warning;
+    -fx-border-width: 1.5;
+}
+
+/* Status bar connection indicator */
+.db-connected    { -fx-text-fill: -pos-success; -fx-font-weight: bold; }
+.db-disconnected { -fx-text-fill: -pos-danger;  -fx-font-weight: bold; }

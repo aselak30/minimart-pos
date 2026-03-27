@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<!--
+  POS Terminal Layout
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  TOP BAR: Cashier | Clock | Bill# | Customer | End Shift | Logout   │
+  ├─────────────────────────────────────┬───────────────────────────────┤
+  │  LEFT: Search bar + Category tabs   │  RIGHT: Cart table            │
+  │         Quick product tile grid     │         Subtotal/Tax/Discount  │
+  │         (or search results list)    │         TOTAL                 │
+  │                                     │         Payment buttons        │
+  ├─────────────────────────────────────┴───────────────────────────────┤
+  │  STATUS BAR: status message | DB status | Machine ID                │
+  └─────────────────────────────────────────────────────────────────────┘
+-->
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.minimartpos.controller.cashier.POSTerminalController"
+            stylesheets="@../../css/main.css"
+            styleClass="scene-bg">
+
+    <!-- ═══════════════════════ TOP BAR ═══════════════════════ -->
+    <top>
+        <HBox styleClass="topbar" alignment="CENTER_LEFT" spacing="10">
+
+            <VBox spacing="1">
+                <Label fx:id="cashierNameLabel" text="Cashier" styleClass="h4"/>
+                <Label fx:id="shiftLabel" text="Shift: —" styleClass="text-secondary"
+                       style="-fx-font-size:11px;"/>
+            </VBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <VBox alignment="CENTER" spacing="1">
+                <Label fx:id="clockLabel" text="00:00:00" styleClass="h3"
+                       style="-fx-font-family:'Courier New'; -fx-text-fill:-pos-primary;"/>
+                <Label fx:id="dateLabel" text="Mon, 16 Mar" styleClass="text-secondary"
+                       style="-fx-font-size:11px;"/>
+            </VBox>
+
+            <Separator orientation="VERTICAL" style="-fx-padding:0 6 0 6;"/>
+
+            <VBox alignment="CENTER" spacing="1">
+                <Label text="BILL #" styleClass="label-form"/>
+                <Label fx:id="billNumberLabel" text="—" styleClass="h4"
+                       style="-fx-text-fill:-pos-accent;"/>
+            </VBox>
+
+            <Separator orientation="VERTICAL" style="-fx-padding:0 6 0 6;"/>
+
+            <VBox alignment="CENTER" spacing="1" minWidth="140">
+                <Label text="CUSTOMER" styleClass="label-form"/>
+                <HBox spacing="4" alignment="CENTER">
+                    <Label fx:id="customerLabel" text="Walk-in" styleClass="text-secondary"
+                           style="-fx-font-size:12px;" maxWidth="110" ellipsisString="…"/>
+                    <Button fx:id="customerBtn" text="👤" styleClass="btn-icon"
+                            onAction="#openCustomerSearch" style="-fx-font-size:13px;"/>
+                    <Button fx:id="clearCustomerBtn" text="✖" styleClass="btn-icon"
+                            onAction="#clearCustomer" style="-fx-font-size:10px;"
+                            visible="false" managed="false"/>
+                </HBox>
+            </VBox>
+
+            <Separator orientation="VERTICAL" style="-fx-padding:0 6 0 6;"/>
+
+            <!-- Quick product creation (permission gated — hidden if no permission) -->
+            <Button fx:id="quickProductBtn" text="⚡ Quick Product"
+                    styleClass="btn-secondary, button"
+                    style="-fx-font-size:12px;"
+                    onAction="#openQuickProduct"
+                    visible="false" managed="false"/>
+
+            <Button fx:id="adminBackBtn" text="← Dashboard"
+                    styleClass="btn-secondary, button"
+                    onAction="#adminBackToDashboard"
+                    visible="false" managed="false"
+                    style="-fx-background-color:-pos-primary-light; -fx-text-fill:-pos-primary-dark; -fx-font-weight:bold;"/>
+            <Button text="🔒 End Shift" styleClass="btn-secondary, button"
+                    onAction="#endShift"/>
+            <Button text="↩ Logout" styleClass="btn-danger, button" onAction="#logout"/>
+
+        </HBox>
+    </top>
+
+    <!-- ═══════════════════════ MAIN CONTENT ═══════════════════════ -->
+    <center>
+        <HBox spacing="0">
+
+            <!-- ═══════ LEFT: Product Search + Quick Grid ═══════ -->
+            <VBox HBox.hgrow="ALWAYS" spacing="8" style="-fx-padding:10;">
+
+                <!-- Row 1: Search + Barcode -->
+                <HBox spacing="8" alignment="CENTER_LEFT">
+                    <TextField fx:id="searchField"
+                               promptText="🔍  Search by name, barcode, or brand…"
+                               styleClass="search-field"
+                               HBox.hgrow="ALWAYS"
+                               onKeyReleased="#onSearchKeyReleased"/>
+                    <TextField fx:id="barcodeField"
+                               promptText="📷 Scan barcode"
+                               prefWidth="165"
+                               styleClass="text-field"
+                               onAction="#onBarcodeEntered"
+                               style="-fx-font-family:'Courier New'; -fx-font-size:13px;"/>
+                </HBox>
+
+                <!-- Row 2: Category filter pills -->
+                <ScrollPane hbarPolicy="AS_NEEDED" vbarPolicy="NEVER"
+                            fitToHeight="true" minHeight="34"
+                            style="-fx-background:transparent; -fx-background-color:transparent;
+                                   -fx-border-color:transparent; -fx-padding:0;">
+                    <HBox fx:id="categoryBar" spacing="6" alignment="CENTER_LEFT"
+                          style="-fx-padding:2 0 2 0;"/>
+                </ScrollPane>
+
+                <!-- Main content area: quick tiles OR search results -->
+                <StackPane VBox.vgrow="ALWAYS">
+
+                    <!-- Quick product tiles -->
+                    <VBox fx:id="quickGridPane" spacing="6">
+                        <HBox alignment="CENTER_LEFT" spacing="8">
+                            <Label text="QUICK PRODUCTS" styleClass="label-form"/>
+                            <Label fx:id="quickGridHint" text="(click to add to cart)"
+                                   styleClass="text-muted" style="-fx-font-size:11px;"/>
+                        </HBox>
+                        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                                    style="-fx-background:transparent; -fx-background-color:transparent;
+                                           -fx-border-color:transparent;">
+                            <FlowPane fx:id="quickProductGrid"
+                                      hgap="8" vgap="8"
+                                      prefWrapLength="9999"
+                                      alignment="TOP_LEFT"
+                                      style="-fx-padding:0 4 8 0;"/>
+                        </ScrollPane>
+                    </VBox>
+
+                    <!-- Search results (shown while typing) -->
+                    <VBox fx:id="searchResultsPane" visible="false" managed="false" spacing="6">
+                        <HBox alignment="CENTER_LEFT" spacing="8">
+                            <Label text="SEARCH RESULTS" styleClass="label-form"/>
+                            <Label fx:id="searchCountLabel" text="" styleClass="text-muted"
+                                   style="-fx-font-size:11px;"/>
+                        </HBox>
+                        <ListView fx:id="searchResultsList" VBox.vgrow="ALWAYS"
+                                  style="-fx-background-color:white; -fx-border-color:-pos-border;
+                                         -fx-border-radius:8; -fx-background-radius:8;"/>
+                    </VBox>
+
+                </StackPane>
+            </VBox>
+
+            <!-- ═══════ RIGHT: Cart Panel ═══════ -->
+            <VBox prefWidth="430" minWidth="390"
+                  style="-fx-background-color:white; -fx-border-color:-pos-border;
+                         -fx-border-width:0 0 0 1;">
+
+                <!-- Cart header -->
+                <HBox styleClass="card-header" alignment="CENTER_LEFT" spacing="8"
+                      style="-fx-padding:10 14;">
+                    <Label text="🛒  CURRENT BILL" style="-fx-text-fill:white; -fx-font-weight:bold;
+                                                           -fx-font-size:14px;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label fx:id="itemCountLabel" text="0 items"
+                           style="-fx-text-fill:rgba(255,255,255,0.85); -fx-font-size:12px;"/>
+                    <Button text="🗑" styleClass="btn-icon" onAction="#clearCart"
+                            style="-fx-text-fill:rgba(255,255,255,0.8); -fx-font-size:15px;"/>
+                </HBox>
+
+                <!-- Cart table -->
+                <TableView fx:id="cartTable" VBox.vgrow="ALWAYS"
+                           style="-fx-border-color:transparent; -fx-background-color:white;"
+                           editable="true">
+                    <columns>
+                        <TableColumn fx:id="colProduct" text="Product"  prefWidth="155" minWidth="120"/>
+                        <TableColumn fx:id="colQty"     text="Qty"      prefWidth="58"  minWidth="50"  style="-fx-alignment:CENTER;"/>
+                        <TableColumn fx:id="colPrice"   text="Price"    prefWidth="72"  minWidth="60"  style="-fx-alignment:CENTER_RIGHT;"/>
+                        <TableColumn fx:id="colDisc"    text="Disc%"    prefWidth="55"  minWidth="48"  style="-fx-alignment:CENTER;"/>
+                        <TableColumn fx:id="colTotal"   text="Total"    prefWidth="72"  minWidth="60"  style="-fx-alignment:CENTER_RIGHT;"/>
+                        <TableColumn fx:id="colRemove"  text=""         prefWidth="32"  minWidth="32"  style="-fx-alignment:CENTER;"/>
+                    </columns>
+                    <placeholder>
+                        <VBox alignment="CENTER" spacing="8" style="-fx-padding:40;">
+                            <Label text="🛒" style="-fx-font-size:38px;"/>
+                            <Label text="Cart is empty" styleClass="h3 text-secondary"/>
+                            <Label text="Search or scan a product to get started"
+                                   styleClass="text-muted" wrapText="true" textAlignment="CENTER"
+                                   maxWidth="220"/>
+                        </VBox>
+                    </placeholder>
+                </TableView>
+
+                <!-- Totals section -->
+                <VBox style="-fx-padding:10 16 0 16; -fx-border-color:-pos-border;
+                             -fx-border-width:1 0 0 0;" spacing="5">
+
+                    <HBox>
+                        <Label text="Subtotal" styleClass="text-secondary"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="subtotalLabel" text="0.00" styleClass="text-secondary"/>
+                    </HBox>
+
+                    <!-- Discount row (always visible; permission gates editing) -->
+                    <HBox alignment="CENTER_LEFT" spacing="6">
+                        <Label text="Bill Discount" styleClass="text-secondary"/>
+                        <TextField fx:id="billDiscountField"
+                                   prefWidth="68" alignment="CENTER_RIGHT"
+                                   promptText="0"
+                                   styleClass="text-field"
+                                   style="-fx-font-size:12px; -fx-padding:3 6;"
+                                   onAction="#applyBillDiscount"/>
+                        <ToggleButton fx:id="discToggle" text="Pct" selected="true"
+                                      style="-fx-font-size:11px; -fx-padding:3 8; -fx-cursor:hand;"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="discountLabel" text="- 0.00"
+                               style="-fx-text-fill:-pos-success; -fx-font-weight:bold;"/>
+                    </HBox>
+
+                    <HBox>
+                        <Label text="Tax" styleClass="text-secondary"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="taxLabel" text="0.00" styleClass="text-secondary"/>
+                    </HBox>
+
+                    <Separator/>
+
+                    <HBox alignment="CENTER_LEFT">
+                        <Label text="TOTAL" styleClass="h3"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="totalLabel" text="Rs. 0.00" styleClass="pos-total-label"/>
+                    </HBox>
+
+                    <!-- Profit row: only shown with VIEW_BILL_PROFIT permission -->
+                    <HBox fx:id="profitRow" visible="false" managed="false">
+                        <Label text="Profit" style="-fx-text-fill:-pos-text-secondary; -fx-font-size:11px;"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="profitLabel" text="0.00"
+                               style="-fx-text-fill:-pos-success; -fx-font-size:11px;"/>
+                    </HBox>
+
+                </VBox>
+
+                <!-- Payment & action buttons -->
+                <VBox style="-fx-padding:10 14 14 14;" spacing="7">
+
+                    <!-- Primary: Cash | Card -->
+                    <HBox spacing="8">
+                        <Button text="💵  CASH" styleClass="pos-payment-btn, button"
+                                HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                                onAction="#payByCash"/>
+                        <Button text="💳  CARD"
+                                HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                                onAction="#payByCard"
+                                style="-fx-background-color:-pos-info; -fx-text-fill:white;
+                                       -fx-font-weight:bold; -fx-font-size:15px;
+                                       -fx-min-height:52px; -fx-background-radius:8; -fx-cursor:hand;"/>
+                    </HBox>
+
+                    <!-- Secondary: Credit | Mobile -->
+                    <HBox spacing="8">
+                        <Button fx:id="creditBtn" text="📋  CREDIT"
+                                HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                                onAction="#payByCredit"
+                                style="-fx-background-color:-pos-warning; -fx-text-fill:white;
+                                       -fx-font-weight:bold; -fx-font-size:13px;
+                                       -fx-min-height:42px; -fx-background-radius:8; -fx-cursor:hand;"/>
+                        <Button text="📱  MOBILE"
+                                HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                                onAction="#payByMobile"
+                                style="-fx-background-color:#7B1FA2; -fx-text-fill:white;
+                                       -fx-font-weight:bold; -fx-font-size:13px;
+                                       -fx-min-height:42px; -fx-background-radius:8; -fx-cursor:hand;"/>
+                    </HBox>
+
+                    <!-- Utility: New Bill | Hold | Retrieve | Discount | Return | Void | Reprint -->
+                    <HBox spacing="6">
+                        <Button text="➕ New" styleClass="btn-secondary, button"
+                                HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                                onAction="#newBill"/>
+                        <Button fx:id="holdBtn" text="⏸ Hold"
+                                styleClass="btn-secondary, button"
+                                HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                                onAction="#holdBill"/>
+                        <Button fx:id="retrieveBtn" text="📂 Retrieve"
+                                styleClass="btn-secondary, button"
+                                HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                                onAction="#retrieveHeldBill"/>
+                        <Button fx:id="discountBtn" text="🏷 Disc"
+                                styleClass="btn-secondary, button"
+                                HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                                onAction="#openDiscountDialog"/>
+                        <Button text="🔁 Return" styleClass="btn-secondary, button"
+                                HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                                onAction="#openReturnDialog"/>
+                        <Button fx:id="reprintBtn" text="🖨 Reprint"
+                                styleClass="btn-secondary, button"
+                                HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                                onAction="#reprintLastBill"
+                                disable="true"/>
+                        <Button fx:id="voidBtn" text="✖ Void"
+                                styleClass="btn-danger, button"
+                                HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                                onAction="#voidBill"/>
+                    </HBox>
+                </VBox>
+
+            </VBox>
+        </HBox>
+    </center>
+
+    <!-- ═══════════════════════ STATUS BAR ═══════════════════════ -->
+    <bottom>
+        <HBox alignment="CENTER_LEFT" spacing="16"
+              style="-fx-background-color:white; -fx-padding:5 16;
+                     -fx-border-color:-pos-border; -fx-border-width:1 0 0 0;">
+            <Label fx:id="statusLabel" text="Ready" styleClass="text-secondary"
+                   style="-fx-font-size:12px;"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="dbStatusLabel" text="● Connected"
+                   style="-fx-text-fill:-pos-success; -fx-font-size:11px; -fx-font-weight:bold;"/>
+            <Label fx:id="machineLabel" text="Machine: —"
+                   styleClass="text-muted" style="-fx-font-size:11px;"/>
+        </HBox>
+    </bottom>
+
+</BorderPane>

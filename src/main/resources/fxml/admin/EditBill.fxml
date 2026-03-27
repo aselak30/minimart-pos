@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<!--
+  Edit Bill Dialog
+  Allows limited editing of a finalized bill within a time window.
+  Changes audited and a correction note added to the bill.
+
+  Editable fields:
+   ▸ Customer (change or clear)
+   ▸ Each item: quantity, unit price, discount %
+   ▸ Bill-level discount
+   ▸ Payment type
+   ▸ Notes / correction reason (required)
+
+  Read-only:
+   ▸ Bill number, cashier, original date
+-->
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.minimartpos.controller.admin.EditBillController"
+      stylesheets="@../../css/main.css"
+      prefWidth="720" prefHeight="640"
+      spacing="0">
+
+    <!-- Header -->
+    <HBox styleClass="card-header" alignment="CENTER_LEFT" spacing="10"
+          style="-fx-padding:12 16;">
+        <Label fx:id="headerLabel" text="✏  Edit Bill"
+               style="-fx-text-fill:white; -fx-font-weight:bold; -fx-font-size:15px;"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label fx:id="timeRemainingLabel" text=""
+               style="-fx-text-fill:rgba(255,255,255,0.8); -fx-font-size:12px;"/>
+        <Button text="✖" styleClass="btn-icon" onAction="#cancel"
+                style="-fx-text-fill:rgba(255,255,255,0.8); -fx-font-size:14px;"/>
+    </HBox>
+
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                style="-fx-background:transparent; -fx-background-color:-pos-bg; -fx-border-color:transparent;">
+        <VBox spacing="14" style="-fx-padding:16;">
+
+            <!-- Bill info (read-only) -->
+            <VBox styleClass="card" spacing="8"
+                  style="-fx-background-color:-pos-surface-alt;">
+                <Label text="BILL INFO (READ-ONLY)" styleClass="label-form"/>
+                <HBox spacing="24">
+                    <VBox spacing="2">
+                        <Label text="Bill Number" styleClass="text-secondary" style="-fx-font-size:11px;"/>
+                        <Label fx:id="billNumberLabel" text="—" style="-fx-font-weight:bold;"/>
+                    </VBox>
+                    <VBox spacing="2">
+                        <Label text="Date" styleClass="text-secondary" style="-fx-font-size:11px;"/>
+                        <Label fx:id="billDateLabel" text="—" styleClass="text-secondary"/>
+                    </VBox>
+                    <VBox spacing="2">
+                        <Label text="Cashier" styleClass="text-secondary" style="-fx-font-size:11px;"/>
+                        <Label fx:id="billCashierLabel" text="—" styleClass="text-secondary"/>
+                    </VBox>
+                    <VBox spacing="2">
+                        <Label text="Original Total" styleClass="text-secondary" style="-fx-font-size:11px;"/>
+                        <Label fx:id="originalTotalLabel" text="—"
+                               style="-fx-font-weight:bold; -fx-text-fill:-pos-primary;"/>
+                    </VBox>
+                </HBox>
+            </VBox>
+
+            <!-- Editable: Customer + Payment -->
+            <VBox styleClass="card" spacing="10">
+                <Label text="HEADER" styleClass="label-form"/>
+                <HBox spacing="12">
+                    <VBox spacing="4" HBox.hgrow="ALWAYS">
+                        <Label text="CUSTOMER" styleClass="label-form"/>
+                        <HBox spacing="8">
+                            <TextField fx:id="customerField" styleClass="text-field"
+                                       HBox.hgrow="ALWAYS" promptText="Walk-in" editable="false"/>
+                            <Button text="🔍" styleClass="btn-secondary, button"
+                                    onAction="#selectCustomer"/>
+                            <Button text="✖" styleClass="btn-secondary, button"
+                                    onAction="#clearCustomer"/>
+                        </HBox>
+                    </VBox>
+                    <VBox spacing="4" HBox.hgrow="ALWAYS">
+                        <Label text="PAYMENT TYPE" styleClass="label-form"/>
+                        <ComboBox fx:id="paymentTypeCombo" maxWidth="Infinity"/>
+                    </VBox>
+                </HBox>
+            </VBox>
+
+            <!-- Items table -->
+            <VBox styleClass="card" spacing="10">
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <Label text="ITEMS" styleClass="label-form"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label text="Double-click a cell to edit quantity, price or discount"
+                           styleClass="text-secondary" style="-fx-font-size:11px;"/>
+                </HBox>
+                <TableView fx:id="itemsTable" editable="true" prefHeight="220"
+                           style="-fx-border-color:-pos-border;">
+                    <columns>
+                        <TableColumn fx:id="colProduct"  text="Product"     prefWidth="200"/>
+                        <TableColumn fx:id="colQty"      text="Qty"         prefWidth="70"
+                                     style="-fx-alignment:CENTER;"/>
+                        <TableColumn fx:id="colPrice"    text="Unit Price"  prefWidth="100"
+                                     style="-fx-alignment:CENTER_RIGHT;"/>
+                        <TableColumn fx:id="colDisc"     text="Disc %"      prefWidth="70"
+                                     style="-fx-alignment:CENTER;"/>
+                        <TableColumn fx:id="colTotal"    text="Line Total"  prefWidth="110"
+                                     style="-fx-alignment:CENTER_RIGHT;"/>
+                        <TableColumn fx:id="colRemove"   text=""            prefWidth="50"
+                                     style="-fx-alignment:CENTER;"/>
+                    </columns>
+                    <placeholder>
+                        <Label text="No items" styleClass="text-secondary"/>
+                    </placeholder>
+                </TableView>
+            </VBox>
+
+            <!-- Bill discount + summary -->
+            <HBox spacing="12">
+                <VBox styleClass="card" spacing="10" HBox.hgrow="ALWAYS">
+                    <Label text="BILL DISCOUNT (%)" styleClass="label-form"/>
+                    <TextField fx:id="billDiscountField" styleClass="text-field"
+                               promptText="0" onKeyReleased="#recalculate"/>
+                </VBox>
+                <VBox styleClass="card" spacing="6" HBox.hgrow="ALWAYS"
+                      style="-fx-background-color:-pos-surface-alt;">
+                    <HBox>
+                        <Label text="Subtotal" styleClass="text-secondary"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="newSubtotalLabel" text="Rs. 0.00"/>
+                    </HBox>
+                    <HBox>
+                        <Label text="Discount" styleClass="text-secondary"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="newDiscountLabel" text="Rs. 0.00"
+                               style="-fx-text-fill:-pos-warning;"/>
+                    </HBox>
+                    <Separator/>
+                    <HBox>
+                        <Label text="NEW TOTAL" style="-fx-font-weight:bold;"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="newTotalLabel" text="Rs. 0.00"
+                               style="-fx-font-weight:bold; -fx-font-size:16px; -fx-text-fill:-pos-primary;"/>
+                    </HBox>
+                    <HBox fx:id="totalDiffRow">
+                        <Label text="Difference" styleClass="text-secondary"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="totalDiffLabel" text="Rs. 0.00"
+                               style="-fx-font-size:12px;"/>
+                    </HBox>
+                </VBox>
+            </HBox>
+
+            <!-- Reason (required) -->
+            <VBox styleClass="card" spacing="6">
+                <Label text="CORRECTION REASON  *  (required — stored in audit log)"
+                       styleClass="label-form"/>
+                <TextArea fx:id="reasonField" prefRowCount="2" styleClass="text-field"
+                          promptText="e.g. Wrong quantity entered, customer requested discount, wrong payment type recorded…"/>
+            </VBox>
+
+            <!-- Error -->
+            <Label fx:id="errorLabel" text="" styleClass="badge badge-danger"
+                   wrapText="true" visible="false" managed="false"/>
+
+        </VBox>
+    </ScrollPane>
+
+    <!-- Footer buttons -->
+    <HBox spacing="10" style="-fx-padding:12 16; -fx-background-color:white;
+          -fx-border-color:-pos-border; -fx-border-width:1 0 0 0;">
+        <Button text="Cancel" styleClass="btn-secondary, button"
+                HBox.hgrow="ALWAYS" maxWidth="Infinity" onAction="#cancel"/>
+        <Button fx:id="saveBtn" text="💾 Save Changes"
+                styleClass="btn-primary, button"
+                HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                style="-fx-font-size:13px; -fx-min-height:40px;"
+                onAction="#saveChanges"/>
+    </HBox>
+</VBox>

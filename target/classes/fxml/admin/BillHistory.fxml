@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.minimartpos.controller.admin.BillHistoryController"
+            stylesheets="@../../css/main.css" styleClass="scene-bg">    <!-- ══════════════════ SIDEBAR ══════════════════ -->
+    <left>
+        <VBox styleClass="sidebar" spacing="0" minWidth="220">
+            <VBox styleClass="sidebar-logo" spacing="4">
+                <Label text="🛒 MiniMart POS" styleClass="sidebar-logo-text"/>
+                <Label text="Admin Console" style="-fx-text-fill:#5A6A7A; -fx-font-size:11px;"/>
+            </VBox>
+            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                        style="-fx-background:transparent; -fx-background-color:transparent; -fx-border-color:transparent;">
+                <VBox spacing="2" style="-fx-padding:8 0;">
+                    <Label text="MAIN" styleClass="sidebar-section-label"/>
+                    <Button text="📊  Dashboard" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToDashboard"/>
+                    <Button text="🖥  POS Terminal" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToPOS"/>
+                    <Button text="👥  Users" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToUsers"/>
+                    <Button text="📦  Products" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToProducts"/>
+                    <Button text="🧑  Customers" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToCustomers"/>
+                    <Button text="🏭  Suppliers" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToSuppliers"/>
+                    <Label text="OPERATIONS" styleClass="sidebar-section-label"/>
+                    <Button text="💰  Live Monitor" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToCashierMonitor"/>
+                    <Button text="🧾  Bills / History" styleClass="sidebar-nav-item active" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToBills"/>
+                    <Button text="📉  Stock" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToStock"/>
+                    <Label text="REPORTS" styleClass="sidebar-section-label"/>
+                    <Button text="📈  Reports" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToReports"/>
+                    <Button text="🔍  Audit Log" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToAudit"/>
+                    <Label text="SYSTEM" styleClass="sidebar-section-label"/>
+                    <Button text="⚙  Settings" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToSettings"/>
+                </VBox>
+            </ScrollPane>
+            <VBox style="-fx-padding:12 16; -fx-border-color:rgba(255,255,255,0.08); -fx-border-width:1 0 0 0;" spacing="4">
+                <Label fx:id="sidebarUserLabel" text="Admin" style="-fx-text-fill:white; -fx-font-weight:bold; -fx-font-size:12px;"/>
+            </VBox>
+        </VBox>
+    </left>
+    <center>
+        <VBox spacing="0">
+            <HBox styleClass="topbar" alignment="CENTER_LEFT" spacing="10">
+                <Label text="🧾  Bill History" styleClass="h3"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <TextField fx:id="searchField" promptText="🔍 Bill # or cashier…" styleClass="search-field" prefWidth="200" onKeyReleased="#onSearchChanged"/>
+                <ComboBox fx:id="statusFilter" prefWidth="120" promptText="All Status" onAction="#onFilterChanged"/>
+                <DatePicker fx:id="fromDate" prefWidth="130"/>
+                <DatePicker fx:id="toDate" prefWidth="130"/>
+                <Button text="🔄 Search" styleClass="btn-primary, button" onAction="#loadBills"/>
+                <Button text="← Back" styleClass="btn-secondary, button" onAction="#navigateToDashboard"/>
+            </HBox>
+            <HBox VBox.vgrow="ALWAYS" spacing="0">
+                <VBox HBox.hgrow="ALWAYS" style="-fx-padding:16;" spacing="10">
+                    <HBox alignment="CENTER_LEFT" spacing="12">
+                        <Label fx:id="rowCountLabel" text="0 bills" styleClass="text-secondary" style="-fx-font-size:12px;"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label text="Total:" styleClass="text-secondary"/>
+                        <Label fx:id="totalSalesLabel" text="Rs. 0.00" styleClass="h4" style="-fx-text-fill:-pos-primary;"/>
+                    </HBox>
+                    <TableView fx:id="billTable" VBox.vgrow="ALWAYS" style="-fx-border-color:transparent;">
+                        <columns>
+                            <TableColumn fx:id="colBillNum"  text="Bill #"     prefWidth="140"/>
+                            <TableColumn fx:id="colDate"     text="Date/Time"  prefWidth="140"/>
+                            <TableColumn fx:id="colCashier"  text="Cashier"    prefWidth="120"/>
+                            <TableColumn fx:id="colCustomer" text="Customer"   prefWidth="120"/>
+                            <TableColumn fx:id="colItems"    text="Items"      prefWidth="60" style="-fx-alignment:CENTER;"/>
+                            <TableColumn fx:id="colTotal"    text="Total"      prefWidth="100" style="-fx-alignment:CENTER_RIGHT;"/>
+                            <TableColumn fx:id="colPayment"  text="Payment"    prefWidth="90" style="-fx-alignment:CENTER;"/>
+                            <TableColumn fx:id="colStatus"   text="Status"     prefWidth="90" style="-fx-alignment:CENTER;"/>
+                            <TableColumn fx:id="colActions"  text="Actions"    prefWidth="100" style="-fx-alignment:CENTER;"/>
+                        </columns>
+                        <placeholder><Label text="No bills found" styleClass="text-secondary"/></placeholder>
+                    </TableView>
+                </VBox>
+                <!-- Bill detail panel -->
+                <VBox fx:id="detailPanel" prefWidth="380"
+                      style="-fx-background-color:white; -fx-border-color:-pos-border; -fx-border-width:0 0 0 1;"
+                      visible="false" managed="false">
+                    <HBox styleClass="card-header" alignment="CENTER_LEFT" spacing="8" style="-fx-padding:10 14;">
+                        <Label fx:id="detailBillLabel" text="Bill Details" style="-fx-text-fill:white; -fx-font-weight:bold; -fx-font-size:14px;"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="✖" styleClass="btn-icon" onAction="#closeDetail" style="-fx-text-fill:rgba(255,255,255,0.8);"/>
+                    </HBox>
+                    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                                style="-fx-background:transparent; -fx-background-color:transparent; -fx-border-color:transparent;">
+                        <VBox fx:id="detailContent" spacing="10" style="-fx-padding:14;"/>
+                    </ScrollPane>
+                    <HBox spacing="8" style="-fx-padding:10 14;">
+                        <Button text="🖨 Reprint" styleClass="btn-secondary, button"
+                                HBox.hgrow="ALWAYS" maxWidth="Infinity" onAction="#reprintBill"/>
+                        <Button fx:id="editBillBtn" text="✏ Edit"
+                                styleClass="btn-secondary, button"
+                                HBox.hgrow="ALWAYS" maxWidth="Infinity" onAction="#openEditBill"/>
+                        <Button fx:id="voidBillBtn" text="✖ Void"
+                                styleClass="btn-danger, button"
+                                HBox.hgrow="ALWAYS" maxWidth="Infinity" onAction="#voidSelectedBill"/>
+                    </HBox>
+                </VBox>
+            </HBox>
+        </VBox>
+    </center>
+</BorderPane>

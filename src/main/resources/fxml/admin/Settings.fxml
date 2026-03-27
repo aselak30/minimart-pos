@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.minimartpos.controller.admin.SettingsController"
+            stylesheets="@../../css/main.css"
+            styleClass="scene-bg">
+
+    <!-- SIDEBAR -->    <!-- ══════════════════ SIDEBAR ══════════════════ -->
+    <left>
+        <VBox styleClass="sidebar" spacing="0" minWidth="220">
+            <VBox styleClass="sidebar-logo" spacing="4">
+                <Label text="🛒 MiniMart POS" styleClass="sidebar-logo-text"/>
+                <Label text="Admin Console" style="-fx-text-fill:#5A6A7A; -fx-font-size:11px;"/>
+            </VBox>
+            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                        style="-fx-background:transparent; -fx-background-color:transparent; -fx-border-color:transparent;">
+                <VBox spacing="2" style="-fx-padding:8 0;">
+                    <Label text="MAIN" styleClass="sidebar-section-label"/>
+                    <Button text="📊  Dashboard" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToDashboard"/>
+                    <Button text="🖥  POS Terminal" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToPOS"/>
+                    <Button text="👥  Users" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToUsers"/>
+                    <Button text="📦  Products" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToProducts"/>
+                    <Button text="🧑  Customers" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToCustomers"/>
+                    <Button text="🏭  Suppliers" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToSuppliers"/>
+                    <Label text="OPERATIONS" styleClass="sidebar-section-label"/>
+                    <Button text="💰  Live Monitor" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToCashierMonitor"/>
+                    <Button text="🧾  Bills / History" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToBills"/>
+                    <Button text="📉  Stock" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToStock"/>
+                    <Label text="REPORTS" styleClass="sidebar-section-label"/>
+                    <Button text="📈  Reports" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToReports"/>
+                    <Button text="🔍  Audit Log" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToAudit"/>
+                    <Label text="SYSTEM" styleClass="sidebar-section-label"/>
+                    <Button text="⚙  Settings" styleClass="sidebar-nav-item active" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToSettings"/>
+                </VBox>
+            </ScrollPane>
+            <VBox style="-fx-padding:12 16; -fx-border-color:rgba(255,255,255,0.08); -fx-border-width:1 0 0 0;" spacing="4">
+                <Label fx:id="sidebarUserLabel" text="Admin" style="-fx-text-fill:white; -fx-font-weight:bold; -fx-font-size:12px;"/>
+            </VBox>
+        </VBox>
+    </left>
+
+    <center>
+        <VBox spacing="0">
+            <HBox styleClass="topbar" alignment="CENTER_LEFT" spacing="12">
+                <Label text="⚙  System Settings" styleClass="h3"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="← Back" styleClass="btn-secondary, button" onAction="#navigateToDashboard"/>
+            </HBox>
+
+            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                        style="-fx-background:transparent; -fx-background-color:-pos-bg; -fx-border-color:transparent;">
+                <VBox spacing="16" style="-fx-padding:24;" maxWidth="800">
+
+                    <!-- Colour Theme -->
+                    <VBox styleClass="card" spacing="12">
+                        <Label text="🎨  COLOUR THEME" styleClass="h4"/>
+                        <Label text="Choose a colour theme for your account. Your preference is saved and applied every time you log in."
+                               style="-fx-text-fill:-pos-text-secondary; -fx-font-size:12px;" wrapText="true"/>
+                        <HBox fx:id="themePickerBox" spacing="8" alignment="CENTER_LEFT"
+                              style="-fx-padding:4 0 4 0;"/>
+                    </VBox>
+
+                    <!-- Company Info -->
+                    <VBox styleClass="card" spacing="12">
+                        <Label text="🏪  COMPANY INFORMATION" styleClass="h4"/>
+                        <HBox spacing="12">
+                            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                <Label text="COMPANY NAME" styleClass="label-form"/>
+                                <TextField fx:id="companyName" styleClass="text-field" maxWidth="Infinity"/>
+                            </VBox>
+                            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                <Label text="PHONE" styleClass="label-form"/>
+                                <TextField fx:id="companyPhone" styleClass="text-field"/>
+                            </VBox>
+                        </HBox>
+                        <HBox spacing="12">
+                            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                <Label text="EMAIL" styleClass="label-form"/>
+                                <TextField fx:id="companyEmail" styleClass="text-field"/>
+                            </VBox>
+                            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                <Label text="CURRENCY SYMBOL" styleClass="label-form"/>
+                                <TextField fx:id="currencySymbol" styleClass="text-field" prefWidth="120"/>
+                            </VBox>
+                        </HBox>
+                        <VBox spacing="4">
+                            <Label text="ADDRESS" styleClass="label-form"/>
+                            <TextArea fx:id="companyAddress" prefRowCount="2"
+                                      styleClass="text-field" maxWidth="Infinity"/>
+                        </VBox>
+                    </VBox>
+
+                    <!-- Receipt -->
+                    <VBox styleClass="card" spacing="12">
+                        <Label text="🧾  RECEIPT SETTINGS" styleClass="h4"/>
+                        <VBox spacing="4">
+                            <Label text="RECEIPT FOOTER MESSAGE" styleClass="label-form"/>
+                            <TextField fx:id="receiptFooter" styleClass="text-field"
+                                       promptText="e.g. Thank you for shopping with us!" maxWidth="Infinity"/>
+                        </VBox>
+                        <HBox spacing="12" alignment="CENTER_LEFT">
+                            <CheckBox fx:id="taxInclusiveCheck" text="Prices are tax-inclusive"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <VBox spacing="4">
+                                <Label text="RECEIPT PRINTER NAME" styleClass="label-form"/>
+                                <TextField fx:id="receiptPrinter" styleClass="text-field"
+                                           promptText="e.g. POS-80" prefWidth="200"/>
+                            </VBox>
+                        </HBox>
+                    </VBox>
+
+                    <!-- Inventory alerts -->
+                    <VBox styleClass="card" spacing="12">
+                        <Label text="📦  INVENTORY ALERTS" styleClass="h4"/>
+                        <HBox spacing="12" alignment="CENTER_LEFT">
+                            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                <Label text="EXPIRY WARNING (days before)" styleClass="label-form"/>
+                                <TextField fx:id="expiryWarningDays" styleClass="text-field" prefWidth="120" promptText="30"/>
+                            </VBox>
+                            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                <Label text="SESSION TIMEOUT (minutes)" styleClass="label-form"/>
+                                <TextField fx:id="sessionTimeout" styleClass="text-field" prefWidth="120" promptText="30"/>
+                            </VBox>
+                            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                <Label text="" styleClass="label-form"/>
+                                <CheckBox fx:id="lowStockAlertCheck" text="Enable low stock alerts"/>
+                            </VBox>
+                        </HBox>
+                    </VBox>
+
+                    <!-- Network / Sync info -->
+                    <VBox styleClass="card" spacing="12">
+                        <Label text="🌐  NETWORK SYNC" styleClass="h4"/>
+                        <HBox spacing="24">
+                            <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                <Label text="THIS MACHINE" styleClass="label-form"/>
+                                <Label fx:id="localMachineLabel" text="—" styleClass="text-secondary"/>
+                            </VBox>
+                            <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                <Label text="LOCAL IP" styleClass="label-form"/>
+                                <Label fx:id="localIpLabel" text="—" styleClass="text-secondary"/>
+                            </VBox>
+                            <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                <Label text="SYNC STATUS" styleClass="label-form"/>
+                                <Label fx:id="syncStatusLabel" text="—"
+                                       style="-fx-font-weight:bold;"/>
+                            </VBox>
+                            <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                <Label text="ONLINE MACHINES" styleClass="label-form"/>
+                                <Label fx:id="onlineMachinesLabel" text="—" styleClass="text-secondary"/>
+                            </VBox>
+                            <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                <Label text="OFFLINE QUEUE" styleClass="label-form"/>
+                                <Label fx:id="offlineQueueLabel" text="0 pending"
+                                       styleClass="text-secondary"/>
+                            </VBox>
+                        </HBox>
+                        <HBox spacing="8">
+                            <Button text="🔄 Refresh Network Status" styleClass="btn-secondary, button"
+                                    onAction="#refreshNetworkStatus"/>
+                        </HBox>
+                    </VBox>
+
+                    <!-- Database info (read-only display) -->
+                    <VBox styleClass="card" spacing="12">
+                        <Label text="🗄️  DATABASE" styleClass="h4"/>
+                        <HBox spacing="16">
+                            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                <Label text="HOST" styleClass="label-form"/>
+                                <Label fx:id="dbHostLabel" text="localhost" styleClass="text-secondary"/>
+                            </VBox>
+                            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                <Label text="DATABASE" styleClass="label-form"/>
+                                <Label fx:id="dbNameLabel" text="minimart_pos" styleClass="text-secondary"/>
+                            </VBox>
+                            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                <Label text="USER" styleClass="label-form"/>
+                                <Label fx:id="dbUserLabel" text="pos_user" styleClass="text-secondary"/>
+                            </VBox>
+                            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                <Label text="STATUS" styleClass="label-form"/>
+                                <Label fx:id="dbStatusLabel" text="● Connected"
+                                       style="-fx-text-fill:-pos-success; -fx-font-weight:bold;"/>
+                            </VBox>
+                        </HBox>
+                        <HBox spacing="8">
+                            <Button text="💾 Backup Database Now" styleClass="btn-secondary, button" onAction="#backupDatabase"/>
+                            <Button text="🔗 Test Connection"     styleClass="btn-secondary, button" onAction="#testConnection"/>
+                        </HBox>
+                    </VBox>
+
+                    <!-- Auto Backup config -->
+                    <VBox styleClass="card" spacing="12">
+                        <Label text="🕐  AUTO BACKUP" styleClass="h4"/>
+                        <HBox spacing="16" alignment="CENTER_LEFT">
+                            <CheckBox fx:id="checkAutoBackup" text="Enable daily automatic backup"
+                                      style="-fx-font-weight:bold;"/>
+                        </HBox>
+                        <HBox spacing="16">
+                            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                <Label text="BACKUP TIME (24h format)" styleClass="label-form"/>
+                                <TextField fx:id="fieldBackupTime" styleClass="text-field"
+                                           promptText="02:00" maxWidth="120"/>
+                            </VBox>
+                            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                <Label text="KEEP LAST N DAYS" styleClass="label-form"/>
+                                <TextField fx:id="fieldBackupKeepDays" styleClass="text-field"
+                                           promptText="30" maxWidth="100"/>
+                            </VBox>
+                            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                <CheckBox fx:id="checkCashAlert"
+                                          text="Alert admin when cashier exceeds cash limit"/>
+                            </VBox>
+                        </HBox>
+                        <HBox spacing="8" alignment="CENTER_LEFT">
+                            <Label text="LAST BACKUP:" styleClass="label-form"/>
+                            <Label fx:id="lastBackupLabel" text="Never"
+                                   styleClass="text-secondary"/>
+                            <Label fx:id="lastBackupStatusLabel" text=""
+                                   style="-fx-font-weight:bold;"/>
+                        </HBox>
+                        <HBox spacing="8">
+                            <Button text="💾 Backup Now" styleClass="btn-primary, button"
+                                    onAction="#backupNow"/>
+                            <Button text="📂 Choose Backup Folder" styleClass="btn-secondary, button"
+                                    onAction="#backupDatabase"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="nextBackupLabel" text=""
+                                   style="-fx-font-size:11px; -fx-text-fill:-pos-text-secondary;"/>
+                        </HBox>
+                        <!-- MySQL bin path (for backup fix) -->
+                        <VBox spacing="4" style="-fx-padding:8 0 0 0;">
+                            <Label text="MySQL Bin Path (optional — only needed if mysqldump is not on PATH)"
+                                   style="-fx-font-size:11px; -fx-text-fill:-pos-text-secondary;"/>
+                            <HBox spacing="6" alignment="CENTER_LEFT">
+                                <TextField fx:id="mysqlBinPathField" HBox.hgrow="ALWAYS"
+                                           promptText="e.g. C:\Program Files\MySQL\MySQL Server 8.0\bin"
+                                           styleClass="text-field"/>
+                                <Button text="Test" styleClass="btn-secondary, button"
+                                        style="-fx-font-size:11px; -fx-padding:5 10;"
+                                        onAction="#testMysqldump"/>
+                            </HBox>
+                            <Label fx:id="backupStatusLabel" text=""
+                                   style="-fx-font-size:11px; -fx-text-fill:-pos-text-secondary;"/>
+                        </VBox>
+                    </VBox>
+
+                    <!-- App info -->
+                    <VBox styleClass="card" spacing="8">
+                        <Label text="ℹ️  APPLICATION" styleClass="h4"/>
+                        <HBox spacing="24">
+                            <VBox spacing="2">
+                                <Label text="VERSION" styleClass="label-form"/>
+                                <Label fx:id="appVersionLabel" text="v1.0.0" styleClass="text-secondary"/>
+                            </VBox>
+                            <VBox spacing="2">
+                                <Label text="JAVA VERSION" styleClass="label-form"/>
+                                <Label fx:id="javaVersionLabel" text="—" styleClass="text-secondary"/>
+                            </VBox>
+                        </HBox>
+                    </VBox>
+
+                    <!-- Feedback / error -->
+                    <Label fx:id="feedbackLabel" text="" wrapText="true"
+                           visible="false" managed="false"/>
+
+                    <!-- Save -->
+                    <HBox>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="💾 Save Settings" styleClass="btn-primary, button"
+                                style="-fx-font-size:14px; -fx-padding:10 24;"
+                                onAction="#saveSettings"/>
+                    </HBox>
+
+                </VBox>
+            </ScrollPane>
+        </VBox>
+    </center>
+</BorderPane>

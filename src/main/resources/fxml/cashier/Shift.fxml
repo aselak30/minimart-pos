@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.minimartpos.controller.cashier.ShiftController"
+      styleClass="card"
+      prefWidth="480"
+      spacing="0"
+      stylesheets="@../../css/main.css">
+
+    <HBox styleClass="card-header" alignment="CENTER_LEFT" spacing="8" style="-fx-padding:10 14;">
+        <Label text="🔒  End Shift &amp; Reconcile"
+               style="-fx-text-fill:white; -fx-font-weight:bold; -fx-font-size:14px;"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="✖" styleClass="btn-icon" onAction="#cancel"
+                style="-fx-text-fill:rgba(255,255,255,0.8); -fx-font-size:14px;"/>
+    </HBox>
+
+    <VBox spacing="16" style="-fx-padding:20;">
+
+        <!-- Shift summary -->
+        <VBox styleClass="card" spacing="8"
+              style="-fx-background-color:-pos-surface-alt; -fx-border-color:-pos-border;">
+            <Label text="SHIFT SUMMARY" styleClass="label-form"/>
+            <HBox>
+                <Label text="Cashier" styleClass="text-secondary"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="cashierLabel" text="—" style="-fx-font-weight:bold;"/>
+            </HBox>
+            <HBox>
+                <Label text="Shift Started" styleClass="text-secondary"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="startTimeLabel" text="—" styleClass="text-secondary"/>
+            </HBox>
+            <HBox>
+                <Label text="Duration" styleClass="text-secondary"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="durationLabel" text="—" styleClass="text-secondary"/>
+            </HBox>
+            <Separator/>
+            <HBox>
+                <Label text="Bills Processed" styleClass="text-secondary"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="billsLabel" text="0" style="-fx-font-weight:bold;"/>
+            </HBox>
+            <HBox>
+                <Label text="Total Sales" styleClass="text-secondary"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="salesLabel" text="Rs. 0.00"
+                       style="-fx-font-weight:bold; -fx-text-fill:-pos-primary; -fx-font-size:16px;"/>
+            </HBox>
+            <HBox>
+                <Label text="Cash Sales" styleClass="text-secondary"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="cashSalesLabel" text="Rs. 0.00" styleClass="text-secondary"/>
+            </HBox>
+            <HBox>
+                <Label text="Card Sales" styleClass="text-secondary"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="cardSalesLabel" text="Rs. 0.00" styleClass="text-secondary"/>
+            </HBox>
+        </VBox>
+
+        <!-- Cash reconciliation -->
+        <VBox styleClass="card" spacing="10">
+            <Label text="CASH RECONCILIATION" styleClass="label-form"/>
+            <HBox spacing="12">
+                <VBox spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="OPENING CASH" styleClass="label-form"/>
+                    <Label fx:id="openingCashLabel" text="Rs. 0.00"
+                           style="-fx-font-size:15px; -fx-font-weight:bold;"/>
+                </VBox>
+                <VBox spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="EXPECTED CASH" styleClass="label-form"/>
+                    <Label fx:id="expectedCashLabel" text="Rs. 0.00"
+                           style="-fx-font-size:15px; -fx-font-weight:bold; -fx-text-fill:-pos-primary;"/>
+                </VBox>
+            </HBox>
+            <VBox spacing="4">
+                <Label text="ACTUAL CLOSING CASH" styleClass="label-form"/>
+                <TextField fx:id="closingCashField" styleClass="text-field"
+                           promptText="Enter cash in drawer" onKeyReleased="#onClosingCashChanged"/>
+            </VBox>
+            <HBox style="-fx-background-color:-pos-surface-alt; -fx-padding:10; -fx-background-radius:6;">
+                <Label text="Variance" styleClass="text-secondary"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="varianceLabel" text="Rs. 0.00"
+                       style="-fx-font-weight:bold; -fx-font-size:15px;"/>
+            </HBox>
+        </VBox>
+
+        <!-- Notes -->
+        <VBox spacing="4">
+            <Label text="NOTES (optional)" styleClass="label-form"/>
+            <TextArea fx:id="notesField" prefRowCount="2" styleClass="text-field"
+                      promptText="Any notes for this shift…"/>
+        </VBox>
+
+        <Label fx:id="errorLabel" text="" styleClass="badge badge-danger"
+               visible="false" managed="false"/>
+
+        <!-- Buttons -->
+        <HBox spacing="10">
+            <Button text="Cancel" styleClass="btn-secondary, button"
+                    HBox.hgrow="ALWAYS" maxWidth="Infinity" onAction="#cancel"/>
+            <Button text="🔒 Close Shift" styleClass="btn-danger, button"
+                    HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                    style="-fx-font-size:14px; -fx-min-height:44px;"
+                    onAction="#closeShift"/>
+        </HBox>
+
+    </VBox>
+</VBox>

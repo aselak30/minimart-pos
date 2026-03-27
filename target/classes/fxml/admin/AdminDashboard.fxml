@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.chart.*?>
+
+<!--
+  Admin Dashboard Layout
+  ┌──────────────────────────────────────────────────────────────────────┐
+  │  SIDEBAR: Logo | Nav items (Dashboard, Users, Products, Reports…)    │
+  ├──────────────────────────────────────────────────────────────────────┤
+  │  TOPBAR:  Page title | Clock | Admin name | Logout                   │
+  ├──────────────────────────────────────────────────────────────────────┤
+  │  CONTENT (ScrollPane):                                               │
+  │  Row 1: KPI Cards — Today Sales | Bills | Avg Bill | Profit          │
+  │  Row 2: Sales Chart (BarChart by hour) | Machine Status panel        │
+  │  Row 3: Low Stock Alerts table | Recent Transactions table           │
+  └──────────────────────────────────────────────────────────────────────┘
+-->
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.minimartpos.controller.admin.AdminDashboardController"
+            stylesheets="@../../css/main.css"
+            styleClass="scene-bg">
+
+    <!-- ══════════════════ SIDEBAR ══════════════════ -->
+    <left>
+        <VBox styleClass="sidebar" spacing="0" minWidth="220">
+
+            <!-- Logo -->
+            <VBox styleClass="sidebar-logo" spacing="4">
+                <Label text="🛒 MiniMart POS" styleClass="sidebar-logo-text"/>
+                <Label text="Admin Console" style="-fx-text-fill:#5A6A7A; -fx-font-size:11px;"/>
+            </VBox>
+
+            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                        style="-fx-background:transparent; -fx-background-color:transparent;
+                               -fx-border-color:transparent;">
+                <VBox spacing="2" style="-fx-padding:8 0;">
+
+                    <Label text="MAIN" styleClass="sidebar-section-label"/>
+
+                    <Button fx:id="navDashboard"
+                            text="📊  Dashboard"
+                            styleClass="sidebar-nav-item"
+                            maxWidth="Infinity" alignment="CENTER_LEFT"
+                            onAction="#showDashboard"/>
+
+                    <Button fx:id="navPOS"
+                            text="🖥  POS Terminal"
+                            styleClass="sidebar-nav-item"
+                            maxWidth="Infinity" alignment="CENTER_LEFT"
+                            onAction="#navigateToPOS"/>
+
+                    <Button fx:id="navUsers"
+                            text="👥  Users"
+                            styleClass="sidebar-nav-item"
+                            maxWidth="Infinity" alignment="CENTER_LEFT"
+                            onAction="#navigateToUsers"/>
+
+                    <Button fx:id="navProducts"
+                            text="📦  Products"
+                            styleClass="sidebar-nav-item"
+                            maxWidth="Infinity" alignment="CENTER_LEFT"
+                            onAction="#navigateToProducts"/>
+
+                    <Button fx:id="navCustomers"
+                            text="🧑  Customers"
+                            styleClass="sidebar-nav-item"
+                            maxWidth="Infinity" alignment="CENTER_LEFT"
+                            onAction="#navigateToCustomers"/>
+
+                    <Button fx:id="navSuppliers"
+                            text="🏭  Suppliers"
+                            styleClass="sidebar-nav-item"
+                            maxWidth="Infinity" alignment="CENTER_LEFT"
+                            onAction="#navigateToSuppliers"/>
+
+                    <Label text="OPERATIONS" styleClass="sidebar-section-label"/>
+
+                    <Button fx:id="navMonitor"
+                            text="💰  Live Monitor"
+                            styleClass="sidebar-nav-item"
+                            maxWidth="Infinity" alignment="CENTER_LEFT"
+                            onAction="#navigateToCashierMonitor"/>
+
+                    <Button fx:id="navBills"
+                            text="🧾  Bills / History"
+                            styleClass="sidebar-nav-item"
+                            maxWidth="Infinity" alignment="CENTER_LEFT"
+                            onAction="#navigateToBills"/>
+
+                    <Button fx:id="navStock"
+                            text="📉  Stock"
+                            styleClass="sidebar-nav-item"
+                            maxWidth="Infinity" alignment="CENTER_LEFT"
+                            onAction="#navigateToStock"/>
+
+                    <Label text="REPORTS" styleClass="sidebar-section-label"/>
+
+                    <Button fx:id="navReports"
+                            text="📈  Reports"
+                            styleClass="sidebar-nav-item"
+                            maxWidth="Infinity" alignment="CENTER_LEFT"
+                            onAction="#navigateToReports"/>
+
+                    <Button fx:id="navAudit"
+                            text="🔍  Audit Log"
+                            styleClass="sidebar-nav-item"
+                            maxWidth="Infinity" alignment="CENTER_LEFT"
+                            onAction="#navigateToAudit"/>
+
+                    <Label text="SYSTEM" styleClass="sidebar-section-label"/>
+
+                    <Button fx:id="navSettings"
+                            text="⚙  Settings"
+                            styleClass="sidebar-nav-item"
+                            maxWidth="Infinity" alignment="CENTER_LEFT"
+                            onAction="#navigateToSettings"/>
+
+                </VBox>
+            </ScrollPane>
+
+            <!-- Sidebar footer -->
+            <VBox style="-fx-padding:12 16; -fx-border-color:rgba(255,255,255,0.08);
+                         -fx-border-width:1 0 0 0;" spacing="4">
+                <Label fx:id="sidebarUserLabel" text="Admin"
+                       style="-fx-text-fill:white; -fx-font-weight:bold; -fx-font-size:12px;"/>
+                <Label fx:id="sidebarVersionLabel" text="v1.0.0"
+                       style="-fx-text-fill:#5A6A7A; -fx-font-size:10px;"/>
+            </VBox>
+
+        </VBox>
+    </left>
+
+    <!-- ══════════════════ MAIN AREA ══════════════════ -->
+    <center>
+        <VBox spacing="0">
+
+            <!-- TOP BAR -->
+            <HBox styleClass="topbar" alignment="CENTER_LEFT" spacing="12">
+                <Label fx:id="pageTitleLabel" text="Dashboard" styleClass="h3"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <!-- Live clock -->
+                <Label fx:id="clockLabel" text="00:00"
+                       style="-fx-font-family:'Courier New'; -fx-font-size:14px;
+                              -fx-text-fill:-pos-primary; -fx-font-weight:bold;"/>
+                <Label fx:id="dateLabel" text="—" styleClass="text-secondary"
+                       style="-fx-font-size:12px;"/>
+                <Separator orientation="VERTICAL" style="-fx-padding:0 8;"/>
+                <Button text="🔄 Refresh" styleClass="btn-secondary, button"
+                        onAction="#refreshDashboard"/>
+                <Button text="↩ Logout" styleClass="btn-danger, button"
+                        onAction="#logout"/>
+            </HBox>
+
+            <!-- CONTENT: Scrollable dashboard body -->
+            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                        style="-fx-background:transparent; -fx-background-color:-pos-bg;
+                               -fx-border-color:transparent;">
+                <VBox spacing="20" style="-fx-padding:20;">
+
+                    <!-- ── Row 1: KPI cards ── -->
+                    <HBox spacing="16">
+
+                        <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS" spacing="6">
+                            <Label text="TODAY'S SALES" styleClass="kpi-label"/>
+                            <Label fx:id="kpiSalesLabel" text="Rs. 0.00" styleClass="kpi-value"/>
+                            <Label fx:id="kpiSalesDeltaLabel" text="vs yesterday"
+                                   style="-fx-font-size:11px;" styleClass="text-muted"/>
+                        </VBox>
+
+                        <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS" spacing="6">
+                            <Label text="BILLS TODAY" styleClass="kpi-label"/>
+                            <Label fx:id="kpiBillsLabel" text="0" styleClass="kpi-value"/>
+                            <Label fx:id="kpiBillsDeltaLabel" text="vs yesterday"
+                                   style="-fx-font-size:11px;" styleClass="text-muted"/>
+                        </VBox>
+
+                        <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS" spacing="6">
+                            <Label text="AVG BILL VALUE" styleClass="kpi-label"/>
+                            <Label fx:id="kpiAvgLabel" text="Rs. 0.00" styleClass="kpi-value"/>
+                            <Label text="per transaction" styleClass="text-muted"
+                                   style="-fx-font-size:11px;"/>
+                        </VBox>
+
+                        <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS" spacing="6">
+                            <Label text="TODAY'S PROFIT" styleClass="kpi-label"
+                                   style="-fx-text-fill:-pos-success;"/>
+                            <Label fx:id="kpiProfitLabel" text="Rs. 0.00"
+                                   style="-fx-font-size:28px; -fx-font-weight:bold;
+                                          -fx-text-fill:-pos-success;"/>
+                            <Label fx:id="kpiMarginLabel" text="0% margin"
+                                   style="-fx-font-size:11px;" styleClass="text-muted"/>
+                        </VBox>
+
+                    </HBox>
+
+                    <!-- ── Row 2: Sales chart + Machine status ── -->
+                    <HBox spacing="16" minHeight="300">
+
+                        <!-- Sales by hour bar chart -->
+                        <VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="10">
+                            <HBox alignment="CENTER_LEFT" spacing="8">
+                                <Label text="Sales by Hour — Today" styleClass="h4"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <ComboBox fx:id="chartDatePicker" prefWidth="140"
+                                          promptText="Today" onAction="#onChartDateChanged"/>
+                            </HBox>
+                            <BarChart fx:id="salesChart" VBox.vgrow="ALWAYS"
+                                      animated="false" legendVisible="false"
+                                      style="-fx-background-color:transparent;">
+                                <xAxis>
+                                    <CategoryAxis label="Hour"/>
+                                </xAxis>
+                                <yAxis>
+                                    <NumberAxis label="Sales (Rs.)" minorTickVisible="false"/>
+                                </yAxis>
+                            </BarChart>
+                        </VBox>
+
+                        <!-- Machine / cashier status -->
+                        <VBox styleClass="card" prefWidth="280" minWidth="260" spacing="10">
+                            <HBox alignment="CENTER_LEFT">
+                                <Label text="Live Cashier Status" styleClass="h4"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Label fx:id="activeCashiersLabel" text="0 active"
+                                       styleClass="badge badge-success"/>
+                            </HBox>
+                            <VBox fx:id="machineStatusBox" spacing="8" VBox.vgrow="ALWAYS"/>
+                        </VBox>
+
+                    </HBox>
+
+                    <!-- ── Row 3: Low stock + Recent transactions ── -->
+                    <HBox spacing="16">
+
+                        <!-- Low stock alerts -->
+                        <VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="10" prefWidth="400">
+                            <HBox alignment="CENTER_LEFT" spacing="8">
+                                <Label text="⚠ Low Stock Alerts" styleClass="h4"
+                                       style="-fx-text-fill:-pos-warning;"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Label fx:id="lowStockCountLabel" text="0 products"
+                                       styleClass="badge badge-warning"/>
+                                <Button text="View All" styleClass="btn-flat, button"
+                                        style="-fx-font-size:12px;" onAction="#navigateToStock"/>
+                            </HBox>
+                            <TableView fx:id="lowStockTable" prefHeight="220" maxHeight="260"
+                                       style="-fx-border-color:transparent;">
+                                <columns>
+                                    <TableColumn fx:id="lsColProduct"  text="Product"  prefWidth="180"/>
+                                    <TableColumn fx:id="lsColCategory" text="Category" prefWidth="100"/>
+                                    <TableColumn fx:id="lsColStock"    text="Stock"    prefWidth="60"
+                                                 style="-fx-alignment:CENTER;"/>
+                                    <TableColumn fx:id="lsColReorder"  text="Reorder"  prefWidth="65"
+                                                 style="-fx-alignment:CENTER;"/>
+                                </columns>
+                                <placeholder>
+                                    <Label text="✅ All products are well stocked"
+                                           styleClass="text-secondary"/>
+                                </placeholder>
+                            </TableView>
+                        </VBox>
+
+                        <!-- Recent transactions -->
+                        <VBox styleClass="card" HBox.hgrow="ALWAYS" spacing="10">
+                            <HBox alignment="CENTER_LEFT" spacing="8">
+                                <Label text="Recent Transactions" styleClass="h4"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Button text="View All" styleClass="btn-flat, button"
+                                        style="-fx-font-size:12px;" onAction="#navigateToBills"/>
+                            </HBox>
+                            <TableView fx:id="recentBillsTable" prefHeight="220" maxHeight="260"
+                                       style="-fx-border-color:transparent;">
+                                <columns>
+                                    <TableColumn fx:id="rbColBill"     text="Bill #"    prefWidth="130"/>
+                                    <TableColumn fx:id="rbColCashier"  text="Cashier"   prefWidth="110"/>
+                                    <TableColumn fx:id="rbColTotal"    text="Total"     prefWidth="90"
+                                                 style="-fx-alignment:CENTER_RIGHT;"/>
+                                    <TableColumn fx:id="rbColPayment"  text="Payment"   prefWidth="80"
+                                                 style="-fx-alignment:CENTER;"/>
+                                    <TableColumn fx:id="rbColTime"     text="Time"      prefWidth="80"
+                                                 style="-fx-alignment:CENTER;"/>
+                                    <TableColumn fx:id="rbColStatus"   text="Status"    prefWidth="80"
+                                                 style="-fx-alignment:CENTER;"/>
+                                </columns>
+                                <placeholder>
+                                    <Label text="No transactions yet today"
+                                           styleClass="text-secondary"/>
+                                </placeholder>
+                            </TableView>
+                        </VBox>
+
+                    </HBox>
+
+                    <!-- ── Row 4: Expiry alerts ── -->
+                    <VBox styleClass="card" spacing="10">
+                        <HBox alignment="CENTER_LEFT" spacing="8">
+                            <Label text="🗓 Expiry Alerts" styleClass="h4"
+                                   style="-fx-text-fill:-pos-danger;"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="expiryCountLabel" text="0 products"
+                                   styleClass="badge badge-danger"/>
+                            <ComboBox fx:id="expiryDaysCombo" prefWidth="130"
+                                      onAction="#onExpiryDaysChanged"/>
+                        </HBox>
+                        <TableView fx:id="expiryTable" prefHeight="160" maxHeight="200"
+                                   style="-fx-border-color:transparent;">
+                            <columns>
+                                <TableColumn fx:id="exColProduct"   text="Product"     prefWidth="200"/>
+                                <TableColumn fx:id="exColBatch"     text="Batch"       prefWidth="100"/>
+                                <TableColumn fx:id="exColStock"     text="Stock"       prefWidth="70"
+                                             style="-fx-alignment:CENTER;"/>
+                                <TableColumn fx:id="exColExpiry"    text="Expiry Date" prefWidth="110"
+                                             style="-fx-alignment:CENTER;"/>
+                                <TableColumn fx:id="exColDaysLeft"  text="Days Left"   prefWidth="90"
+                                             style="-fx-alignment:CENTER;"/>
+                            </columns>
+                            <placeholder>
+                                <Label text="✅ No products expiring soon"
+                                       styleClass="text-secondary"/>
+                            </placeholder>
+                        </TableView>
+                    </VBox>
+
+                </VBox>
+            </ScrollPane>
+
+        </VBox>
+    </center>
+
+</BorderPane>

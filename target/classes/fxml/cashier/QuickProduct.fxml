@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<!--
+  Quick Product Dialog
+  Minimal form: name + price + category + stock.
+  Only fields essential for an immediate sale — full details
+  can be completed later via Product Management.
+-->
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.minimartpos.controller.cashier.QuickProductController"
+      styleClass="card"
+      prefWidth="420"
+      spacing="0"
+      stylesheets="@../../css/main.css">
+
+    <!-- Header -->
+    <HBox styleClass="card-header" alignment="CENTER_LEFT" spacing="8"
+          style="-fx-padding:10 14;">
+        <Label text="⚡  Quick Add Product"
+               style="-fx-text-fill:white; -fx-font-weight:bold; -fx-font-size:14px;"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="✖" styleClass="btn-icon" onAction="#cancel"
+                style="-fx-text-fill:rgba(255,255,255,0.8); -fx-font-size:14px;"/>
+    </HBox>
+
+    <VBox spacing="14" style="-fx-padding:18;">
+
+        <Label text="Fill in the essential details. Full product info can be completed later in Product Management."
+               styleClass="text-secondary" wrapText="true"
+               style="-fx-font-size:11px;"/>
+
+        <!-- Barcode (pre-filled if called from scanner) -->
+        <VBox spacing="4">
+            <Label text="BARCODE" styleClass="label-form"/>
+            <HBox spacing="8">
+                <TextField fx:id="fieldBarcode" styleClass="text-field"
+                           HBox.hgrow="ALWAYS"
+                           promptText="Scan or type barcode"/>
+                <Button text="🔢 Generate" styleClass="btn-secondary, button"
+                        style="-fx-font-size:11px;" onAction="#generateBarcode"/>
+            </HBox>
+        </VBox>
+
+        <!-- Product Name (required) -->
+        <VBox spacing="4">
+            <Label text="PRODUCT NAME *" styleClass="label-form"/>
+            <TextField fx:id="fieldName" styleClass="text-field" maxWidth="Infinity"
+                       promptText="e.g. Coca Cola 330ml"/>
+        </VBox>
+
+        <!-- Price + Category row -->
+        <HBox spacing="12">
+            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                <Label text="SELLING PRICE *" styleClass="label-form"/>
+                <TextField fx:id="fieldPrice" styleClass="text-field"
+                           promptText="0.00"/>
+            </VBox>
+            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                <Label text="CATEGORY *" styleClass="label-form"/>
+                <HBox spacing="6">
+                    <ComboBox fx:id="fieldCategory" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                    <Button text="＋" styleClass="btn-secondary, button"
+                            style="-fx-font-size:12px;" onAction="#addCategory">
+                        <tooltip><Tooltip text="New category"/></tooltip>
+                    </Button>
+                </HBox>
+            </VBox>
+        </HBox>
+
+        <!-- Stock + Cost row -->
+        <HBox spacing="12">
+            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                <Label text="INITIAL STOCK" styleClass="label-form"/>
+                <TextField fx:id="fieldStock" styleClass="text-field"
+                           promptText="0"/>
+            </VBox>
+            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                <Label text="COST PRICE" styleClass="label-form"/>
+                <TextField fx:id="fieldCost" styleClass="text-field"
+                           promptText="0.00 (optional)"/>
+            </VBox>
+        </HBox>
+
+        <!-- Add-to-cart option -->
+        <CheckBox fx:id="addToCartCheck"
+                  text="Add this product to cart immediately"
+                  selected="true"/>
+
+        <!-- Error label -->
+        <Label fx:id="errorLabel" text=""
+               styleClass="badge badge-danger" wrapText="true"
+               visible="false" managed="false"/>
+
+        <!-- Buttons -->
+        <HBox spacing="10">
+            <Button text="Cancel" styleClass="btn-secondary, button"
+                    HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                    onAction="#cancel"/>
+            <Button fx:id="saveBtn" text="💾 Save &amp; Continue"
+                    styleClass="btn-primary, button"
+                    HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                    defaultButton="true"
+                    onAction="#saveProduct"/>
+        </HBox>
+
+    </VBox>
+</VBox>

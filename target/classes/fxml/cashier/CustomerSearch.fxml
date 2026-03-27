@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.minimartpos.controller.cashier.CustomerSearchController"
+      styleClass="card"
+      prefWidth="520" prefHeight="520"
+      spacing="0"
+      stylesheets="@../../css/main.css">
+
+    <!-- Header -->
+    <HBox styleClass="card-header" alignment="CENTER_LEFT" spacing="8" style="-fx-padding:10 14;">
+        <Label text="🧑  Select Customer" style="-fx-text-fill:white; -fx-font-weight:bold; -fx-font-size:14px;"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="✖" styleClass="btn-icon" onAction="#cancel"
+                style="-fx-text-fill:rgba(255,255,255,0.8); -fx-font-size:14px;"/>
+    </HBox>
+
+    <VBox spacing="12" style="-fx-padding:16;" VBox.vgrow="ALWAYS">
+
+        <!-- Search bar -->
+        <HBox spacing="8">
+            <TextField fx:id="searchField" HBox.hgrow="ALWAYS"
+                       promptText="🔍  Search by name or phone…"
+                       styleClass="search-field"
+                       onKeyReleased="#onSearchChanged"/>
+            <Button text="＋ New Customer" styleClass="btn-primary, button"
+                    onAction="#openAddCustomer"/>
+        </HBox>
+
+        <!-- Walk-in option -->
+        <Button text="👤  Walk-in Customer (no account)"
+                styleClass="btn-secondary, button"
+                maxWidth="Infinity" onAction="#selectWalkin"
+                style="-fx-padding:8; -fx-font-size:13px;"/>
+
+        <!-- Results list -->
+        <Label text="CUSTOMERS" styleClass="label-form"/>
+        <ListView fx:id="customerList" VBox.vgrow="ALWAYS"
+                  style="-fx-background-color:white; -fx-border-color:-pos-border;
+                         -fx-border-radius:8; -fx-background-radius:8;"/>
+
+        <!-- Add new customer form (hidden by default) -->
+        <VBox fx:id="addCustomerForm" visible="false" managed="false"
+              styleClass="card" spacing="10"
+              style="-fx-background-color:-pos-surface-alt; -fx-border-color:-pos-primary;">
+            <Label text="NEW CUSTOMER" styleClass="label-form"/>
+            <HBox spacing="10">
+                <VBox spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="NAME *" styleClass="label-form"/>
+                    <TextField fx:id="newName" styleClass="text-field" maxWidth="Infinity"/>
+                </VBox>
+                <VBox spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="PHONE" styleClass="label-form"/>
+                    <TextField fx:id="newPhone" styleClass="text-field"/>
+                </VBox>
+            </HBox>
+            <HBox spacing="8">
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Cancel" styleClass="btn-secondary, button"
+                        onAction="#cancelAddCustomer"/>
+                <Button text="💾 Save &amp; Select" styleClass="btn-success, button"
+                        onAction="#saveNewCustomer"/>
+            </HBox>
+        </VBox>
+
+    </VBox>
+</VBox>

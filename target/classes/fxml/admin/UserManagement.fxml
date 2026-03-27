@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<!--
+  User Management Screen
+  ┌───────────────────────────────────────────────────────────────────────┐
+  │  SIDEBAR (shared nav) │  TOPBAR: title | search | Add User btn        │
+  │                       ├───────────────────────────────────────────────┤
+  │                       │  LEFT: User TableView                         │
+  │                       │  RIGHT: Edit Panel (form + permission matrix) │
+  └───────────────────────────────────────────────────────────────────────┘
+-->
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.minimartpos.controller.admin.UserManagementController"
+            stylesheets="@../../css/main.css"
+            styleClass="scene-bg">
+
+        <!-- ══════════════════ SIDEBAR ══════════════════ -->
+    <left>
+        <VBox styleClass="sidebar" spacing="0" minWidth="220">
+            <VBox styleClass="sidebar-logo" spacing="4">
+                <Label text="🛒 MiniMart POS" styleClass="sidebar-logo-text"/>
+                <Label text="Admin Console" style="-fx-text-fill:#5A6A7A; -fx-font-size:11px;"/>
+            </VBox>
+            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                        style="-fx-background:transparent; -fx-background-color:transparent; -fx-border-color:transparent;">
+                <VBox spacing="2" style="-fx-padding:8 0;">
+                    <Label text="MAIN" styleClass="sidebar-section-label"/>
+                    <Button text="📊  Dashboard" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToDashboard"/>
+                    <Button text="🖥  POS Terminal" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToPOS"/>
+                    <Button text="👥  Users" styleClass="sidebar-nav-item active" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToUsers"/>
+                    <Button text="📦  Products" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToProducts"/>
+                    <Button text="🧑  Customers" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToCustomers"/>
+                    <Button text="🏭  Suppliers" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToSuppliers"/>
+                    <Label text="OPERATIONS" styleClass="sidebar-section-label"/>
+                    <Button text="💰  Live Monitor" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToCashierMonitor"/>
+                    <Button text="🧾  Bills / History" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToBills"/>
+                    <Button text="📉  Stock" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToStock"/>
+                    <Label text="REPORTS" styleClass="sidebar-section-label"/>
+                    <Button text="📈  Reports" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToReports"/>
+                    <Button text="🔍  Audit Log" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToAudit"/>
+                    <Label text="SYSTEM" styleClass="sidebar-section-label"/>
+                    <Button text="⚙  Settings" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToSettings"/>
+                </VBox>
+            </ScrollPane>
+            <VBox style="-fx-padding:12 16; -fx-border-color:rgba(255,255,255,0.08); -fx-border-width:1 0 0 0;" spacing="4">
+                <Label fx:id="sidebarUserLabel" text="Admin" style="-fx-text-fill:white; -fx-font-weight:bold; -fx-font-size:12px;"/>
+            </VBox>
+        </VBox>
+    </left>
+
+    <!-- ══════════════════ MAIN AREA ══════════════════ -->
+    <center>
+        <VBox spacing="0">
+
+            <!-- TOP BAR -->
+            <HBox styleClass="topbar" alignment="CENTER_LEFT" spacing="12">
+                <Label text="👥  User Management" styleClass="h3"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <TextField fx:id="searchField" promptText="🔍 Search users…"
+                           styleClass="search-field" prefWidth="220"
+                           onKeyReleased="#onSearchChanged"/>
+                <ComboBox fx:id="roleFilter" prefWidth="130" promptText="All Roles"
+                          onAction="#onRoleFilterChanged"/>
+                <Button text="＋ Add User" styleClass="btn-primary, button"
+                        onAction="#openAddUserDialog"/>
+                <Button text="← Back" styleClass="btn-secondary, button"
+                        onAction="#navigateToDashboard"/>
+            </HBox>
+
+            <!-- BODY: Table (left) + Edit panel (right) -->
+            <HBox VBox.vgrow="ALWAYS" spacing="0">
+
+                <!-- ══ USER TABLE ══ -->
+                <VBox HBox.hgrow="ALWAYS" style="-fx-padding:16;" spacing="10">
+
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Label fx:id="userCountLabel" text="0 users" styleClass="text-secondary"
+                               style="-fx-font-size:12px;"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="🔄" styleClass="btn-icon" onAction="#refreshUsers"
+                                style="-fx-font-size:14px;"><tooltip><Tooltip text="Refresh"/></tooltip></Button>
+                    </HBox>
+
+                    <TableView fx:id="userTable" VBox.vgrow="ALWAYS" editable="false">
+                        <columns>
+                            <TableColumn fx:id="colName"     text="Full Name"  prefWidth="160" minWidth="130"/>
+                            <TableColumn fx:id="colUsername" text="Username"   prefWidth="120" minWidth="100"/>
+                            <TableColumn fx:id="colRole"     text="Role"       prefWidth="90"  minWidth="80"
+                                         style="-fx-alignment:CENTER;"/>
+                            <TableColumn fx:id="colStatus"   text="Status"     prefWidth="80"  minWidth="70"
+                                         style="-fx-alignment:CENTER;"/>
+                            <TableColumn fx:id="colLastLogin" text="Last Login" prefWidth="130" minWidth="100"/>
+                            <TableColumn fx:id="colPerms"    text="Permissions" prefWidth="90" minWidth="80"
+                                         style="-fx-alignment:CENTER;"/>
+                            <TableColumn fx:id="colActions"  text="Actions"    prefWidth="120" minWidth="110"
+                                         style="-fx-alignment:CENTER;"/>
+                        </columns>
+                        <placeholder>
+                            <Label text="No users found" styleClass="text-secondary"/>
+                        </placeholder>
+                    </TableView>
+
+                </VBox>
+
+                <!-- ══ EDIT / DETAIL PANEL ══ -->
+                <VBox fx:id="editPanel" prefWidth="400" minWidth="360"
+                      style="-fx-background-color:white; -fx-border-color:-pos-border; -fx-border-width:0 0 0 1;"
+                      visible="false" managed="false">
+
+                    <HBox styleClass="card-header" alignment="CENTER_LEFT" spacing="8"
+                          style="-fx-padding:10 14;">
+                        <Label fx:id="editPanelTitle" text="User Details"
+                               style="-fx-text-fill:white; -fx-font-weight:bold; -fx-font-size:14px;"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="✖" styleClass="btn-icon" onAction="#closeEditPanel"
+                                style="-fx-text-fill:rgba(255,255,255,0.8); -fx-font-size:14px;"/>
+                    </HBox>
+
+                    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                                style="-fx-background:transparent; -fx-background-color:transparent; -fx-border-color:transparent;">
+                        <VBox spacing="16" style="-fx-padding:16;">
+
+                            <!-- Basic Info -->
+                            <VBox styleClass="card" spacing="12">
+                                <Label text="BASIC INFO" styleClass="label-form"/>
+
+                                <VBox spacing="4">
+                                    <Label text="FULL NAME" styleClass="label-form"/>
+                                    <TextField fx:id="fieldFullName" styleClass="text-field" maxWidth="Infinity"/>
+                                </VBox>
+                                <VBox spacing="4">
+                                    <Label text="USERNAME" styleClass="label-form"/>
+                                    <TextField fx:id="fieldUsername" styleClass="text-field" maxWidth="Infinity"/>
+                                </VBox>
+                                <HBox spacing="10">
+                                    <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                        <Label text="ROLE" styleClass="label-form"/>
+                                        <ComboBox fx:id="fieldRole" maxWidth="Infinity"
+                                                  onAction="#onRoleChanged"/>
+                                    </VBox>
+                                    <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                        <Label text="SESSION TIMEOUT (min)" styleClass="label-form"/>
+                                        <TextField fx:id="fieldTimeout" styleClass="text-field"
+                                                   promptText="30"/>
+                                    </VBox>
+                                </HBox>
+                                <!-- Cash limit row -->
+                                <HBox spacing="10">
+                                    <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                        <Label text="CASH LIMIT (0 = no limit)" styleClass="label-form"/>
+                                        <TextField fx:id="fieldCashLimit" styleClass="text-field"
+                                                   promptText="e.g. 50000.00"/>
+                                    </VBox>
+                                    <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                        <Label text="DAILY SALES TARGET" styleClass="label-form"/>
+                                        <TextField fx:id="fieldDailyTarget" styleClass="text-field"
+                                                   promptText="e.g. 100000.00"/>
+                                    </VBox>
+                                </HBox>
+                                <HBox spacing="10">
+                                    <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                        <Label text="EMAIL" styleClass="label-form"/>
+                                        <TextField fx:id="fieldEmail" styleClass="text-field"/>
+                                    </VBox>
+                                    <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                        <Label text="PHONE" styleClass="label-form"/>
+                                        <TextField fx:id="fieldPhone" styleClass="text-field"/>
+                                    </VBox>
+                                </HBox>
+
+                                <!-- Password (only shown for new users) -->
+                                <VBox fx:id="passwordSection" spacing="4">
+                                    <Label text="PASSWORD" styleClass="label-form"/>
+                                    <PasswordField fx:id="fieldPassword" styleClass="password-field"
+                                                   promptText="Leave blank to keep current"/>
+                                    <Label fx:id="passwordStrengthLabel" text=""
+                                           style="-fx-font-size:11px;"/>
+                                </VBox>
+
+                                <HBox alignment="CENTER_LEFT" spacing="8">
+                                    <CheckBox fx:id="fieldActive" text="Account Active"/>
+                                    <Region HBox.hgrow="ALWAYS"/>
+                                    <Button fx:id="resetPwdBtn" text="🔑 Reset Password"
+                                            styleClass="btn-secondary, button"
+                                            style="-fx-font-size:12px;"
+                                            onAction="#resetPassword"/>
+                                </HBox>
+                            </VBox>
+
+                            <!-- Permission matrix (only shown for CASHIER role) -->
+                            <VBox fx:id="permissionsSection" styleClass="card" spacing="10"
+                                  visible="false" managed="false">
+                                <HBox alignment="CENTER_LEFT" spacing="8">
+                                    <Label text="CASHIER PERMISSIONS" styleClass="label-form"/>
+                                    <Region HBox.hgrow="ALWAYS"/>
+                                    <Button text="Grant All" styleClass="btn-flat, button"
+                                            style="-fx-font-size:11px;" onAction="#grantAllPermissions"/>
+                                    <Button text="Revoke All" styleClass="btn-flat, button"
+                                            style="-fx-font-size:11px; -fx-text-fill:-pos-danger;"
+                                            onAction="#revokeAllPermissions"/>
+                                </HBox>
+
+                                <!-- Template buttons -->
+                                <HBox spacing="6" alignment="CENTER_LEFT">
+                                    <Label text="Templates:" styleClass="text-secondary"
+                                           style="-fx-font-size:11px;"/>
+                                    <Button text="Trainee"    styleClass="btn-secondary, button"
+                                            style="-fx-font-size:11px;" onAction="#applyTemplateTrainee"/>
+                                    <Button text="Regular"    styleClass="btn-secondary, button"
+                                            style="-fx-font-size:11px;" onAction="#applyTemplateRegular"/>
+                                    <Button text="Senior"     styleClass="btn-secondary, button"
+                                            style="-fx-font-size:11px;" onAction="#applyTemplateSenior"/>
+                                    <Button text="Supervisor" styleClass="btn-secondary, button"
+                                            style="-fx-font-size:11px;" onAction="#applyTemplateSupervisor"/>
+                                </HBox>
+
+                                <!-- Permission checkboxes (populated dynamically) -->
+                                <VBox fx:id="permissionGroupsBox" spacing="10"/>
+                            </VBox>
+
+                            <!-- Validation error -->
+                            <Label fx:id="formErrorLabel" text=""
+                                   styleClass="badge badge-danger" wrapText="true"
+                                   visible="false" managed="false"/>
+
+                            <!-- Save / Delete buttons -->
+                            <HBox spacing="8">
+                                <Button fx:id="deleteBtn" text="🗑 Delete"
+                                        styleClass="btn-danger, button"
+                                        onAction="#deleteUser"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Button text="Cancel" styleClass="btn-secondary, button"
+                                        onAction="#closeEditPanel"/>
+                                <Button fx:id="saveBtn" text="💾 Save"
+                                        styleClass="btn-primary, button"
+                                        onAction="#saveUser"/>
+                            </HBox>
+
+                        </VBox>
+                    </ScrollPane>
+                </VBox>
+            </HBox>
+        </VBox>
+    </center>
+
+</BorderPane>

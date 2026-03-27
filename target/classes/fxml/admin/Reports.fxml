@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.chart.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.minimartpos.controller.admin.ReportsController"
+            stylesheets="@../../css/main.css"
+            styleClass="scene-bg">
+
+    <!-- SIDEBAR -->    <!-- ══════════════════ SIDEBAR ══════════════════ -->
+    <left>
+        <VBox styleClass="sidebar" spacing="0" minWidth="220">
+            <VBox styleClass="sidebar-logo" spacing="4">
+                <Label text="🛒 MiniMart POS" styleClass="sidebar-logo-text"/>
+                <Label text="Admin Console" style="-fx-text-fill:#5A6A7A; -fx-font-size:11px;"/>
+            </VBox>
+            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                        style="-fx-background:transparent; -fx-background-color:transparent; -fx-border-color:transparent;">
+                <VBox spacing="2" style="-fx-padding:8 0;">
+                    <Label text="MAIN" styleClass="sidebar-section-label"/>
+                    <Button text="📊  Dashboard" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToDashboard"/>
+                    <Button text="🖥  POS Terminal" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToPOS"/>
+                    <Button text="👥  Users" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToUsers"/>
+                    <Button text="📦  Products" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToProducts"/>
+                    <Button text="🧑  Customers" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToCustomers"/>
+                    <Button text="🏭  Suppliers" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToSuppliers"/>
+                    <Label text="OPERATIONS" styleClass="sidebar-section-label"/>
+                    <Button text="💰  Live Monitor" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToCashierMonitor"/>
+                    <Button text="🧾  Bills / History" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToBills"/>
+                    <Button text="📉  Stock" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToStock"/>
+                    <Label text="REPORTS" styleClass="sidebar-section-label"/>
+                    <Button text="📈  Reports" styleClass="sidebar-nav-item active" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToReports"/>
+                    <Button text="🔍  Audit Log" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToAudit"/>
+                    <Label text="SYSTEM" styleClass="sidebar-section-label"/>
+                    <Button text="⚙  Settings" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToSettings"/>
+                </VBox>
+            </ScrollPane>
+            <VBox style="-fx-padding:12 16; -fx-border-color:rgba(255,255,255,0.08); -fx-border-width:1 0 0 0;" spacing="4">
+                <Label fx:id="sidebarUserLabel" text="Admin" style="-fx-text-fill:white; -fx-font-weight:bold; -fx-font-size:12px;"/>
+            </VBox>
+        </VBox>
+    </left>
+
+    <center>
+        <VBox spacing="0">
+
+            <!-- TOP BAR -->
+            <HBox styleClass="topbar" alignment="CENTER_LEFT" spacing="12">
+                <Label text="📈  Reports" styleClass="h3"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <!-- Date range -->
+                <Label text="From" styleClass="text-secondary"/>
+                <DatePicker fx:id="fromDate" prefWidth="140"/>
+                <Label text="To" styleClass="text-secondary"/>
+                <DatePicker fx:id="toDate" prefWidth="140"/>
+                <Button text="🔄 Run Report" styleClass="btn-primary, button" onAction="#runReport"/>
+                <Button text="📊 Export Excel" styleClass="btn-secondary, button" onAction="#exportCsv"/>
+                <Button text="📄 Export PDF" styleClass="btn-secondary, button" onAction="#exportPdf"/>
+                <Button text="← Back" styleClass="btn-secondary, button" onAction="#navigateToDashboard"/>
+            </HBox>
+
+            <HBox VBox.vgrow="ALWAYS" spacing="0">
+
+                <!-- Report type list -->
+                <VBox prefWidth="190" minWidth="170"
+                      style="-fx-background-color:white; -fx-border-color:-pos-border; -fx-border-width:0 1 0 0; -fx-padding:12 0;">
+                    <Label text="REPORT TYPE" styleClass="sidebar-section-label"
+                           style="-fx-padding:0 16 8 16;"/>
+                    <ListView fx:id="reportTypeList" VBox.vgrow="ALWAYS"
+                              style="-fx-border-color:transparent; -fx-background-color:transparent;"/>
+                </VBox>
+
+                <!-- Report content area -->
+                <ScrollPane fitToWidth="true" HBox.hgrow="ALWAYS"
+                            style="-fx-background:transparent; -fx-background-color:-pos-bg; -fx-border-color:transparent;">
+                    <VBox spacing="16" style="-fx-padding:20;">
+
+                        <!-- Summary KPI row -->
+                        <HBox spacing="12">
+                            <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS" spacing="4">
+                                <Label text="TOTAL SALES"  styleClass="kpi-label"/>
+                                <Label fx:id="rptSalesLabel" text="Rs. 0.00" styleClass="kpi-value"/>
+                            </VBox>
+                            <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS" spacing="4">
+                                <Label text="TOTAL BILLS"  styleClass="kpi-label"/>
+                                <Label fx:id="rptBillsLabel" text="0" styleClass="kpi-value"/>
+                            </VBox>
+                            <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS" spacing="4">
+                                <Label text="AVG BILL"     styleClass="kpi-label"/>
+                                <Label fx:id="rptAvgLabel" text="Rs. 0.00" styleClass="kpi-value"/>
+                            </VBox>
+                            <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS" spacing="4">
+                                <Label text="PROFIT"       styleClass="kpi-label" style="-fx-text-fill:-pos-success;"/>
+                                <Label fx:id="rptProfitLabel" text="Rs. 0.00"
+                                       style="-fx-font-size:28px; -fx-font-weight:bold; -fx-text-fill:-pos-success;"/>
+                            </VBox>
+                            <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS" spacing="4">
+                                <Label text="DISCOUNTS"    styleClass="kpi-label"/>
+                                <Label fx:id="rptDiscountLabel" text="Rs. 0.00" styleClass="kpi-value"
+                                       style="-fx-text-fill:-pos-warning;"/>
+                            </VBox>
+                        </HBox>
+
+                        <!-- Chart -->
+                        <VBox styleClass="card" spacing="10">
+                            <Label fx:id="chartTitleLabel" text="Daily Sales Trend" styleClass="h4"/>
+                            <LineChart fx:id="trendChart" prefHeight="240" animated="false"
+                                       legendVisible="false"
+                                       style="-fx-background-color:transparent;">
+                                <xAxis><CategoryAxis label="Date"/></xAxis>
+                                <yAxis><NumberAxis label="Sales (Rs.)"/></yAxis>
+                            </LineChart>
+                        </VBox>
+
+                        <!-- Main data table -->
+                        <VBox styleClass="card" spacing="10">
+                            <HBox alignment="CENTER_LEFT" spacing="8">
+                                <Label fx:id="tableTitleLabel" text="Report Data" styleClass="h4"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Label fx:id="rowCountLabel" text="0 rows"
+                                       styleClass="text-muted" style="-fx-font-size:12px;"/>
+                            </HBox>
+                            <TableView fx:id="reportTable" prefHeight="300"
+                                       style="-fx-border-color:transparent;"/>
+                        </VBox>
+
+                    </VBox>
+                </ScrollPane>
+            </HBox>
+        </VBox>
+    </center>
+</BorderPane>

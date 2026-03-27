@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.image.*?>
+
+<StackPane xmlns="http://javafx.com/javafx/17"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.minimartpos.controller.shared.LoginController"
+           styleClass="login-container"
+           stylesheets="@../css/main.css">
+
+    <!-- Centered login card -->
+    <VBox styleClass="login-card" alignment="CENTER" spacing="0">
+
+        <!-- Logo / App name -->
+        <VBox alignment="CENTER" spacing="4">
+            <Label text="🛒" style="-fx-font-size:40px;"/>
+            <Label text="MiniMart POS" styleClass="login-title"/>
+            <Label text="Please sign in to continue" styleClass="login-subtitle"/>
+        </VBox>
+
+        <Region minHeight="24"/>
+
+        <!-- Error message (hidden by default) -->
+        <Label fx:id="errorLabel" styleClass="badge, badge-danger"
+               wrapText="true" maxWidth="300" managed="false" visible="false"/>
+
+        <Region minHeight="8"/>
+
+        <!-- Username -->
+        <VBox spacing="4">
+            <Label text="USERNAME" styleClass="label-form"/>
+            <TextField fx:id="usernameField" promptText="Enter your username"
+                       styleClass="text-field" maxWidth="Infinity"/>
+        </VBox>
+
+        <Region minHeight="14"/>
+
+        <!-- Password -->
+        <VBox spacing="4">
+            <Label text="PASSWORD" styleClass="label-form"/>
+            <StackPane>
+                <PasswordField fx:id="passwordField" promptText="Enter your password"
+                               styleClass="password-field" maxWidth="Infinity"/>
+                <Button fx:id="togglePasswordBtn" text="👁" styleClass="btn-icon"
+                        StackPane.alignment="CENTER_RIGHT"
+                        onAction="#togglePasswordVisibility"/>
+            </StackPane>
+        </VBox>
+
+        <Region minHeight="8"/>
+
+        <!-- Remember me -->
+        <CheckBox fx:id="rememberMeCheck" text="Remember me on this machine"/>
+
+        <Region minHeight="20"/>
+
+        <!-- CAPTCHA placeholder (shown after 3 failed attempts) -->
+        <VBox fx:id="captchaPane" managed="false" visible="false" spacing="8">
+            <Label text="Security Check" styleClass="label-form"/>
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label fx:id="captchaQuestion" text="5 + 3 = ?" style="-fx-font-weight:bold; -fx-font-size:15px;"/>
+                <TextField fx:id="captchaField" promptText="Answer" maxWidth="80"/>
+            </HBox>
+            <Region minHeight="8"/>
+        </VBox>
+
+        <!-- Login button -->
+        <Button fx:id="loginBtn" text="Sign In" styleClass="btn-primary, button"
+                maxWidth="Infinity" minHeight="42"
+                onAction="#handleLogin" defaultButton="true"/>
+
+        <Region minHeight="16"/>
+
+        <!-- Lockout timer (shown when account is locked) -->
+        <VBox fx:id="lockoutPane" managed="false" visible="false" alignment="CENTER" spacing="4">
+            <Label text="Account locked. Try again in:" styleClass="text-secondary"/>
+            <Label fx:id="lockoutCountdown" text="14:58" styleClass="h3, text-danger"/>
+        </VBox>
+
+        <Region minHeight="16"/>
+
+        <!-- Version footer -->
+        <Label fx:id="versionLabel" text="v1.0.0" styleClass="text-muted"
+               style="-fx-font-size:11px;" alignment="CENTER"/>
+
+    </VBox>
+
+</StackPane>

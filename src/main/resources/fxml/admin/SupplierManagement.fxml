@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.minimartpos.controller.admin.SupplierManagementController"
+            stylesheets="@../../css/main.css" styleClass="scene-bg">    <!-- ══════════════════ SIDEBAR ══════════════════ -->
+    <left>
+        <VBox styleClass="sidebar" spacing="0" minWidth="220">
+            <VBox styleClass="sidebar-logo" spacing="4">
+                <Label text="🛒 MiniMart POS" styleClass="sidebar-logo-text"/>
+                <Label text="Admin Console" style="-fx-text-fill:#5A6A7A; -fx-font-size:11px;"/>
+            </VBox>
+            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                        style="-fx-background:transparent; -fx-background-color:transparent; -fx-border-color:transparent;">
+                <VBox spacing="2" style="-fx-padding:8 0;">
+                    <Label text="MAIN" styleClass="sidebar-section-label"/>
+                    <Button text="📊  Dashboard" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToDashboard"/>
+                    <Button text="🖥  POS Terminal" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToPOS"/>
+                    <Button text="👥  Users" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToUsers"/>
+                    <Button text="📦  Products" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToProducts"/>
+                    <Button text="🧑  Customers" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToCustomers"/>
+                    <Button text="🏭  Suppliers" styleClass="sidebar-nav-item active" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToSuppliers"/>
+                    <Label text="OPERATIONS" styleClass="sidebar-section-label"/>
+                    <Button text="💰  Live Monitor" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToCashierMonitor"/>
+                    <Button text="🧾  Bills / History" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToBills"/>
+                    <Button text="📉  Stock" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToStock"/>
+                    <Label text="REPORTS" styleClass="sidebar-section-label"/>
+                    <Button text="📈  Reports" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToReports"/>
+                    <Button text="🔍  Audit Log" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToAudit"/>
+                    <Label text="SYSTEM" styleClass="sidebar-section-label"/>
+                    <Button text="⚙  Settings" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToSettings"/>
+                </VBox>
+            </ScrollPane>
+            <VBox style="-fx-padding:12 16; -fx-border-color:rgba(255,255,255,0.08); -fx-border-width:1 0 0 0;" spacing="4">
+                <Label fx:id="sidebarUserLabel" text="Admin" style="-fx-text-fill:white; -fx-font-weight:bold; -fx-font-size:12px;"/>
+            </VBox>
+        </VBox>
+    </left>
+    <center>
+        <VBox spacing="0">
+            <HBox styleClass="topbar" alignment="CENTER_LEFT" spacing="12">
+                <Label text="🏭  Supplier Management" styleClass="h3"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <TextField fx:id="searchField" promptText="🔍 Search suppliers…"
+                           styleClass="search-field" prefWidth="220"
+                           onKeyReleased="#onSearchChanged"/>
+                <Button text="＋ Add Supplier" styleClass="btn-primary, button"
+                        onAction="#openAddSupplier"/>
+                <Button text="← Back" styleClass="btn-secondary, button"
+                        onAction="#navigateToDashboard"/>
+            </HBox>
+            <HBox VBox.vgrow="ALWAYS" spacing="0">
+                <!-- Table -->
+                <VBox HBox.hgrow="ALWAYS" style="-fx-padding:16;" spacing="10">
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Label fx:id="countLabel" text="0 suppliers"
+                               styleClass="text-secondary" style="-fx-font-size:12px;"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="🔄" styleClass="btn-icon" onAction="#refresh"
+                                style="-fx-font-size:14px;"/>
+                    </HBox>
+                    <TableView fx:id="supplierTable" VBox.vgrow="ALWAYS"
+                               style="-fx-border-color:transparent;">
+                        <columns>
+                            <TableColumn fx:id="colName"    text="Supplier Name"  prefWidth="200"/>
+                            <TableColumn fx:id="colContact" text="Contact"        prefWidth="140"/>
+                            <TableColumn fx:id="colPhone"   text="Phone"          prefWidth="130"/>
+                            <TableColumn fx:id="colEmail"   text="Email"          prefWidth="180"/>
+                            <TableColumn fx:id="colActive"  text="Status"         prefWidth="90"
+                                         style="-fx-alignment:CENTER;"/>
+                            <TableColumn fx:id="colActions" text="Actions"        prefWidth="100"
+                                         style="-fx-alignment:CENTER;"/>
+                        </columns>
+                        <placeholder>
+                            <Label text="No suppliers found" styleClass="text-secondary"/>
+                        </placeholder>
+                    </TableView>
+                </VBox>
+                <!-- Edit panel -->
+                <VBox fx:id="editPanel" prefWidth="370"
+                      style="-fx-background-color:white; -fx-border-color:-pos-border; -fx-border-width:0 0 0 1;"
+                      visible="false" managed="false">
+                    <HBox styleClass="card-header" alignment="CENTER_LEFT" spacing="8"
+                          style="-fx-padding:10 14;">
+                        <Label fx:id="editTitle" text="Supplier Details"
+                               style="-fx-text-fill:white; -fx-font-weight:bold; -fx-font-size:14px;"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="✖" styleClass="btn-icon" onAction="#closePanel"
+                                style="-fx-text-fill:rgba(255,255,255,0.8);"/>
+                    </HBox>
+                    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                                style="-fx-background:transparent; -fx-background-color:transparent; -fx-border-color:transparent;">
+                        <VBox spacing="12" style="-fx-padding:16;">
+                            <VBox styleClass="card" spacing="10">
+                                <Label text="COMPANY INFO" styleClass="label-form"/>
+                                <VBox spacing="4">
+                                    <Label text="SUPPLIER NAME *" styleClass="label-form"/>
+                                    <TextField fx:id="fieldName" styleClass="text-field" maxWidth="Infinity"/>
+                                </VBox>
+                                <HBox spacing="10">
+                                    <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                        <Label text="CONTACT PERSON" styleClass="label-form"/>
+                                        <TextField fx:id="fieldContact" styleClass="text-field"/>
+                                    </VBox>
+                                    <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                        <Label text="PHONE" styleClass="label-form"/>
+                                        <TextField fx:id="fieldPhone" styleClass="text-field"/>
+                                    </VBox>
+                                </HBox>
+                                <HBox spacing="10">
+                                    <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                        <Label text="EMAIL" styleClass="label-form"/>
+                                        <TextField fx:id="fieldEmail" styleClass="text-field"/>
+                                    </VBox>
+                                </HBox>
+                                <VBox spacing="4">
+                                    <Label text="ADDRESS" styleClass="label-form"/>
+                                    <TextArea fx:id="fieldAddress" prefRowCount="3"
+                                              styleClass="text-field"/>
+                                </VBox>
+                                <CheckBox fx:id="fieldActive" text="Active" selected="true"/>
+                            </VBox>
+                            <Label fx:id="formError" text="" styleClass="badge badge-danger"
+                                   visible="false" managed="false" wrapText="true"/>
+                            <HBox spacing="8">
+                                <Button text="🗑 Delete" styleClass="btn-danger, button" onAction="#deleteSupplier"/>
+                                <Button text="Cancel" styleClass="btn-secondary, button"
+                                        onAction="#closePanel"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Button text="💾 Save" styleClass="btn-primary, button"
+                                        onAction="#saveSupplier"/>
+                            </HBox>
+                        </VBox>
+                    </ScrollPane>
+                </VBox>
+            </HBox>
+        </VBox>
+    </center>
+</BorderPane>

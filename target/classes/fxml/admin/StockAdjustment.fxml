@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.minimartpos.controller.admin.StockAdjustmentController"
+            stylesheets="@../../css/main.css" styleClass="scene-bg">    <!-- ══════════════════ SIDEBAR ══════════════════ -->
+    <left>
+        <VBox styleClass="sidebar" spacing="0" minWidth="220">
+            <VBox styleClass="sidebar-logo" spacing="4">
+                <Label text="🛒 MiniMart POS" styleClass="sidebar-logo-text"/>
+                <Label text="Admin Console" style="-fx-text-fill:#5A6A7A; -fx-font-size:11px;"/>
+            </VBox>
+            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                        style="-fx-background:transparent; -fx-background-color:transparent; -fx-border-color:transparent;">
+                <VBox spacing="2" style="-fx-padding:8 0;">
+                    <Label text="MAIN" styleClass="sidebar-section-label"/>
+                    <Button text="📊  Dashboard" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToDashboard"/>
+                    <Button text="🖥  POS Terminal" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToPOS"/>
+                    <Button text="👥  Users" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToUsers"/>
+                    <Button text="📦  Products" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToProducts"/>
+                    <Button text="🧑  Customers" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToCustomers"/>
+                    <Button text="🏭  Suppliers" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToSuppliers"/>
+                    <Label text="OPERATIONS" styleClass="sidebar-section-label"/>
+                    <Button text="💰  Live Monitor" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToCashierMonitor"/>
+                    <Button text="🧾  Bills / History" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToBills"/>
+                    <Button text="📉  Stock" styleClass="sidebar-nav-item active" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToStock"/>
+                    <Label text="REPORTS" styleClass="sidebar-section-label"/>
+                    <Button text="📈  Reports" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToReports"/>
+                    <Button text="🔍  Audit Log" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToAudit"/>
+                    <Label text="SYSTEM" styleClass="sidebar-section-label"/>
+                    <Button text="⚙  Settings" styleClass="sidebar-nav-item" maxWidth="Infinity" alignment="CENTER_LEFT" onAction="#navigateToSettings"/>
+                </VBox>
+            </ScrollPane>
+            <VBox style="-fx-padding:12 16; -fx-border-color:rgba(255,255,255,0.08); -fx-border-width:1 0 0 0;" spacing="4">
+                <Label fx:id="sidebarUserLabel" text="Admin" style="-fx-text-fill:white; -fx-font-weight:bold; -fx-font-size:12px;"/>
+            </VBox>
+        </VBox>
+    </left>
+    <center>
+        <VBox spacing="0">
+            <HBox styleClass="topbar" alignment="CENTER_LEFT" spacing="10">
+                <Label text="📉  Stock Management" styleClass="h3"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <TextField fx:id="searchField" promptText="🔍 Search products…" styleClass="search-field" prefWidth="220" onKeyReleased="#onSearchChanged"/>
+                <ComboBox fx:id="stockFilter" prefWidth="160" promptText="All Products" onAction="#onFilterChanged"/>
+                <Button text="📤 Export Stock" styleClass="btn-secondary, button" onAction="#exportStock"/>
+                <Button text="← Back" styleClass="btn-secondary, button" onAction="#navigateToDashboard"/>
+            </HBox>
+            <HBox VBox.vgrow="ALWAYS" spacing="0">
+                <!-- Product stock table -->
+                <VBox HBox.hgrow="ALWAYS" style="-fx-padding:16;" spacing="10">
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Label fx:id="productCountLabel" text="0 products" styleClass="text-secondary" style="-fx-font-size:12px;"/>
+                        <Label fx:id="lowStockBadge" text="⚠ Low stock" styleClass="badge badge-warning" visible="false" managed="false"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="🔄" styleClass="btn-icon" onAction="#refreshProducts" style="-fx-font-size:14px;"/>
+                    </HBox>
+                    <TableView fx:id="stockTable" VBox.vgrow="ALWAYS" style="-fx-border-color:transparent;">
+                        <columns>
+                            <TableColumn fx:id="colBarcode"  text="Barcode"   prefWidth="120"/>
+                            <TableColumn fx:id="colName"     text="Product"   prefWidth="200"/>
+                            <TableColumn fx:id="colCategory" text="Category"  prefWidth="110"/>
+                            <TableColumn fx:id="colCurrent"  text="Current"   prefWidth="80" style="-fx-alignment:CENTER;"/>
+                            <TableColumn fx:id="colReorder"  text="Reorder"   prefWidth="80" style="-fx-alignment:CENTER;"/>
+                            <TableColumn fx:id="colStatus"   text="Status"    prefWidth="90" style="-fx-alignment:CENTER;"/>
+                            <TableColumn fx:id="colActions"  text="Adjust"    prefWidth="100" style="-fx-alignment:CENTER;"/>
+                        </columns>
+                        <placeholder><Label text="No products found" styleClass="text-secondary"/></placeholder>
+                    </TableView>
+                </VBox>
+                <!-- Adjustment panel -->
+                <VBox fx:id="adjustPanel" prefWidth="340"
+                      style="-fx-background-color:white; -fx-border-color:-pos-border; -fx-border-width:0 0 0 1;"
+                      visible="false" managed="false">
+                    <HBox styleClass="card-header" alignment="CENTER_LEFT" spacing="8" style="-fx-padding:10 14;">
+                        <Label text="📦  Adjust Stock" style="-fx-text-fill:white; -fx-font-weight:bold; -fx-font-size:14px;"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="✖" styleClass="btn-icon" onAction="#closeAdjustPanel" style="-fx-text-fill:rgba(255,255,255,0.8);"/>
+                    </HBox>
+                    <VBox spacing="14" style="-fx-padding:16;">
+                        <VBox styleClass="card" spacing="6"
+                              style="-fx-background-color:-pos-surface-alt; -fx-border-color:-pos-border;">
+                            <Label fx:id="adjustProductName" text="—" styleClass="h4"/>
+                            <HBox>
+                                <Label text="Current Stock:" styleClass="text-secondary"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Label fx:id="adjustCurrentStock" text="0" styleClass="h4" style="-fx-text-fill:-pos-primary;"/>
+                            </HBox>
+                        </VBox>
+                        <VBox spacing="4">
+                            <Label text="ADJUSTMENT TYPE" styleClass="label-form"/>
+                            <ComboBox fx:id="adjustTypeCombo" maxWidth="Infinity"/>
+                        </VBox>
+                        <VBox spacing="4">
+                            <Label text="QUANTITY" styleClass="label-form"/>
+                            <TextField fx:id="adjustQtyField" styleClass="text-field"
+                                       promptText="Enter quantity" onKeyReleased="#onQtyChanged"/>
+                        </VBox>
+                        <VBox spacing="4" style="-fx-background-color:-pos-surface-alt; -fx-padding:10; -fx-background-radius:6;">
+                            <HBox>
+                                <Label text="New Stock Will Be:" styleClass="text-secondary"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Label fx:id="newStockPreview" text="—" styleClass="h3" style="-fx-text-fill:-pos-success;"/>
+                            </HBox>
+                        </VBox>
+                        <VBox spacing="4">
+                            <Label text="REASON / NOTES" styleClass="label-form"/>
+                            <TextArea fx:id="adjustNotesField" prefRowCount="2" styleClass="text-field"
+                                      promptText="Optional notes…"/>
+                        </VBox>
+                        <Label fx:id="adjustErrorLabel" text="" styleClass="badge badge-danger"
+                               visible="false" managed="false"/>
+                        <HBox spacing="8">
+                            <Button text="Cancel" styleClass="btn-secondary, button"
+                                    HBox.hgrow="ALWAYS" maxWidth="Infinity" onAction="#closeAdjustPanel"/>
+                            <Button text="✔ Apply" styleClass="btn-success, button"
+                                    HBox.hgrow="ALWAYS" maxWidth="Infinity" onAction="#applyAdjustment"/>
+                        </HBox>
+                    </VBox>
+                </VBox>
+            </HBox>
+        </VBox>
+    </center>
+</BorderPane>

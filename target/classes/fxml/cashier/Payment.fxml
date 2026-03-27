@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<!--
+  Payment Dialog
+  Shows the total, accepts tendered amount, computes change.
+  Used for Cash and Card payments.
+-->
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.minimartpos.controller.cashier.PaymentController"
+      styleClass="card"
+      spacing="0"
+      prefWidth="400"
+      stylesheets="@../../css/main.css">
+
+    <!-- Header -->
+    <HBox styleClass="card-header" alignment="CENTER_LEFT" spacing="8"
+          style="-fx-padding:12 16;">
+        <Label fx:id="titleLabel" text="💵  Cash Payment"
+               style="-fx-text-fill:white; -fx-font-weight:bold; -fx-font-size:16px;"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="✖" styleClass="btn-icon" onAction="#cancel"
+                style="-fx-text-fill:rgba(255,255,255,0.8); -fx-font-size:14px;"/>
+    </HBox>
+
+    <VBox spacing="16" style="-fx-padding:20;">
+
+        <!-- Bill summary -->
+        <VBox styleClass="card" spacing="8"
+              style="-fx-background-color:-pos-surface-alt; -fx-border-color:-pos-border;">
+            <HBox>
+                <Label text="Bill Number" styleClass="text-secondary"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="billNumLabel" text="BILL-0001" styleClass="h4"
+                       style="-fx-text-fill:-pos-accent;"/>
+            </HBox>
+            <HBox>
+                <Label text="Items" styleClass="text-secondary"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="itemsLabel" text="0"/>
+            </HBox>
+            <Separator/>
+            <HBox>
+                <Label text="TOTAL AMOUNT" styleClass="h4"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="totalAmountLabel" text="Rs. 0.00" styleClass="pos-total-label"/>
+            </HBox>
+        </VBox>
+
+        <!-- Tendered amount input -->
+        <VBox spacing="6">
+            <Label text="AMOUNT TENDERED" styleClass="label-form"/>
+            <TextField fx:id="tenderedField"
+                       promptText="0.00"
+                       styleClass="text-field"
+                       alignment="CENTER_RIGHT"
+                       style="-fx-font-size:22px; -fx-font-weight:bold; -fx-padding:10 14;"
+                       onKeyReleased="#onTenderedChanged"/>
+        </VBox>
+
+        <!-- Quick amount buttons -->
+        <VBox spacing="6" fx:id="quickAmountsPane">
+            <Label text="QUICK AMOUNTS" styleClass="label-form"/>
+            <HBox fx:id="quickAmountRow1" spacing="8"/>
+            <HBox fx:id="quickAmountRow2" spacing="8"/>
+        </VBox>
+
+        <!-- Change display -->
+        <VBox styleClass="card" spacing="6"
+              style="-fx-background-color:-pos-surface-alt; -fx-border-color:-pos-border;">
+            <HBox>
+                <Label text="Tendered" styleClass="text-secondary"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="tenderedDisplayLabel" text="0.00" styleClass="text-secondary"/>
+            </HBox>
+            <HBox>
+                <Label text="CHANGE" styleClass="h3"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="changeLabel" text="0.00" styleClass="h2"
+                       style="-fx-text-fill:-pos-success;"/>
+            </HBox>
+        </VBox>
+
+        <!-- Error message -->
+        <Label fx:id="errorLabel" text="" styleClass="badge badge-danger"
+               wrapText="true" managed="false" visible="false"/>
+
+        <!-- Action buttons -->
+        <HBox spacing="10">
+            <Button text="Cancel" styleClass="btn-secondary, button"
+                    HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                    onAction="#cancel"/>
+            <Button fx:id="confirmBtn" text="✔ Confirm Payment"
+                    styleClass="btn-success, button"
+                    HBox.hgrow="ALWAYS" maxWidth="Infinity"
+                    defaultButton="true"
+                    onAction="#confirmPayment"/>
+        </HBox>
+
+    </VBox>
+</VBox>

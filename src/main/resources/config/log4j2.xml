@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+
+    <Properties>
+        <Property name="LOG_DIR">${sys:user.home}/MiniMartPOS/logs</Property>
+        <Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] [%t] %logger{36} - %msg%n</Property>
+    </Properties>
+
+    <Appenders>
+
+        <!-- Console output (development) -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <ThresholdFilter level="DEBUG" onMatch="ACCEPT" onMismatch="DENY"/>
+        </Console>
+
+        <!-- Rolling daily log file -->
+        <RollingFile name="FileAppender"
+                     fileName="${LOG_DIR}/minimart-pos.log"
+                     filePattern="${LOG_DIR}/minimart-pos-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30"/>
+        </RollingFile>
+
+        <!-- Separate file for audit/security events -->
+        <RollingFile name="AuditAppender"
+                     fileName="${LOG_DIR}/audit.log"
+                     filePattern="${LOG_DIR}/audit-%d{yyyy-MM-dd}.log.gz">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+            </Policies>
+            <DefaultRolloverStrategy max="90"/>
+        </RollingFile>
+
+    </Appenders>
+
+    <Loggers>
+
+        <!-- Audit logger (security events) -->
+        <Logger name="com.minimartpos.security" level="INFO" additivity="false">
+            <AppenderRef ref="AuditAppender"/>
+            <AppenderRef ref="Console"/>
+        </Logger>
+
+        <!-- Application loggers -->
+        <Logger name="com.minimartpos" level="DEBUG" additivity="false">
+            <AppenderRef ref="FileAppender"/>
+            <AppenderRef ref="Console"/>
+        </Logger>
+
+        <!-- HikariCP (reduce noise) -->
+        <Logger name="com.zaxxer.hikari" level="WARN" additivity="false">
+            <AppenderRef ref="FileAppender"/>
+        </Logger>
+
+        <!-- Root logger -->
+        <Root level="INFO">
+            <AppenderRef ref="FileAppender"/>
+            <AppenderRef ref="Console"/>
+        </Root>
+
+    </Loggers>
+
+</Configuration>
