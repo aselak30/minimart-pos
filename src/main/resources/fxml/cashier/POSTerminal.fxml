@@ -17,7 +17,7 @@
   │  STATUS BAR: status message | DB status | Machine ID                │
   └─────────────────────────────────────────────────────────────────────┘
 -->
-<BorderPane xmlns="http://javafx.com/javafx/17"
+<BorderPane fx:id="rootPane" xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.minimartpos.controller.cashier.POSTerminalController"
             stylesheets="@../../css/main.css"
@@ -313,17 +313,32 @@
 
     <!-- ═══════════════════════ STATUS BAR ═══════════════════════ -->
     <bottom>
-        <HBox alignment="CENTER_LEFT" spacing="16"
-              style="-fx-background-color:white; -fx-padding:5 16;
-                     -fx-border-color:-pos-border; -fx-border-width:1 0 0 0;">
-            <Label fx:id="statusLabel" text="Ready" styleClass="text-secondary"
-                   style="-fx-font-size:12px;"/>
-            <Region HBox.hgrow="ALWAYS"/>
-            <Label fx:id="dbStatusLabel" text="● Connected"
-                   style="-fx-text-fill:-pos-success; -fx-font-size:11px; -fx-font-weight:bold;"/>
-            <Label fx:id="machineLabel" text="Machine: —"
-                   styleClass="text-muted" style="-fx-font-size:11px;"/>
-        </HBox>
+        <VBox>
+            <HBox alignment="CENTER_LEFT" spacing="16"
+                  style="-fx-background-color:white; -fx-padding:5 16;
+                         -fx-border-color:-pos-border; -fx-border-width:1 0 0 0;">
+                <Label fx:id="statusLabel" text="Ready" styleClass="text-secondary"
+                       style="-fx-font-size:12px;"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="dbStatusLabel" text="● Connected"
+                       style="-fx-text-fill:-pos-success; -fx-font-size:11px; -fx-font-weight:bold;"/>
+                <Label fx:id="machineLabel" text="Machine: —"
+                       styleClass="text-muted" style="-fx-font-size:11px;"/>
+            </HBox>
+            <!-- Keyboard Shortcuts Hint Bar -->
+            <HBox alignment="CENTER" spacing="12" style="-fx-background-color:#f0f0f0; -fx-padding:4 10; -fx-border-color:-pos-border; -fx-border-width:1 0 0 0;">
+                <Label text="Keyboard Hints:" style="-fx-font-weight:bold; -fx-font-size:11px; -fx-text-fill:-pos-text-secondary;"/>
+                <Label text="ENTER: Search/Scan" style="-fx-font-size:11px; -fx-text-fill:-pos-text-secondary;"/>
+                <Label text="F1: Search" style="-fx-font-size:11px; -fx-text-fill:-pos-text-secondary;"/>
+                <Label text="F2/F3: Disc" style="-fx-font-size:11px; -fx-text-fill:-pos-text-secondary;"/>
+                <Label text="F5: Pay" style="-fx-font-size:11px; -fx-text-fill:-pos-text-secondary;"/>
+                <Label text="F9/DEL: Void Item" style="-fx-font-size:11px; -fx-text-fill:-pos-text-secondary;"/>
+                <Label text="F10: Clear" style="-fx-font-size:11px; -fx-text-fill:-pos-text-secondary;"/>
+                <Label text="F11: Theme" style="-fx-font-size:11px; -fx-text-fill:-pos-text-secondary;"/>
+                <Label text="F12: Logout" style="-fx-font-size:11px; -fx-text-fill:-pos-text-secondary;"/>
+                <Label text="Ctrl+H: Help" style="-fx-font-size:11px; -fx-text-fill:-pos-text-secondary;"/>
+            </HBox>
+        </VBox>
     </bottom>
 
 </BorderPane>

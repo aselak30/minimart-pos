@@ -7,7 +7,6 @@ import com.minimartpos.repository.BillRepository;
 import com.minimartpos.security.SessionManager;
 import com.minimartpos.service.AuditService;
 import com.minimartpos.service.CustomerService;
-import com.minimartpos.service.SettingsService;
 import com.minimartpos.service.StockService;
 import com.minimartpos.util.AlertUtil;
 import com.minimartpos.util.CurrencyUtil;
@@ -19,7 +18,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.*;
@@ -118,7 +116,6 @@ public class EditBillController implements Initializable {
     private final StockService    stockService   = new StockService();
     private final AuditService    auditService   = new AuditService();
     private final CustomerService customerService = new CustomerService();
-    private final SettingsService settingsService = new SettingsService();
 
     /** Called after successful save so BillHistoryController can refresh. */
     private Runnable onSaved;
@@ -182,7 +179,8 @@ public class EditBillController implements Initializable {
 
     private void checkEditWindow() {
         boolean isAdmin = SessionManager.getCurrentUser()
-            .getRole().name().equals("ADMIN");
+            .getRole() == com.minimartpos.model.enums.Role.ADMIN ||
+            SessionManager.getCurrentUser().getRole() == com.minimartpos.model.enums.Role.SUPER_ADMIN;
         if (isAdmin) {
             timeRemainingLabel.setText("Admin — no time limit");
             return;
@@ -220,7 +218,8 @@ public class EditBillController implements Initializable {
         }));
         countdownTimer.setCycleCount(Timeline.INDEFINITE);
         // Only run countdown for non-admins
-        if (!SessionManager.getCurrentUser().getRole().name().equals("ADMIN")) {
+        com.minimartpos.model.enums.Role role = SessionManager.getCurrentUser().getRole();
+        if (role != com.minimartpos.model.enums.Role.ADMIN && role != com.minimartpos.model.enums.Role.SUPER_ADMIN) {
             countdownTimer.play();
         }
     }
@@ -236,13 +235,13 @@ public class EditBillController implements Initializable {
 
         // Editable: Quantity
         colQty.setCellValueFactory(c ->
-            new SimpleStringProperty(String.valueOf(c.getValue().getQuantity())));
+            new SimpleStringProperty(c.getValue().getQuantity().toString()));
         colQty.setCellFactory(TextFieldTableCell.forTableColumn());
         colQty.setOnEditCommit(e -> {
             BillItem item = e.getRowValue();
             try {
-                int qty = Integer.parseInt(e.getNewValue().trim());
-                if (qty < 1) { AlertUtil.showWarning("Invalid", "Quantity must be at least 1."); return; }
+                BigDecimal qty = new BigDecimal(e.getNewValue().trim());
+                if (qty.compareTo(BigDecimal.ZERO) <= 0) { AlertUtil.showWarning("Invalid", "Quantity must be greater than 0."); return; }
                 item.setQuantity(qty);
                 recalcItemTotal(item);
                 itemsTable.refresh();
@@ -361,8 +360,10 @@ public class EditBillController implements Initializable {
     }
 
     private void recalcItemTotal(BillItem item) {
+        BigDecimal baseQty = item.isWeightBased() ? item.getWeight() : item.getQuantity();
+        if (baseQty == null) baseQty = BigDecimal.ZERO;
         BigDecimal gross = item.getUnitPrice()
-            .multiply(BigDecimal.valueOf(item.getQuantity()));
+            .multiply(baseQty);
         BigDecimal discAmt = gross.multiply(item.getDiscountPercent())
             .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
         item.setDiscountAmount(discAmt);
@@ -505,21 +506,23 @@ public class EditBillController implements Initializable {
         int userId = SessionManager.getCurrentUser().getId();
 
         // Build map: productId → new qty
-        java.util.Map<Integer, Integer> newQtyMap = new java.util.HashMap<>();
+        java.util.Map<Integer, BigDecimal> newQtyMap = new java.util.HashMap<>();
         for (BillItem ni : newItems) newQtyMap.put(ni.getProductId(), ni.getQuantity());
 
         for (BillItem old : oldItems) {
             int pid    = old.getProductId();
-            int oldQty = old.getQuantity();
-            int newQty = newQtyMap.getOrDefault(pid, 0); // 0 = item was removed
+            BigDecimal oldQty = old.getQuantity();
+            BigDecimal newQty = newQtyMap.getOrDefault(pid, BigDecimal.ZERO); // 0 = item was removed
 
-            if (oldQty == newQty) continue; // unchanged
+            if (oldQty != null && newQty != null && oldQty.compareTo(newQty) == 0) continue; // unchanged
 
             // Restore old deduction
-            stockService.addStock(pid, oldQty, billId, userId, "BILL_EDIT_RESTORE");
+            if (oldQty != null) {
+                stockService.addStock(pid, oldQty, billId, userId, "BILL_EDIT_RESTORE");
+            }
 
             // Deduct new quantity (if item still present)
-            if (newQty > 0) {
+            if (newQty != null && newQty.compareTo(BigDecimal.ZERO) > 0) {
                 stockService.deductStock(pid, newQty, billId, userId);
             }
 
@@ -547,6 +550,9 @@ public class EditBillController implements Initializable {
         copy.setTaxRate(src.getTaxRate());
         copy.setTaxAmount(src.getTaxAmount());
         copy.setLineTotal(src.getLineTotal());
+        copy.setWeightBased(src.isWeightBased());
+        copy.setWeight(src.getWeight());
+        copy.setWeightUnit(src.getWeightUnit());
         return copy;
     }
 

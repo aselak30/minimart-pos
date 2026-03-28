@@ -13,7 +13,7 @@ public class BillItem {
     private int        productId;
     private String     productName;    // denormalized snapshot
     private String     productBarcode; // snapshot
-    private int        quantity;
+    private BigDecimal quantity;
     private BigDecimal unitPrice;      // actual price charged (may differ from catalog)
     private BigDecimal originalPrice;  // catalog price at time of sale
     private BigDecimal costPrice;      // cost at time of sale (for margin calc)
@@ -23,13 +23,16 @@ public class BillItem {
     private BigDecimal taxAmount       = BigDecimal.ZERO;
     private BigDecimal lineTotal       = BigDecimal.ZERO;
     private BigDecimal lineCostTotal   = BigDecimal.ZERO;
+    private BigDecimal weight          = BigDecimal.ZERO;
+    private String     weightUnit;
+    private boolean    isWeightBased   = false;
     private boolean    isPriceOverride = false;
 
     // ── Constructors ──────────────────────────────────────────────────────────
 
     public BillItem() {}
 
-    public BillItem(Product product, int quantity) {
+    public BillItem(Product product, BigDecimal quantity) {
         this.productId      = product.getId();
         this.productName    = product.getName();
         this.productBarcode = product.getBarcode();
@@ -38,22 +41,31 @@ public class BillItem {
         this.originalPrice  = product.getUnitPrice();
         this.costPrice      = product.getCostPrice();
         this.taxRate        = product.getTaxRate();
+        this.isWeightBased  = product.isWeightBased();
+        this.weightUnit     = product.getWeightUnit();
+        if (this.isWeightBased) {
+            this.weight     = quantity;
+            this.unitPrice  = product.getPricePerUnit();
+        }
         recalculate();
     }
 
     // ── Computed ──────────────────────────────────────────────────────────────
 
     public void recalculate() {
-        BigDecimal qty     = BigDecimal.valueOf(quantity);
-        BigDecimal gross   = unitPrice.multiply(qty);
-        BigDecimal disc    = discountAmount.compareTo(BigDecimal.ZERO) > 0
+        BigDecimal baseQty = isWeightBased ? weight : quantity;
+        if (baseQty == null) baseQty = BigDecimal.ZERO;
+        BigDecimal gross   = unitPrice.multiply(baseQty);
+        BigDecimal disc    = (discountAmount != null && discountAmount.compareTo(BigDecimal.ZERO) > 0)
                              ? discountAmount
-                             : gross.multiply(discountPercent).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                             : gross.multiply(discountPercent != null ? discountPercent : BigDecimal.ZERO)
+                                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
         BigDecimal net     = gross.subtract(disc);
-        taxAmount          = net.multiply(taxRate).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        taxAmount          = net.multiply(taxRate != null ? taxRate : BigDecimal.ZERO)
+                                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
         lineTotal          = net.add(taxAmount);
         lineCostTotal      = (costPrice != null)
-                             ? costPrice.multiply(qty)
+                             ? costPrice.multiply(baseQty)
                              : BigDecimal.ZERO;
     }
 
@@ -78,8 +90,12 @@ public class BillItem {
     public String getProductBarcode()                           { return productBarcode; }
     public void   setProductBarcode(String productBarcode)      { this.productBarcode = productBarcode; }
 
-    public int    getQuantity()                             { return quantity; }
-    public void   setQuantity(int quantity)                 { this.quantity = quantity; recalculate(); }
+    public BigDecimal getQuantity()                         { return isWeightBased ? weight : quantity; }
+    public void       setQuantity(BigDecimal quantity)         { 
+        if (isWeightBased) this.weight = quantity; 
+        else this.quantity = quantity; 
+        recalculate(); 
+    }
 
     public BigDecimal getUnitPrice()                            { return unitPrice; }
     public void       setUnitPrice(BigDecimal unitPrice)        { this.unitPrice = unitPrice; recalculate(); }
@@ -107,4 +123,13 @@ public class BillItem {
 
     public boolean    isPriceOverride()                                     { return isPriceOverride; }
     public void       setPriceOverride(boolean priceOverride)               { this.isPriceOverride = priceOverride; }
+
+    public BigDecimal getWeight() { return weight; }
+    public void setWeight(BigDecimal weight) { this.weight = weight; recalculate(); }
+
+    public String getWeightUnit() { return weightUnit; }
+    public void setWeightUnit(String weightUnit) { this.weightUnit = weightUnit; }
+
+    public boolean isWeightBased() { return isWeightBased; }
+    public void setWeightBased(boolean weightBased) { isWeightBased = weightBased; }
 }

@@ -1,6 +1,5 @@
 package com.minimartpos.controller.cashier;
 
-import com.minimartpos.app.MainApp;
 import com.minimartpos.model.Bill;
 import com.minimartpos.model.BillItem;
 import com.minimartpos.model.Product;
@@ -61,6 +60,7 @@ public class POSTerminalController implements Initializable {
     private static final Logger logger = LogManager.getLogger(POSTerminalController.class);
 
     // ── FXML: Top Bar ─────────────────────────────────────────────────────────
+    @FXML private BorderPane rootPane;
     @FXML private Label    cashierNameLabel;
     @FXML private Label    shiftLabel;
     @FXML private Label    clockLabel;
@@ -149,6 +149,116 @@ public class POSTerminalController implements Initializable {
         setStatus("Ready. Scan or search a product.");
         logger.info("POS Terminal initialized for user: {}",
                     SessionManager.getCurrentUser().getUsername());
+        
+        Platform.runLater(this::setupKeyBindings);
+    }
+
+    private void setupKeyBindings() {
+        if (rootPane != null && rootPane.getScene() != null) {
+            // Auto focus on start
+            barcodeField.requestFocus();
+            
+            // Re-focus anytime we return to the scene (like after a dialog)
+            rootPane.getScene().windowProperty().addListener((obs, oldV, newV) -> {
+                if (newV != null) {
+                    newV.focusedProperty().addListener((o, oldFocus, newFocus) -> {
+                        if (newFocus) Platform.runLater(() -> barcodeField.requestFocus());
+                    });
+                }
+            });
+
+            rootPane.getScene().setOnKeyPressed(e -> {
+                switch (e.getCode()) {
+                    case F1 -> { searchField.requestFocus(); e.consume(); }
+                    case F2 -> {
+                        if (!cartTable.getSelectionModel().isEmpty()) {
+                            BillItem selected = cartTable.getSelectionModel().getSelectedItem();
+                            if (SessionManager.hasPermission(Permission.APPLY_LINE_ITEM_DISCOUNT)) {
+                                String discStr = AlertUtil.promptText("Item Discount", "Enter percentage discount (e.g., 10):", "");
+                                if (discStr != null && !discStr.trim().isEmpty()) {
+                                    try {
+                                        BigDecimal disc = new BigDecimal(discStr.trim());
+                                        int idx = cartItems.indexOf(selected);
+                                        BillingService.BillResult r = billingService.applyItemDiscount(activeBill, idx, disc, true);
+                                        if (r.isSuccess()) refreshCart();
+                                        else AlertUtil.showWarning("Discount Error", r.getMessage());
+                                    } catch (Exception ex) {
+                                        AlertUtil.showWarning("Invalid", "Please enter a valid number.");
+                                    }
+                                }
+                            }
+                        }
+                        e.consume();
+                    }
+                    case F3 -> { openDiscountDialog(); e.consume(); }
+                    case F4 -> { openCustomerSearch(); e.consume(); }
+                    case F5 -> { payByCash(); e.consume(); }
+                    case F6 -> { reprintLastBill(); e.consume(); }
+                    case F7 -> { holdBill(); e.consume(); }
+                    case F8 -> { retrieveHeldBill(); e.consume(); }
+                    case F9 -> {
+                        if (!cartItems.isEmpty()) {
+                            BillingService.BillResult r = billingService.removeItem(activeBill, cartItems.size() - 1);
+                            if (r.isSuccess()) refreshCart();
+                        }
+                        e.consume();
+                    }
+                    case F10 -> { clearCart(); e.consume(); }
+                    case F11 -> {
+                        java.util.List<String> keys = new java.util.ArrayList<>(com.minimartpos.util.ThemeManager.THEMES.keySet());
+                        int idx = keys.indexOf(com.minimartpos.util.ThemeManager.getUserTheme());
+                        String nextTheme = keys.get((idx + 1) % keys.size());
+                        com.minimartpos.util.ThemeManager.setUserTheme(nextTheme);
+                        e.consume();
+                    }
+                    case F12 -> { logout(); e.consume(); }
+                    case DELETE -> {
+                        if (cartTable.isFocused() && !cartTable.getSelectionModel().isEmpty()) {
+                            int idx = cartTable.getSelectionModel().getSelectedIndex();
+                            BillingService.BillResult r = billingService.removeItem(activeBill, idx);
+                            if (r.isSuccess()) refreshCart();
+                        }
+                        e.consume();
+                    }
+                    case D -> {
+                        if (e.isControlDown()) { voidBill(); e.consume(); }
+                    }
+                    case P -> {
+                        if (e.isControlDown()) { reprintLastBill(); e.consume(); }
+                    }
+                    case C -> {
+                        if (e.isControlDown()) {
+                            new Thread(() -> com.minimartpos.hardware.CashDrawer.open()).start();
+                            e.consume();
+                        }
+                    }
+                    case H -> {
+                        if (e.isControlDown()) {
+                            AlertUtil.showInfo("Keyboard Shortcuts",
+                                "F1: Search Product\n" +
+                                "F2: Apply Discount to Selected Item\n" +
+                                "F3: Apply Bill Discount\n" +
+                                "F4: Open Customer Selection\n" +
+                                "F5: Pay via Cash\n" +
+                                "F6: Reprint Last Bill\n" +
+                                "F7: Hold Bill\n" +
+                                "F8: Retrieve Held Bill\n" +
+                                "F9: Remove Last Added Item\n" +
+                                "F10: Clear Cart\n" +
+                                "F11: Toggle Theme\n" +
+                                "F12: Logout\n" +
+                                "Ctrl+D: Delete Bill / Void\n" +
+                                "Ctrl+P: Reprint\n" +
+                                "Ctrl+C: Open Cash Drawer\n" +
+                                "DEL: Remove Selected Item in Cart"
+                            );
+                            e.consume();
+                        }
+                    }
+                    default -> {}
+                }
+            });
+        }
     }
 
     // ── Setup Methods ─────────────────────────────────────────────────────────
@@ -241,7 +351,7 @@ public class POSTerminalController implements Initializable {
             BillItem item = event.getRowValue();
             int idx = cartItems.indexOf(item);
             try {
-                int newQty = Integer.parseInt(event.getNewValue().trim());
+                BigDecimal newQty = new BigDecimal(event.getNewValue().trim());
                 BillingService.BillResult result = billingService.updateQuantity(activeBill, idx, newQty);
                 if (!result.isSuccess()) {
                     AlertUtil.showWarning("Cannot Update Quantity", result.getMessage());
@@ -445,7 +555,7 @@ public class POSTerminalController implements Initializable {
             tile.setOpacity(0.45);
             tile.setDisable(true);
         } else {
-            tile.setOnMouseClicked(e -> addProductToCart(product, 1));
+            tile.setOnMouseClicked(e -> addProductToCart(product, BigDecimal.ONE));
         }
 
         // Low stock badge
@@ -557,7 +667,7 @@ public class POSTerminalController implements Initializable {
             if (e.getClickCount() >= 1) {
                 Product selected = searchResultsList.getSelectionModel().getSelectedItem();
                 if (selected != null && !selected.isOutOfStock()) {
-                    addProductToCart(selected, 1);
+                    addProductToCart(selected, BigDecimal.ONE);
                     searchField.clear();
                     showQuickGrid();
                 }
@@ -604,7 +714,7 @@ public class POSTerminalController implements Initializable {
             var product = productService.findByBarcode(barcode);
             Platform.runLater(() -> {
                 if (product.isPresent()) {
-                    addProductToCart(product.get(), 1);
+                    addProductToCart(product.get(), BigDecimal.ONE);
                     setStatus("Added: " + product.get().getName());
                 } else {
                     setStatus("⚠ Product not found for barcode: " + barcode);
@@ -629,7 +739,16 @@ public class POSTerminalController implements Initializable {
 
     // ── Cart Operations ───────────────────────────────────────────────────────
 
-    private void addProductToCart(Product product, int quantity) {
+    private void addProductToCart(Product product, BigDecimal quantity) {
+        // Handle weight-based products automatically!
+        if (product.isWeightBased()) {
+            quantity = promptForWeight(product);
+            if (quantity == null) {
+                // User cancelled weight input
+                return;
+            }
+        }
+        
         BillingService.BillResult result = billingService.addProduct(activeBill, product, quantity);
         if (result.isSuccess()) {
             refreshCart();
@@ -639,16 +758,54 @@ public class POSTerminalController implements Initializable {
             AlertUtil.showWarning("Cannot Add Product", result.getMessage());
         }
         SessionManager.touch();
+        Platform.runLater(() -> barcodeField.requestFocus()); // Return focus after add
+    }
+    
+    private BigDecimal promptForWeight(Product product) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/cashier/WeightInput.fxml"));
+            Parent root = loader.load();
+            WeightInputController ctrl = loader.getController();
+            ctrl.setProduct(product);
+            
+            Stage stage = new Stage();
+            stage.setTitle("Enter Weight");
+            stage.initModality(Modality.WINDOW_MODAL);
+            stage.initOwner(SceneManager.getPrimaryStage());
+            
+            Scene scene = new Scene(root);
+            com.minimartpos.util.ThemeManager.applyCurrentUserTheme(scene);
+            stage.setScene(scene);
+            stage.setResizable(false);
+            stage.showAndWait();
+            
+            if (ctrl.isConfirmed()) {
+                BigDecimal weight = ctrl.getWeightValue();
+                if (weight != null && product.getMinWeight() != null && product.getMaxWeight() != null) {
+                    if (weight.compareTo(product.getMinWeight()) < 0 || weight.compareTo(product.getMaxWeight()) > 0) {
+                        AlertUtil.showWarning("Invalid Weight", "Weight must be between " + 
+                            product.getMinWeight() + " and " + product.getMaxWeight() + " " + product.getWeightUnit());
+                        return null; // Force them to try again if invalid
+                    }
+                }
+                BillItem.class.getMethod("setWeight", BigDecimal.class); // Check if we should use weight? In BillingService addProduct handles it via unit_price logic. The quantity IS the weight.
+                return weight;
+            }
+        } catch (Exception e) {
+            logger.error("Failed to open weight input dialog", e);
+            AlertUtil.showError("Error", "Could not open weight input dialog: " + e.getMessage());
+        }
+        return null; // Cancelled
     }
 
     private void openItemEditDialog(BillItem item) {
         int idx = cartItems.indexOf(item);
-        double qty = AlertUtil.promptNumber(
+        BigDecimal qty = AlertUtil.promptBigDecimal(
                 "Edit Item",
                 "Quantity for: " + item.getProductName(),
                 item.getQuantity());
-        if (qty >= 0) {
-            BillingService.BillResult r = billingService.updateQuantity(activeBill, idx, (int) qty);
+        if (qty.compareTo(BigDecimal.ZERO) >= 0) {
+            BillingService.BillResult r = billingService.updateQuantity(activeBill, idx, qty);
             if (!r.isSuccess()) AlertUtil.showWarning("Update Failed", r.getMessage());
             refreshCart();
         }
@@ -1042,7 +1199,7 @@ public class POSTerminalController implements Initializable {
             // Callback: add new product to cart after save
             ctrl.setOnSaved(product -> {
                 productService.invalidateCache();
-                addProductToCart(product, 1);
+                addProductToCart(product, java.math.BigDecimal.ONE);
                 setupQuickProductGrid(); // refresh grid to show new product
             });
 

@@ -6,20 +6,19 @@ import com.minimartpos.service.ExcelService;
 import com.minimartpos.service.ProductService;
 import com.minimartpos.service.StockService;
 import com.minimartpos.util.AlertUtil;
-import com.minimartpos.util.SceneManager;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.math.BigDecimal;
 import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -79,14 +78,14 @@ public class StockAdjustmentController implements Initializable {
         colBarcode.setCellValueFactory(c  -> new SimpleStringProperty(c.getValue().getBarcode()));
         colName.setCellValueFactory(c     -> new SimpleStringProperty(c.getValue().getName()));
         colCategory.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getCategoryName()));
-        colCurrent.setCellValueFactory(c  -> new SimpleStringProperty(String.valueOf(c.getValue().getStockQuantity())));
+        colCurrent.setCellValueFactory(c  -> new SimpleStringProperty(c.getValue().getStockQuantity() != null ? c.getValue().getStockQuantity().toString() : "0.000"));
         colCurrent.setCellFactory(col -> new TableCell<>() {
             @Override protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
                 if (empty || v == null) { setText(null); setStyle(""); return; }
                 setText(v);
-                int qty = Integer.parseInt(v);
-                if (qty == 0)
+                BigDecimal qty = new BigDecimal(v);
+                if (qty.compareTo(BigDecimal.ZERO) <= 0)
                     setStyle("-fx-text-fill:-pos-danger; -fx-font-weight:bold;");
                 else if (getIndex() < getTableView().getItems().size() &&
                          getTableView().getItems().get(getIndex()).isLowStock())
@@ -194,19 +193,19 @@ public class StockAdjustmentController implements Initializable {
     private void onQtyChanged() {
         if (selectedProduct == null) return;
         try {
-            int qty     = Integer.parseInt(adjustQtyField.getText().trim());
-            int current = selectedProduct.getStockQuantity();
+            BigDecimal qty     = new BigDecimal(adjustQtyField.getText().trim());
+            BigDecimal current = selectedProduct.getStockQuantity();
             String type = adjustTypeCombo.getValue();
-
-            int newQty = switch (type) {
-                case "Remove Stock (Damage/Loss)", "Return to Supplier" -> current - qty;
+    
+            BigDecimal newQty = switch (type) {
+                case "Remove Stock (Damage/Loss)", "Return to Supplier" -> current.subtract(qty);
                 case "Set Exact Quantity"                               -> qty;
-                default                                                  -> current + qty;
+                default                                                  -> current.add(qty);
             };
-
-            newStockPreview.setText(String.valueOf(newQty));
+    
+            newStockPreview.setText(newQty.toString());
             newStockPreview.setStyle("-fx-font-size:18px; -fx-font-weight:bold; -fx-text-fill:" +
-                (newQty < 0 ? "-pos-danger;" : newQty <= selectedProduct.getReorderLevel()
+                (newQty.compareTo(BigDecimal.ZERO) < 0 ? "-pos-danger;" : newQty.compareTo(selectedProduct.getReorderLevel()) <= 0
                     ? "-pos-warning;" : "-pos-success;"));
             clearAdjustError();
         } catch (NumberFormatException e) {
@@ -219,16 +218,16 @@ public class StockAdjustmentController implements Initializable {
         if (selectedProduct == null) return;
         clearAdjustError();
 
-        int qty;
+        BigDecimal qty;
         try {
-            qty = Integer.parseInt(adjustQtyField.getText().trim());
-            if (qty < 0) { showAdjustError("Quantity must be positive."); return; }
+            qty = new BigDecimal(adjustQtyField.getText().trim());
+            if (qty.compareTo(BigDecimal.ZERO) < 0) { showAdjustError("Quantity must be positive."); return; }
         } catch (NumberFormatException e) {
             showAdjustError("Please enter a valid number."); return;
         }
 
         String type     = adjustTypeCombo.getValue();
-        int    current  = selectedProduct.getStockQuantity();
+        BigDecimal current  = selectedProduct.getStockQuantity();
         int    userId   = SessionManager.getCurrentUser().getId();
         boolean success;
 
@@ -236,15 +235,15 @@ public class StockAdjustmentController implements Initializable {
             case "Set Exact Quantity" ->
                 stockService.manualAdjust(selectedProduct.getId(), qty, userId);
             case "Remove Stock (Damage/Loss)" -> {
-                if (qty > current) { showAdjustError("Cannot remove more than current stock."); yield false; }
-                yield stockService.manualAdjust(selectedProduct.getId(), current - qty, userId);
+                if (qty.compareTo(current) > 0) { showAdjustError("Cannot remove more than current stock."); yield false; }
+                yield stockService.manualAdjust(selectedProduct.getId(), current.subtract(qty), userId);
             }
             case "Return to Supplier" -> {
-                if (qty > current) { showAdjustError("Cannot return more than current stock."); yield false; }
-                yield stockService.manualAdjust(selectedProduct.getId(), current - qty, userId);
+                if (qty.compareTo(current) > 0) { showAdjustError("Cannot return more than current stock."); yield false; }
+                yield stockService.manualAdjust(selectedProduct.getId(), current.subtract(qty), userId);
             }
             default -> // Add Stock
-                stockService.manualAdjust(selectedProduct.getId(), current + qty, userId);
+                stockService.manualAdjust(selectedProduct.getId(), current.add(qty), userId);
         };
 
         if (success) {
@@ -293,10 +292,10 @@ public class StockAdjustmentController implements Initializable {
             new ExcelService().exportStock(toExport, file.getAbsolutePath());
 
             long low = toExport.stream()
-                .filter(p -> p.getStockQuantity() > 0 && p.getStockQuantity() <= p.getReorderLevel())
+                .filter(p -> p.getStockQuantity().compareTo(BigDecimal.ZERO) > 0 && p.getStockQuantity().compareTo(p.getReorderLevel()) <= 0)
                 .count();
             long out = toExport.stream()
-                .filter(p -> p.getStockQuantity() <= 0)
+                .filter(p -> p.getStockQuantity().compareTo(BigDecimal.ZERO) <= 0)
                 .count();
 
             AlertUtil.showInfo("Stock Exported",

@@ -32,13 +32,13 @@ public class UserRepository {
 
     private static final String SQL_INSERT =
         "INSERT INTO users (username, password_hash, full_name, role, email, phone, active, " +
-        "session_timeout_minutes, cash_limit, daily_sales_target) " +
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        "session_timeout_minutes, cash_limit, daily_sales_target, theme_preference) " +
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     private static final String SQL_UPDATE =
         "UPDATE users SET full_name=?, role=?, email=?, phone=?, active=?, " +
         "session_timeout_minutes=?, cash_limit=?, daily_sales_target=?, " +
-        "updated_at=NOW() WHERE id=?";
+        "theme_preference=?, updated_at=NOW() WHERE id=?";
 
     private static final String SQL_UPDATE_PASSWORD =
         "UPDATE users SET password_hash=?, updated_at=NOW() WHERE id=?";
@@ -48,6 +48,9 @@ public class UserRepository {
 
     private static final String SQL_UPDATE_FAILED_LOGIN =
         "UPDATE users SET failed_login_attempts=?, locked_until=? WHERE id=?";
+
+    private static final String SQL_UPDATE_THEME =
+        "UPDATE users SET theme_preference=?, last_theme_change=NOW() WHERE id=?";
 
     private static final String SQL_DELETE_PERMISSIONS =
         "DELETE FROM user_permissions WHERE user_id=?";
@@ -111,6 +114,7 @@ public class UserRepository {
             ps.setInt(8,     user.getSessionTimeoutMinutes());
             ps.setBigDecimal(9,  user.getCashLimit());
             ps.setBigDecimal(10, user.getDailySalesTarget());
+            ps.setString(11, user.getThemePreference());
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (keys.next()) {
@@ -136,7 +140,8 @@ public class UserRepository {
             ps.setInt(6,     user.getSessionTimeoutMinutes());
             ps.setBigDecimal(7, user.getCashLimit());
             ps.setBigDecimal(8, user.getDailySalesTarget());
-            ps.setInt(9,     user.getId());
+            ps.setString(9,  user.getThemePreference());
+            ps.setInt(10,    user.getId());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             logger.error("update user error: {}", e.getMessage(), e);
@@ -176,6 +181,17 @@ public class UserRepository {
             ps.executeUpdate();
         } catch (SQLException e) {
             logger.error("updateFailedLogin error: {}", e.getMessage(), e);
+        }
+    }
+
+    public void updateTheme(int userId, String theme) {
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(SQL_UPDATE_THEME)) {
+            ps.setString(1, theme);
+            ps.setInt(2, userId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            logger.error("updateTheme error: {}", e.getMessage(), e);
         }
     }
 
@@ -256,6 +272,14 @@ public class UserRepository {
             u.setDailySalesTarget(dst != null ? dst : java.math.BigDecimal.ZERO);
         } catch (SQLException ignored) {
             // Column may not exist on older installs — safe default
+        }
+
+        try {
+            u.setThemePreference(rs.getString("theme_preference"));
+            Timestamp themeTime = rs.getTimestamp("last_theme_change");
+            if (themeTime != null) u.setLastThemeChange(themeTime.toLocalDateTime());
+        } catch (SQLException ignored) {
+            // Theme fields may not exist yet
         }
 
         Timestamp locked = rs.getTimestamp("locked_until");

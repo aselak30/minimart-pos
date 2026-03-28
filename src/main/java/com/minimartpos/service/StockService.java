@@ -4,6 +4,7 @@ import com.minimartpos.config.DatabaseConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.math.BigDecimal;
 import java.sql.*;
 
 /**
@@ -27,20 +28,20 @@ public class StockService {
      * Deducts stock after a successful sale.
      * Uses SELECT FOR UPDATE to prevent race conditions on concurrent machines.
      */
-    public boolean deductStock(int productId, int quantity, int billId, int userId) {
+    public boolean deductStock(int productId, BigDecimal quantity, int billId, int userId) {
         try (Connection conn = DatabaseConfig.getConnection()) {
             conn.setAutoCommit(false);
             try {
-                int current = getCurrentStock(conn, productId);
-                if (current < quantity) {
+                BigDecimal current = getCurrentStock(conn, productId);
+                if (current.compareTo(quantity) < 0) {
                     conn.rollback();
                     logger.warn("Stock deduction failed: product={} has {} but need {}",
                                 productId, current, quantity);
                     return false;
                 }
-                adjustStock(conn, productId, -quantity);
-                recordAdjustment(conn, productId, -quantity, "SALE", billId,
-                                 current, current - quantity, userId);
+                adjustStock(conn, productId, quantity.negate());
+                recordAdjustment(conn, productId, quantity.negate(), "SALE", billId,
+                                 current, current.subtract(quantity), userId);
                 conn.commit();
                 return true;
             } catch (SQLException e) {
@@ -58,14 +59,14 @@ public class StockService {
     /**
      * Adds stock back (e.g. on void or return).
      */
-    public boolean addStock(int productId, int quantity, int referenceId, int userId, String reason) {
+    public boolean addStock(int productId, BigDecimal quantity, int referenceId, int userId, String reason) {
         try (Connection conn = DatabaseConfig.getConnection()) {
             conn.setAutoCommit(false);
             try {
-                int current = getCurrentStock(conn, productId);
+                BigDecimal current = getCurrentStock(conn, productId);
                 adjustStock(conn, productId, quantity);
                 recordAdjustment(conn, productId, quantity, reason, referenceId,
-                                 current, current + quantity, userId);
+                                 current, current.add(quantity), userId);
                 conn.commit();
                 return true;
             } catch (SQLException e) {
@@ -83,15 +84,15 @@ public class StockService {
     /**
      * Manual stock set by admin/cashier with permission.
      */
-    public boolean manualAdjust(int productId, int newQuantity, int userId) {
+    public boolean manualAdjust(int productId, BigDecimal newQuantity, int userId) {
         try (Connection conn = DatabaseConfig.getConnection()) {
             conn.setAutoCommit(false);
             try {
-                int current = getCurrentStock(conn, productId);
-                int delta   = newQuantity - current;
+                BigDecimal current = getCurrentStock(conn, productId);
+                BigDecimal delta   = newQuantity.subtract(current);
                 try (PreparedStatement ps = conn.prepareStatement(
                         "UPDATE products SET stock_quantity=?, updated_at=NOW() WHERE id=?")) {
-                    ps.setInt(1, newQuantity);
+                    ps.setBigDecimal(1, newQuantity);
                     ps.setInt(2, productId);
                     ps.executeUpdate();
                 }
@@ -113,33 +114,33 @@ public class StockService {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private int getCurrentStock(Connection conn, int productId) throws SQLException {
+    private BigDecimal getCurrentStock(Connection conn, int productId) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(SQL_GET_STOCK)) {
             ps.setInt(1, productId);
             try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? rs.getInt("stock_quantity") : 0;
+                return rs.next() ? rs.getBigDecimal("stock_quantity") : BigDecimal.ZERO;
             }
         }
     }
 
-    private void adjustStock(Connection conn, int productId, int delta) throws SQLException {
+    private void adjustStock(Connection conn, int productId, BigDecimal delta) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(SQL_ADJUST_STOCK)) {
-            ps.setInt(1, delta);
+            ps.setBigDecimal(1, delta);
             ps.setInt(2, productId);
             ps.executeUpdate();
         }
     }
 
-    private void recordAdjustment(Connection conn, int productId, int adjustment,
-                                   String reason, int refId, int oldQty, int newQty,
+    private void recordAdjustment(Connection conn, int productId, BigDecimal adjustment,
+                                   String reason, int refId, BigDecimal oldQty, BigDecimal newQty,
                                    int userId) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(SQL_INSERT_ADJUSTMENT)) {
             ps.setInt(1,    productId);
-            ps.setInt(2,    adjustment);
+            ps.setBigDecimal(2,    adjustment);
             ps.setString(3, reason);
             ps.setInt(4,    refId);
-            ps.setInt(5,    oldQty);
-            ps.setInt(6,    newQty);
+            ps.setBigDecimal(5,    oldQty);
+            ps.setBigDecimal(6,    newQty);
             ps.setInt(7,    userId);
             ps.executeUpdate();
         }

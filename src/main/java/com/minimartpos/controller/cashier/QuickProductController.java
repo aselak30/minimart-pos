@@ -153,12 +153,12 @@ public class QuickProductController implements Initializable {
 
         // Optional fields with safe defaults
         BigDecimal cost  = CurrencyUtil.parse(fieldCost.getText());
-        int stock;
+        BigDecimal stock;
         try {
             stock = fieldStock.getText().isBlank()
-                ? 0 : Integer.parseInt(fieldStock.getText().trim());
+                ? BigDecimal.ZERO : new BigDecimal(fieldStock.getText().trim());
         } catch (NumberFormatException e) {
-            showError("Stock must be a whole number.");
+            showError("Stock must be a valid number.");
             return;
         }
 
@@ -171,7 +171,7 @@ public class QuickProductController implements Initializable {
         p.setUnitPrice(price);
         p.setCostPrice(cost.compareTo(BigDecimal.ZERO) > 0 ? cost : BigDecimal.ZERO);
         p.setStockQuantity(stock);
-        p.setReorderLevel(5);           // sensible default
+        p.setReorderLevel(BigDecimal.valueOf(5));           // sensible default
         p.setTaxRate(BigDecimal.ZERO);  // no tax by default — admin can edit later
         p.setDiscountAllowed(true);
         p.setActive(true);

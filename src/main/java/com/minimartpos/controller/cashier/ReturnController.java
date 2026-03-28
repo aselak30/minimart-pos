@@ -108,14 +108,14 @@ public class ReturnController implements Initializable {
         colQtyRet.setOnEditCommit(event -> {
             ReturnItem ri = event.getRowValue();
             try {
-                int qty = Integer.parseInt(event.getNewValue().trim());
-                int max = ri.getBillItem().getQuantity();
-                if (qty < 0 || qty > max) {
+                BigDecimal qty = new BigDecimal(event.getNewValue().trim());
+                BigDecimal max = ri.getBillItem().getQuantity();
+                if (qty.compareTo(BigDecimal.ZERO) < 0 || qty.compareTo(max) > 0) {
                     AlertUtil.showWarning("Invalid", "Return quantity must be 0–" + max);
                     qty = ri.getReturnQty();
                 }
                 ri.setReturnQty(qty);
-                ri.setSelected(qty > 0);
+                ri.setSelected(qty.compareTo(BigDecimal.ZERO) > 0);
             } catch (NumberFormatException e) {
                 ri.setReturnQty(ri.getBillItem().getQuantity());
             }
@@ -207,7 +207,7 @@ public class ReturnController implements Initializable {
     }
 
     @FXML private void clearSelection() {
-        returnItems.forEach(ri -> { ri.setSelected(false); ri.setReturnQty(0); });
+        returnItems.forEach(ri -> { ri.setSelected(false); ri.setReturnQty(BigDecimal.ZERO); });
         itemsTable.refresh();
         updateRefundTotal();
     }
@@ -216,7 +216,7 @@ public class ReturnController implements Initializable {
         int count = 0;
         BigDecimal total = BigDecimal.ZERO;
         for (ReturnItem ri : returnItems) {
-            if (ri.isSelected() && ri.getReturnQty() > 0) {
+            if (ri.isSelected() && ri.getReturnQty().compareTo(BigDecimal.ZERO) > 0) {
                 total = total.add(ri.getRefundAmount());
                 count++;
             }
@@ -233,7 +233,7 @@ public class ReturnController implements Initializable {
         clearError();
 
         List<ReturnItem> toReturn = returnItems.stream()
-            .filter(ri -> ri.isSelected() && ri.getReturnQty() > 0)
+            .filter(ri -> ri.isSelected() && ri.getReturnQty().compareTo(BigDecimal.ZERO) > 0)
             .toList();
 
         if (toReturn.isEmpty()) {
@@ -295,25 +295,25 @@ public class ReturnController implements Initializable {
 
     public static class ReturnItem {
         private final BillItem billItem;
-        private int     returnQty;
+        private BigDecimal returnQty;
         private boolean selected;
 
         public ReturnItem(BillItem item) {
             this.billItem  = item;
-            this.returnQty = 0;
+            this.returnQty = BigDecimal.ZERO;
             this.selected  = false;
         }
 
         public BillItem getBillItem()           { return billItem; }
-        public int      getReturnQty()          { return returnQty; }
-        public void     setReturnQty(int q)     { this.returnQty = q; }
+        public BigDecimal getReturnQty()          { return returnQty; }
+        public void     setReturnQty(BigDecimal q)     { this.returnQty = q; }
         public boolean  isSelected()            { return selected; }
         public void     setSelected(boolean s)  { this.selected = s; }
 
         public BigDecimal getRefundAmount() {
-            if (!selected || returnQty <= 0) return BigDecimal.ZERO;
+            if (!selected || returnQty == null || returnQty.compareTo(BigDecimal.ZERO) <= 0) return BigDecimal.ZERO;
             return billItem.getUnitPrice()
-                .multiply(BigDecimal.valueOf(returnQty));
+                .multiply(returnQty);
         }
     }
 }

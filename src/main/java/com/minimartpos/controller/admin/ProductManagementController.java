@@ -9,7 +9,7 @@ import com.minimartpos.service.ProductService;
 import com.minimartpos.util.AlertUtil;
 import com.minimartpos.util.CurrencyUtil;
 import com.minimartpos.util.DateUtil;
-import com.minimartpos.util.SceneManager;
+import com.minimartpos.util.BarcodeUtil;
 import com.minimartpos.util.ValidationUtil;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -30,9 +30,7 @@ import java.math.RoundingMode;
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.util.ResourceBundle;
-import java.util.UUID;
 
 /**
  * Admin screen for managing products.
@@ -91,6 +89,13 @@ public class ProductManagementController implements Initializable {
     @FXML private CheckBox    fieldDiscountAllowed;
     @FXML private TextField   fieldStock;
     @FXML private TextField   fieldReorder;
+    @FXML private CheckBox    fieldIsWeightBased;
+    @FXML private VBox        weightSettingsBox;
+    @FXML private ComboBox<String> fieldWeightUnit;
+    @FXML private TextField   fieldPricePerUnit;
+    @FXML private TextField   fieldDefaultWeight;
+    @FXML private TextField   fieldMinWeight;
+    @FXML private TextField   fieldMaxWeight;
     @FXML private DatePicker  fieldExpiry;
     @FXML private TextField   fieldBatch;
     @FXML private TextField   fieldLocation;
@@ -123,6 +128,7 @@ public class ProductManagementController implements Initializable {
         statusFilter.setItems(FXCollections.observableArrayList(
             "Active", "Inactive", "All"));
         statusFilter.getSelectionModel().selectFirst();
+        fieldWeightUnit.setItems(FXCollections.observableArrayList("kg", "g", "pcs", "ltr", "ml"));
     }
 
     private void setupTableColumns() {
@@ -137,14 +143,14 @@ public class ProductManagementController implements Initializable {
             new SimpleStringProperty(CurrencyUtil.formatPlain(c.getValue().getCostPrice())));
 
         colStock.setCellValueFactory(c ->
-            new SimpleStringProperty(String.valueOf(c.getValue().getStockQuantity())));
+            new SimpleStringProperty(c.getValue().getStockQuantity() != null ? c.getValue().getStockQuantity().toString() : "0"));
         colStock.setCellFactory(col -> new TableCell<>() {
             @Override protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
                 if (empty || v == null) { setText(null); setStyle(""); return; }
                 setText(v);
-                int qty = Integer.parseInt(v);
-                if (qty == 0)
+                BigDecimal qty = new BigDecimal(v);
+                if (qty.compareTo(BigDecimal.ZERO) <= 0)
                     setStyle("-fx-text-fill:-pos-danger; -fx-font-weight:bold;");
                 else if (getTableView() != null && getIndex() < getTableView().getItems().size()) {
                     Product p = getTableView().getItems().get(getIndex());
@@ -156,7 +162,7 @@ public class ProductManagementController implements Initializable {
         });
 
         colReorder.setCellValueFactory(c ->
-            new SimpleStringProperty(String.valueOf(c.getValue().getReorderLevel())));
+            new SimpleStringProperty(c.getValue().getReorderLevel() != null ? c.getValue().getReorderLevel().toString() : "0"));
 
         colExpiry.setCellValueFactory(c -> new SimpleStringProperty(
             c.getValue().getExpiryDate() != null
@@ -322,8 +328,17 @@ public class ProductManagementController implements Initializable {
         fieldMaxDiscount.setText(p.getMaxDiscountPercent() != null
             ? p.getMaxDiscountPercent().toPlainString() : "");
         fieldDiscountAllowed.setSelected(p.isDiscountAllowed());
-        fieldStock.setText(String.valueOf(p.getStockQuantity()));
-        fieldReorder.setText(String.valueOf(p.getReorderLevel()));
+        fieldStock.setText(p.getStockQuantity() != null ? p.getStockQuantity().toString() : "0");
+        fieldReorder.setText(p.getReorderLevel() != null ? p.getReorderLevel().toString() : "5");
+        
+        fieldIsWeightBased.setSelected(p.isWeightBased());
+        onWeightBasedToggle();
+        fieldWeightUnit.setValue(p.getWeightUnit());
+        fieldPricePerUnit.setText(p.getPricePerUnit() != null ? p.getPricePerUnit().toString() : "");
+        fieldDefaultWeight.setText(p.getDefaultWeight() != null ? p.getDefaultWeight().toString() : "");
+        fieldMinWeight.setText(p.getMinWeight() != null ? p.getMinWeight().toString() : "");
+        fieldMaxWeight.setText(p.getMaxWeight() != null ? p.getMaxWeight().toString() : "");
+
         fieldExpiry.setValue(p.getExpiryDate());
         fieldBatch.setText(p.getBatchNumber() != null ? p.getBatchNumber() : "");
         fieldLocation.setText(p.getLocation() != null ? p.getLocation() : "");
@@ -343,6 +358,13 @@ public class ProductManagementController implements Initializable {
         fieldPrice.clear(); fieldCost.clear(); fieldTax.setText("0");
         fieldMaxDiscount.clear(); fieldDiscountAllowed.setSelected(true);
         fieldStock.setText("0"); fieldReorder.setText("5");
+        fieldIsWeightBased.setSelected(false);
+        onWeightBasedToggle();
+        fieldWeightUnit.setValue(null);
+        fieldPricePerUnit.clear();
+        fieldDefaultWeight.clear();
+        fieldMinWeight.clear();
+        fieldMaxWeight.clear();
         fieldExpiry.setValue(null); fieldBatch.clear(); fieldLocation.clear();
         fieldActive.setSelected(true);
         fieldCategory.setValue(null); fieldSupplier.setValue(null);
@@ -396,6 +418,13 @@ public class ProductManagementController implements Initializable {
         }
     }
 
+    @FXML
+    private void onWeightBasedToggle() {
+        boolean isWeight = fieldIsWeightBased.isSelected();
+        weightSettingsBox.setVisible(isWeight);
+        weightSettingsBox.setManaged(isWeight);
+    }
+
     // ── Save / Deactivate ─────────────────────────────────────────────────────
 
     @FXML
@@ -406,23 +435,23 @@ public class ProductManagementController implements Initializable {
         String name    = fieldName.getText().trim();
         Category cat   = fieldCategory.getValue();
 
-        if (ValidationUtil.isNullOrBlank(barcode)) { showFormError("Barcode is required."); return; }
-        if (ValidationUtil.isNullOrBlank(name))    { showFormError("Product name is required."); return; }
+        if (com.minimartpos.util.ValidationUtil.isNullOrBlank(barcode)) { showFormError("Barcode is required."); return; }
+        if (com.minimartpos.util.ValidationUtil.isNullOrBlank(name))    { showFormError("Product name is required."); return; }
         if (cat == null)                           { showFormError("Please select a category."); return; }
 
         BigDecimal price = CurrencyUtil.parse(fieldPrice.getText());
         BigDecimal cost  = CurrencyUtil.parse(fieldCost.getText());
-        if (!ValidationUtil.isPositive(price))     { showFormError("Selling price must be greater than 0."); return; }
-        if (!ValidationUtil.isNonNegative(cost))   { showFormError("Cost price cannot be negative."); return; }
+        if (!com.minimartpos.util.ValidationUtil.isPositive(price))     { showFormError("Selling price must be greater than 0."); return; }
+        if (!com.minimartpos.util.ValidationUtil.isNonNegative(cost))   { showFormError("Cost price cannot be negative."); return; }
 
-        int stock   = parseIntSafe(fieldStock.getText(), 0);
-        int reorder = parseIntSafe(fieldReorder.getText(), 5);
+        BigDecimal stock   = parseBigDecimalSafe(fieldStock.getText(), BigDecimal.ZERO);
+        BigDecimal reorder = parseBigDecimalSafe(fieldReorder.getText(), BigDecimal.valueOf(5));
 
         Product p = editingProduct != null ? editingProduct : new Product();
         p.setBarcode(barcode);
         p.setName(name);
-        p.setBrand(ValidationUtil.trimOrNull(fieldBrand.getText()));
-        p.setSizeWeight(ValidationUtil.trimOrNull(fieldSize.getText()));
+        p.setBrand(com.minimartpos.util.ValidationUtil.trimOrNull(fieldBrand.getText()));
+        p.setSizeWeight(com.minimartpos.util.ValidationUtil.trimOrNull(fieldSize.getText()));
         p.setCategoryId(cat.getId());
         p.setCategoryName(cat.getName());
         p.setUnitPrice(price);
@@ -433,9 +462,19 @@ public class ProductManagementController implements Initializable {
         p.setMaxDiscountPercent(maxDisc.compareTo(BigDecimal.ZERO) > 0 ? maxDisc : null);
         p.setStockQuantity(stock);
         p.setReorderLevel(reorder);
+
+        p.setWeightBased(fieldIsWeightBased.isSelected());
+        if (p.isWeightBased()) {
+            p.setWeightUnit(fieldWeightUnit.getValue());
+            p.setPricePerUnit(parseBigDecimalSafe(fieldPricePerUnit.getText(), null));
+            p.setDefaultWeight(parseBigDecimalSafe(fieldDefaultWeight.getText(), BigDecimal.ONE));
+            p.setMinWeight(parseBigDecimalSafe(fieldMinWeight.getText(), BigDecimal.valueOf(0.001)));
+            p.setMaxWeight(parseBigDecimalSafe(fieldMaxWeight.getText(), BigDecimal.valueOf(50)));
+        }
+
         p.setExpiryDate(fieldExpiry.getValue());
-        p.setBatchNumber(ValidationUtil.trimOrNull(fieldBatch.getText()));
-        p.setLocation(ValidationUtil.trimOrNull(fieldLocation.getText()));
+        p.setBatchNumber(com.minimartpos.util.ValidationUtil.trimOrNull(fieldBatch.getText()));
+        p.setLocation(com.minimartpos.util.ValidationUtil.trimOrNull(fieldLocation.getText()));
         p.setActive(fieldActive.isSelected());
 
         Supplier supplier = fieldSupplier.getValue();
@@ -468,7 +507,7 @@ public class ProductManagementController implements Initializable {
         copy.setTaxRate(editingProduct.getTaxRate());
         copy.setDiscountAllowed(editingProduct.isDiscountAllowed());
         copy.setMaxDiscountPercent(editingProduct.getMaxDiscountPercent());
-        copy.setStockQuantity(0);                    // fresh stock = 0
+        copy.setStockQuantity(BigDecimal.ZERO);                    // fresh stock = 0
         copy.setReorderLevel(editingProduct.getReorderLevel());
         copy.setSupplierId(editingProduct.getSupplierId());
         copy.setSupplierName(editingProduct.getSupplierName());
@@ -663,6 +702,12 @@ public class ProductManagementController implements Initializable {
 
     private int parseIntSafe(String text, int fallback) {
         try { return Integer.parseInt(text.trim()); }
+        catch (NumberFormatException e) { return fallback; }
+    }
+
+    private BigDecimal parseBigDecimalSafe(String text, BigDecimal fallback) {
+        if (text == null || text.isBlank()) return fallback;
+        try { return new BigDecimal(text.trim()); }
         catch (NumberFormatException e) { return fallback; }
     }
 

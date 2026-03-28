@@ -74,17 +74,17 @@ public class BillingService {
      *
      * @return  Result with success/failure and message.
      */
-    public BillResult addProduct(Bill bill, Product product, int quantity) {
+    public BillResult addProduct(Bill bill, Product product, BigDecimal quantity) {
         if (product == null) {
             return BillResult.fail("Product not found.");
         }
         if (!product.isActive()) {
             return BillResult.fail("Product '" + product.getName() + "' is inactive.");
         }
-        if (product.isOutOfStock() && quantity > 0) {
+        if (product.isOutOfStock() && quantity.compareTo(BigDecimal.ZERO) > 0) {
             return BillResult.fail("'" + product.getName() + "' is out of stock.");
         }
-        if (product.getStockQuantity() < quantity) {
+        if (product.getStockQuantity() != null && product.getStockQuantity().compareTo(quantity) < 0) {
             return BillResult.fail("Insufficient stock. Available: " + product.getStockQuantity());
         }
 
@@ -95,8 +95,8 @@ public class BillingService {
 
         if (existing.isPresent()) {
             BillItem item    = existing.get();
-            int      newQty  = item.getQuantity() + quantity;
-            if (newQty > product.getStockQuantity()) {
+            BigDecimal newQty = item.getQuantity().add(quantity);
+            if (product.getStockQuantity() != null && newQty.compareTo(product.getStockQuantity()) > 0) {
                 return BillResult.fail("Cannot add more. Available: " + product.getStockQuantity());
             }
             item.setQuantity(newQty);
@@ -127,20 +127,20 @@ public class BillingService {
      * Updates the quantity of a cart item.
      * Passing quantity = 0 removes the item.
      */
-    public BillResult updateQuantity(Bill bill, int itemIndex, int newQty) {
+    public BillResult updateQuantity(Bill bill, int itemIndex, BigDecimal newQty) {
         if (itemIndex < 0 || itemIndex >= bill.getItems().size()) {
             return BillResult.fail("Invalid item index.");
         }
-        if (newQty == 0) {
+        if (newQty.compareTo(BigDecimal.ZERO) == 0) {
             return removeItem(bill, itemIndex);
         }
-        if (newQty < 0 && !SessionManager.hasPermission(Permission.ADD_NEGATIVE_QUANTITY)) {
+        if (newQty.compareTo(BigDecimal.ZERO) < 0 && !SessionManager.hasPermission(Permission.ADD_NEGATIVE_QUANTITY)) {
             return BillResult.fail("You do not have permission to add negative quantities.");
         }
 
         BillItem item    = bill.getItems().get(itemIndex);
         Optional<Product> prod = productRepo.findById(item.getProductId());
-        if (prod.isPresent() && newQty > prod.get().getStockQuantity()) {
+        if (prod.isPresent() && prod.get().getStockQuantity() != null && newQty.compareTo(prod.get().getStockQuantity()) > 0) {
             return BillResult.fail("Insufficient stock. Available: " + prod.get().getStockQuantity());
         }
 
@@ -295,8 +295,11 @@ public class BillingService {
 
         // Deduct stock for each item (atomic per product)
         for (BillItem item : bill.getItems()) {
+            BigDecimal qtyToDeduct = item.isWeightBased() ? item.getWeight() : item.getQuantity();
+            if (qtyToDeduct == null) qtyToDeduct = BigDecimal.ZERO;
+            
             boolean stockOk = stockService.deductStock(
-                    item.getProductId(), item.getQuantity(),
+                    item.getProductId(), qtyToDeduct,
                     bill.getId(), bill.getCashierId());
             if (!stockOk) {
                 logger.warn("Stock deduction failed for product {} on bill {}",
@@ -346,7 +349,10 @@ public class BillingService {
 
         // Reverse stock deductions
         for (BillItem item : bill.getItems()) {
-            stockService.addStock(item.getProductId(), item.getQuantity(),
+            BigDecimal qtyToAdd = item.isWeightBased() ? item.getWeight() : item.getQuantity();
+            if (qtyToAdd == null) qtyToAdd = BigDecimal.ZERO;
+            
+            stockService.addStock(item.getProductId(), qtyToAdd,
                                   bill.getId(), bill.getCashierId(), "RETURN");
         }
 

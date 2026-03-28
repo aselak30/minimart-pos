@@ -29,6 +29,8 @@ public class User {
     private int           sessionTimeoutMinutes;
     private java.math.BigDecimal cashLimit        = java.math.BigDecimal.ZERO; // 0 = no limit
     private java.math.BigDecimal dailySalesTarget = java.math.BigDecimal.ZERO;
+    private String        themePreference    = "light";
+    private LocalDateTime lastThemeChange;
 
     /** Configurable permissions for cashiers. Admins: always full access. */
     private Set<Permission> permissions = EnumSet.noneOf(Permission.class);
@@ -52,7 +54,7 @@ public class User {
     // ── Permission Helpers ────────────────────────────────────────────────────
 
     public boolean hasPermission(Permission p) {
-        if (role == Role.ADMIN) return true;
+        if (role == Role.SUPER_ADMIN || role == Role.ADMIN) return true;
         return permissions.contains(p);
     }
 
@@ -120,6 +122,12 @@ public class User {
     public void setDailySalesTarget(java.math.BigDecimal t)             { this.dailySalesTarget = t != null ? t : java.math.BigDecimal.ZERO; }
 
     public Set<Permission> getPermissions()                             { return permissions; }
+
+    public String getThemePreference() { return themePreference; }
+    public void setThemePreference(String themePreference) { this.themePreference = themePreference; }
+
+    public LocalDateTime getLastThemeChange() { return lastThemeChange; }
+    public void setLastThemeChange(LocalDateTime lastThemeChange) { this.lastThemeChange = lastThemeChange; }
 
     public boolean isLocked() {
         return lockedUntil != null && LocalDateTime.now().isBefore(lockedUntil);

@@ -5,7 +5,8 @@ package com.minimartpos.model.enums;
  */
 public enum Role {
     ADMIN("Administrator"),
-    CASHIER("Cashier");
+    CASHIER("Cashier"),
+    SUPER_ADMIN("Super Administrator");
 
     private final String displayName;
 

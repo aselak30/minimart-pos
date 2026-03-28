@@ -1,0 +1,85 @@
+/* =============================================================================
+   MiniMart POS Ultimate - Dark Theme
+   ============================================================================= */
+
+.root {
+    /* Brand colours - slightly adjusted for dark mode */
+    -pos-primary:        #2196F3;
+    -pos-primary-dark:   #1976D2;
+    -pos-primary-light:  #0D47A1;
+    -pos-accent:         #FFB300;
+    -pos-accent-dark:    #FF8F00;
+    -pos-success:        #4CAF50;
+    -pos-warning:        #FF9800;
+    -pos-danger:         #F44336;
+    -pos-info:           #03A9F4;
+
+    /* Surfaces */
+    -pos-bg:             #121212;
+    -pos-surface:        #1E1E1E;
+    -pos-surface-alt:    #2D2D2D;
+    -pos-border:         #333333;
+
+    /* Text */
+    -pos-text-primary:   #E0E0E0;
+    -pos-text-secondary: #B0B0B0;
+    -pos-text-disabled:  #606060;
+    -pos-text-on-dark:   #FFFFFF;
+}
+
+/* Overrides for specific components in dark mode */
+.scene-bg {
+    -fx-background-color: -pos-bg;
+}
+
+.table-view {
+    -fx-background-color: -pos-surface;
+}
+
+.table-row-cell:even {
+    -fx-background-color: #252525;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: #1E1E1E;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: -pos-surface-alt;
+}
+
+.text-field, .password-field, .text-area, .combo-box {
+     -fx-control-inner-background: -pos-surface;
+}
+
+/* Adjust shadows for dark mode */
+.card, .login-card, .kpi-card {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 10, 0, 0, 4);
+}
+
+.sidebar {
+    -fx-background-color: #000000;
+}
+
+.topbar {
+    -fx-background-color: #1A1A1A;
+}
+
+/* POS Cart Panel Override */
+.right-panel {
+    -fx-background-color: #1E1E1E !important;
+}
+
+/* Fix list view scroll background */
+.list-view {
+    -fx-background-color: #1E1E1E;
+}
+
+.list-cell {
+    -fx-background-color: #1E1E1E;
+    -fx-text-fill: -pos-text-primary;
+}
+
+.list-cell:hover {
+    -fx-background-color: #2D2D2D;
+}

@@ -23,14 +23,14 @@ public class BillRepository {
         "INSERT INTO bills (bill_number, cashier_id, customer_id, machine_id, " +
         "subtotal, discount_percent, discount_amount, tax_amount, total_amount, " +
         "paid_amount, change_amount, cost_total, profit_total, payment_type, " +
-        "status, void_reason, notes, created_at, finalized_at) " +
-        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        "status, void_reason, notes, created_at, finalized_at, is_editable) " +
+        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
     private static final String SQL_INSERT_ITEM =
         "INSERT INTO bill_items (bill_id, product_id, product_name, product_barcode, " +
         "quantity, unit_price, original_price, cost_price, discount_percent, discount_amount, " +
-        "tax_rate, tax_amount, line_total, is_price_override) " +
-        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        "tax_rate, tax_amount, line_total, is_price_override, is_weight_based, weight, weight_unit) " +
+        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
     private static final String SQL_UPDATE_STATUS =
         "UPDATE bills SET status=?, void_reason=?, updated_at=NOW() WHERE id=?";
@@ -120,6 +120,7 @@ public class BillRepository {
             ps.setTimestamp(18, Timestamp.valueOf(bill.getCreatedAt()));
             ps.setTimestamp(19, bill.getFinalizedAt() != null
                                 ? Timestamp.valueOf(bill.getFinalizedAt()) : null);
+            ps.setBoolean(20, bill.isEditable());
             ps.executeUpdate();
 
             try (ResultSet keys = ps.getGeneratedKeys()) {
@@ -138,7 +139,7 @@ public class BillRepository {
                 ps.setInt(2,     item.getProductId());
                 ps.setString(3,  item.getProductName());
                 ps.setString(4,  item.getProductBarcode());
-                ps.setInt(5,     item.getQuantity());
+                ps.setBigDecimal(5,  item.getQuantity());
                 ps.setBigDecimal(6,  item.getUnitPrice());
                 ps.setBigDecimal(7,  item.getOriginalPrice());
                 ps.setBigDecimal(8,  item.getCostPrice() != null
@@ -150,6 +151,9 @@ public class BillRepository {
                 ps.setBigDecimal(12, item.getTaxAmount());
                 ps.setBigDecimal(13, item.getLineTotal());
                 ps.setBoolean(14, item.isPriceOverride());
+                ps.setBoolean(15, item.isWeightBased());
+                ps.setBigDecimal(16, item.getWeight());
+                ps.setString(17, item.getWeightUnit());
                 ps.addBatch();
             }
             ps.executeBatch();
@@ -340,6 +344,14 @@ public class BillRepository {
         if (created != null) b.setCreatedAt(created.toLocalDateTime());
         Timestamp finalized = rs.getTimestamp("finalized_at");
         if (finalized != null) b.setFinalizedAt(finalized.toLocalDateTime());
+        
+        try {
+            b.setEditable(rs.getBoolean("is_editable"));
+            b.setDeletedBy(rs.getInt("deleted_by"));
+            b.setDeletedReason(rs.getString("deleted_reason"));
+        } catch (SQLException ignored) {
+            // New columns not present in result set
+        }
         return b;
     }
 
@@ -350,7 +362,7 @@ public class BillRepository {
         i.setProductId(rs.getInt("product_id"));
         i.setProductName(rs.getString("product_name"));
         i.setProductBarcode(rs.getString("product_barcode"));
-        i.setQuantity(rs.getInt("quantity"));
+        i.setQuantity(rs.getBigDecimal("quantity"));
         i.setUnitPrice(rs.getBigDecimal("unit_price"));
         i.setOriginalPrice(rs.getBigDecimal("original_price"));
         i.setCostPrice(rs.getBigDecimal("cost_price"));
@@ -358,6 +370,14 @@ public class BillRepository {
         i.setDiscountAmount(rs.getBigDecimal("discount_amount"));
         i.setTaxRate(rs.getBigDecimal("tax_rate"));
         i.setPriceOverride(rs.getBoolean("is_price_override"));
+        
+        try {
+            i.setWeightBased(rs.getBoolean("is_weight_based"));
+            i.setWeight(rs.getBigDecimal("weight"));
+            i.setWeightUnit(rs.getString("weight_unit"));
+        } catch (SQLException ignored) {
+            // New columns
+        }
         return i;
     }
 

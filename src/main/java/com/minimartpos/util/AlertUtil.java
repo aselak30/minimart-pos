@@ -1,9 +1,6 @@
 package com.minimartpos.util;
 
 import javafx.scene.control.*;
-import javafx.scene.layout.VBox;
-import javafx.stage.Window;
-
 import java.util.Optional;
 
 /**
@@ -75,6 +72,19 @@ public final class AlertUtil {
             return Double.parseDouble(result);
         } catch (NumberFormatException e) {
             return -1;
+        }
+    }
+
+    public static java.math.BigDecimal promptBigDecimal(String title, String label, java.math.BigDecimal defaultValue) {
+        TextInputDialog dialog = new TextInputDialog(defaultValue != null ? defaultValue.toPlainString() : "");
+        dialog.setTitle(title);
+        dialog.setHeaderText(null);
+        dialog.setContentText(label);
+        String result = dialog.showAndWait().orElse("").trim();
+        try {
+            return new java.math.BigDecimal(result);
+        } catch (NumberFormatException e) {
+            return java.math.BigDecimal.valueOf(-1);
         }
     }
 }

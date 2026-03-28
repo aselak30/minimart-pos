@@ -168,11 +168,45 @@
                                             </Button>
                                         </HBox>
                                     </VBox>
+                                </HBox>
+                                <HBox spacing="10">
                                     <VBox spacing="4" HBox.hgrow="ALWAYS">
                                         <Label text="SUPPLIER" styleClass="label-form"/>
                                         <ComboBox fx:id="fieldSupplier" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
                                     </VBox>
+                                    <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                        <Label text="WEIGHT-BASED?" styleClass="label-form"/>
+                                        <CheckBox fx:id="fieldIsWeightBased" text="Sold by weight" onAction="#onWeightBasedToggle"/>
+                                    </VBox>
                                 </HBox>
+
+                                <!-- Weight-based settings (hidden by default) -->
+                                <VBox fx:id="weightSettingsBox" spacing="10" visible="false" managed="false">
+                                    <HBox spacing="10">
+                                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                            <Label text="WEIGHT UNIT" styleClass="label-form"/>
+                                            <ComboBox fx:id="fieldWeightUnit" maxWidth="Infinity"/>
+                                        </VBox>
+                                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                            <Label text="PRICE PER UNIT" styleClass="label-form"/>
+                                            <TextField fx:id="fieldPricePerUnit" promptText="0.00"/>
+                                        </VBox>
+                                    </HBox>
+                                    <HBox spacing="10">
+                                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                            <Label text="DEFAULT WEIGHT" styleClass="label-form"/>
+                                            <TextField fx:id="fieldDefaultWeight" promptText="1.000"/>
+                                        </VBox>
+                                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                            <Label text="MIN WEIGHT" styleClass="label-form"/>
+                                            <TextField fx:id="fieldMinWeight" promptText="0.001"/>
+                                        </VBox>
+                                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                            <Label text="MAX WEIGHT" styleClass="label-form"/>
+                                            <TextField fx:id="fieldMaxWeight" promptText="50.000"/>
+                                        </VBox>
+                                    </HBox>
+                                </VBox>
                             </VBox>
 
                             <!-- Pricing -->

@@ -152,8 +152,8 @@ public class DashboardService {
                 p.setId(rs.getInt("id"));
                 p.setName(rs.getString("name"));
                 p.setBarcode(rs.getString("barcode"));
-                p.setStockQuantity(rs.getInt("stock_quantity"));
-                p.setReorderLevel(rs.getInt("reorder_level"));
+                p.setStockQuantity(rs.getBigDecimal("stock_quantity"));
+                p.setReorderLevel(rs.getBigDecimal("reorder_level"));
                 p.setCategoryName(rs.getString("category_name"));
                 list.add(p);
             }
@@ -188,7 +188,7 @@ public class DashboardService {
                     row.put("id",           rs.getInt("id"));
                     row.put("name",         rs.getString("name"));
                     row.put("batch",        rs.getString("batch_number"));
-                    row.put("stock",        rs.getInt("stock_quantity"));
+                    row.put("stock",        rs.getBigDecimal("stock_quantity"));
                     row.put("expiryDate",   rs.getDate("expiry_date") != null
                                             ? rs.getDate("expiry_date").toLocalDate() : null);
                     row.put("daysLeft",     rs.getInt("days_left"));

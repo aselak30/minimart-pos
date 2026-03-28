@@ -39,6 +39,9 @@ public class Bill {
 
     private LocalDateTime createdAt;
     private LocalDateTime finalizedAt;
+    private boolean       isEditable = true;
+    private int           deletedBy;
+    private String        deletedReason;
 
     // ── Constructors ──────────────────────────────────────────────────────────
 
@@ -69,7 +72,11 @@ public class Bill {
     }
 
     public int getItemCount() {
-        return items.stream().mapToInt(BillItem::getQuantity).sum();
+        if (items == null) return 0;
+        return items.stream()
+                .map(item -> item.getQuantity() != null ? item.getQuantity() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .intValue();
     }
 
     // ── Getters & Setters ─────────────────────────────────────────────────────
@@ -139,4 +146,13 @@ public class Bill {
 
     public LocalDateTime getFinalizedAt()                               { return finalizedAt; }
     public void          setFinalizedAt(LocalDateTime finalizedAt)      { this.finalizedAt = finalizedAt; }
+
+    public boolean isEditable() { return isEditable; }
+    public void setEditable(boolean editable) { isEditable = editable; }
+
+    public int getDeletedBy() { return deletedBy; }
+    public void setDeletedBy(int deletedBy) { this.deletedBy = deletedBy; }
+
+    public String getDeletedReason() { return deletedReason; }
+    public void setDeletedReason(String deletedReason) { this.deletedReason = deletedReason; }
 }

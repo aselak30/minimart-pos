@@ -31,7 +31,8 @@ public class ExcelService {
         "Barcode", "Product Name", "Brand", "Size/Weight", "Category",
         "Selling Price", "Cost Price", "Tax Rate (%)", "Stock Qty",
         "Reorder Level", "Discount Allowed", "Max Discount (%)",
-        "Expiry Date", "Batch Number", "Location", "Active"
+        "Expiry Date", "Batch Number", "Location", "Active",
+        "Weight Based", "Weight Unit", "Price Per Unit", "Default Weight"
     };
 
     // ── Product Export ────────────────────────────────────────────────────────
@@ -93,8 +94,8 @@ public class ExcelService {
 
                 setNumericCell(row, col++, p.getTaxRate() != null
                     ? p.getTaxRate().doubleValue() : 0.0, rowStyle);
-                setNumericCell(row, col++, p.getStockQuantity(), rowStyle);
-                setNumericCell(row, col++, p.getReorderLevel(), rowStyle);
+                setBigDecimalCell(row, col++, p.getStockQuantity(), rowStyle);
+                setBigDecimalCell(row, col++, p.getReorderLevel(), rowStyle);
                 setCell(row, col++, p.isDiscountAllowed() ? "YES" : "NO", rowStyle);
                 setNumericCell(row, col++, p.getMaxDiscountPercent() != null
                     ? p.getMaxDiscountPercent().doubleValue() : 0.0, rowStyle);
@@ -109,6 +110,10 @@ public class ExcelService {
                 setCell(row, col++, p.getBatchNumber(), rowStyle);
                 setCell(row, col++, p.getLocation(), rowStyle);
                 setCell(row, col++, p.isActive() ? "YES" : "NO", rowStyle);
+                setCell(row, col++, p.isWeightBased() ? "YES" : "NO", rowStyle);
+                setCell(row, col++, p.getWeightUnit(), rowStyle);
+                setBigDecimalCell(row, col++, p.getPricePerUnit(), rowStyle);
+                setBigDecimalCell(row, col++, p.getDefaultWeight(), rowStyle);
 
                 rowNum++;
             }
@@ -206,8 +211,14 @@ public class ExcelService {
         double cost = getDouble(row, cols, "Cost Price", 0.0);
         p.setCostPrice(BigDecimal.valueOf(cost));
         p.setTaxRate(BigDecimal.valueOf(getDouble(row, cols, "Tax Rate (%)", 0.0)));
-        p.setStockQuantity((int) getDouble(row, cols, "Stock Qty", 0.0));
-        p.setReorderLevel(Math.max(1, (int) getDouble(row, cols, "Reorder Level", 5.0)));
+        p.setStockQuantity(getBigDecimal(row, cols, "Stock Qty", BigDecimal.ZERO));
+        p.setReorderLevel(getBigDecimal(row, cols, "Reorder Level", BigDecimal.valueOf(5)));
+
+        String wtBased = getString(row, cols, "Weight Based");
+        p.setWeightBased("YES".equalsIgnoreCase(wtBased));
+        p.setWeightUnit(getString(row, cols, "Weight Unit"));
+        p.setPricePerUnit(getBigDecimal(row, cols, "Price Per Unit", null));
+        p.setDefaultWeight(getBigDecimal(row, cols, "Default Weight", null));
 
         String discAllowed = getString(row, cols, "Discount Allowed");
         p.setDiscountAllowed(!"NO".equalsIgnoreCase(discAllowed));
@@ -247,9 +258,9 @@ public class ExcelService {
             // Example row
             Row ex = sheet.createRow(1);
             String[] example = {
-                "4890008100309", "Coca Cola 330ml", "Coca-Cola", "330ml", "Beverages",
-                "120.00", "85.00", "0", "100", "10", "YES", "15",
-                "", "", "Aisle 3", "YES"
+                "4890008100309", "Apple Red", "Fresh", "Per Kg", "Fruits",
+                "120.00", "85.00", "0", "50.5", "10", "YES", "0",
+                "", "", "Aisle 1", "YES", "YES", "kg", "120.00", "1.000"
             };
             for (int i = 0; i < example.length; i++) {
                 ex.createCell(i).setCellValue(example[i]);
@@ -313,8 +324,8 @@ public class ExcelService {
 
             for (Product p : products) {
                 Row row = sheet.createRow(rowNum);
-                boolean outOfStock = p.getStockQuantity() <= 0;
-                boolean lowStock   = !outOfStock && p.getStockQuantity() <= p.getReorderLevel();
+                boolean outOfStock = p.getStockQuantity().compareTo(BigDecimal.ZERO) <= 0;
+                boolean lowStock   = !outOfStock && p.getStockQuantity().compareTo(p.getReorderLevel()) <= 0;
 
                 CellStyle rowStyle = outOfStock ? outStyle
                                    : lowStock   ? lowStyle
@@ -330,11 +341,11 @@ public class ExcelService {
 
                 // Current Stock — numeric
                 Cell stockCell = row.createCell(4);
-                stockCell.setCellValue(p.getStockQuantity());
+                stockCell.setCellValue(p.getStockQuantity().doubleValue());
                 if (rowStyle != null) stockCell.setCellStyle(rowStyle);
 
                 Cell reorderCell = row.createCell(5);
-                reorderCell.setCellValue(p.getReorderLevel());
+                reorderCell.setCellValue(p.getReorderLevel().doubleValue());
                 if (rowStyle != null) reorderCell.setCellStyle(rowStyle);
 
                 setStyledCell(row, 6,
@@ -352,9 +363,9 @@ public class ExcelService {
 
                 // Stock value = qty × cost
                 Cell valueCell = row.createCell(9);
-                double stockValue = p.getStockQuantity() *
-                    (p.getCostPrice() != null ? p.getCostPrice().doubleValue() : 0.0);
-                valueCell.setCellValue(stockValue);
+                BigDecimal stockValue = p.getStockQuantity().multiply(
+                    p.getCostPrice() != null ? p.getCostPrice() : BigDecimal.ZERO);
+                valueCell.setCellValue(stockValue.doubleValue());
                 valueCell.setCellStyle(moneyStyle);
 
                 setStyledCell(row, 10, p.getBatchNumber() != null ? p.getBatchNumber() : "", rowStyle);
@@ -582,6 +593,27 @@ public class ExcelService {
         Cell c = row.createCell(col);
         c.setCellValue(value);
         if (style != null) c.setCellStyle(style);
+    }
+
+    private void setBigDecimalCell(Row row, int col, BigDecimal value, CellStyle style) {
+        Cell c = row.createCell(col);
+        if (value != null) {
+            c.setCellValue(value.doubleValue());
+        }
+        if (style != null) c.setCellStyle(style);
+    }
+
+    private BigDecimal getBigDecimal(Row row, Map<String, Integer> cols, String key, BigDecimal def) {
+        Integer idx = cols.get(key);
+        if (idx == null) return def;
+        Cell c = row.getCell(idx);
+        if (c == null) return def;
+        try {
+            if (c.getCellType() == CellType.NUMERIC)
+                return BigDecimal.valueOf(c.getNumericCellValue());
+            else
+                return new BigDecimal(c.getStringCellValue().trim());
+        } catch (Exception e) { return def; }
     }
 
     private String formatKey(String key) {

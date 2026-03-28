@@ -22,8 +22,8 @@ public class Product {
     private BigDecimal taxRate;
     private boolean    discountAllowed;
     private BigDecimal maxDiscountPercent;
-    private int        stockQuantity;
-    private int        reorderLevel;
+    private BigDecimal stockQuantity;
+    private BigDecimal reorderLevel;
     private LocalDate  expiryDate;
     private String     batchNumber;
     private int        supplierId;
@@ -35,6 +35,12 @@ public class Product {
     private String     description;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private boolean       isWeightBased;
+    private String        weightUnit;       // e.g., kg, g, lb, oz
+    private BigDecimal    pricePerUnit;     // price per weight unit
+    private BigDecimal    defaultWeight;    // preset weight value
+    private BigDecimal    minWeight;        // minimum allowed entry
+    private BigDecimal    maxWeight;        // maximum allowed entry
 
     // ── Constructors ──────────────────────────────────────────────────────────
 
@@ -42,19 +48,19 @@ public class Product {
         this.active          = true;
         this.discountAllowed = true;
         this.taxRate         = BigDecimal.ZERO;
-        this.stockQuantity   = 0;
-        this.reorderLevel    = 5;
+        this.stockQuantity   = BigDecimal.ZERO;
+        this.reorderLevel    = BigDecimal.valueOf(5);
         this.createdAt       = LocalDateTime.now();
     }
 
     // ── Computed Helpers ──────────────────────────────────────────────────────
 
     public boolean isLowStock() {
-        return stockQuantity <= reorderLevel;
+        return stockQuantity != null && stockQuantity.compareTo(reorderLevel) <= 0;
     }
 
     public boolean isOutOfStock() {
-        return stockQuantity <= 0;
+        return stockQuantity == null || stockQuantity.compareTo(BigDecimal.ZERO) <= 0;
     }
 
     public boolean isExpiringSoon(int withinDays) {
@@ -117,11 +123,11 @@ public class Product {
     public BigDecimal  getMaxDiscountPercent()                          { return maxDiscountPercent; }
     public void        setMaxDiscountPercent(BigDecimal maxDiscountPercent) { this.maxDiscountPercent = maxDiscountPercent; }
 
-    public int         getStockQuantity()                           { return stockQuantity; }
-    public void        setStockQuantity(int stockQuantity)          { this.stockQuantity = stockQuantity; }
+    public BigDecimal  getStockQuantity()                           { return stockQuantity; }
+    public void        setStockQuantity(BigDecimal stockQuantity)          { this.stockQuantity = stockQuantity; }
 
-    public int         getReorderLevel()                            { return reorderLevel; }
-    public void        setReorderLevel(int reorderLevel)            { this.reorderLevel = reorderLevel; }
+    public BigDecimal  getReorderLevel()                            { return reorderLevel; }
+    public void        setReorderLevel(BigDecimal reorderLevel)            { this.reorderLevel = reorderLevel; }
 
     public LocalDate   getExpiryDate()                              { return expiryDate; }
     public void        setExpiryDate(LocalDate expiryDate)          { this.expiryDate = expiryDate; }
@@ -155,6 +161,24 @@ public class Product {
 
     public LocalDateTime getUpdatedAt()                             { return updatedAt; }
     public void          setUpdatedAt(LocalDateTime updatedAt)      { this.updatedAt = updatedAt; }
+
+    public boolean isWeightBased() { return isWeightBased; }
+    public void setWeightBased(boolean weightBased) { isWeightBased = weightBased; }
+
+    public String getWeightUnit() { return weightUnit; }
+    public void setWeightUnit(String weightUnit) { this.weightUnit = weightUnit; }
+
+    public BigDecimal getPricePerUnit() { return pricePerUnit; }
+    public void setPricePerUnit(BigDecimal pricePerUnit) { this.pricePerUnit = pricePerUnit; }
+
+    public BigDecimal getDefaultWeight() { return defaultWeight; }
+    public void setDefaultWeight(BigDecimal defaultWeight) { this.defaultWeight = defaultWeight; }
+
+    public BigDecimal getMinWeight() { return minWeight; }
+    public void setMinWeight(BigDecimal minWeight) { this.minWeight = minWeight; }
+
+    public BigDecimal getMaxWeight() { return maxWeight; }
+    public void setMaxWeight(BigDecimal maxWeight) { this.maxWeight = maxWeight; }
 
     @Override
     public String toString() {

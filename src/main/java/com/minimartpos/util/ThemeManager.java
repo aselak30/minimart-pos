@@ -159,6 +159,18 @@ public final class ThemeManager {
         applyTheme(scene, getUserTheme());
     }
 
+    /**
+     * Toggles to the next available theme and applies it.
+     */
+    public static void toggleTheme(Scene scene) {
+        String current = getUserTheme();
+        java.util.List<String> keys = new java.util.ArrayList<>(THEMES.keySet());
+        int idx = keys.indexOf(current);
+        String nextTheme = keys.get((idx + 1) % keys.size());
+        setUserTheme(nextTheme);
+        applyTheme(scene, nextTheme);
+    }
+
     // ── DB Persistence ────────────────────────────────────────────────────────
 
     private static String loadThemeFromDb(int userId) {

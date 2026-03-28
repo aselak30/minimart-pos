@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.minimartpos.controller.cashier.WeightInputController"
+      spacing="14" styleClass="card" prefWidth="320">
+    <padding>
+        <Insets top="18" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <Label fx:id="productNameLabel" text="Product Name" styleClass="h3"/>
+    
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <VBox spacing="4" HBox.hgrow="ALWAYS">
+            <Label text="Enter Weight" styleClass="label-form"/>
+            <TextField fx:id="weightField" promptText="0.000" style="-fx-font-size: 20px; -fx-font-weight: bold;" onAction="#confirm"/>
+        </VBox>
+        <Label fx:id="unitLabel" text="kg" styleClass="h3"/>
+    </HBox>
+
+    <HBox spacing="8" alignment="CENTER">
+        <Button text="0.5" styleClass="quick-amt-btn" onAction="#setWeightShortcut" userData="0.5"/>
+        <Button text="1.0" styleClass="quick-amt-btn" onAction="#setWeightShortcut" userData="1.0"/>
+        <Button text="1.5" styleClass="quick-amt-btn" onAction="#setWeightShortcut" userData="1.5"/>
+        <Button text="2.0" styleClass="quick-amt-btn" onAction="#setWeightShortcut" userData="2.0"/>
+        <Button text="2.5" styleClass="quick-amt-btn" onAction="#setWeightShortcut" userData="2.5"/>
+    </HBox>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT" style="-fx-padding: 10 0 0 0;">
+        <Label text="Price/Unit: " styleClass="text-secondary"/>
+        <Label fx:id="pricePerUnitLabel" text="Rs. 0.00" styleClass="h4"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label text="Total: " styleClass="h4"/>
+        <Label fx:id="totalPriceLabel" text="Rs. 0.00" styleClass="pos-total-label" style="-fx-font-size: 18px;"/>
+    </HBox>
+
+    <Separator/>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button text="Cancel (Esc)" styleClass="btn-secondary" onAction="#cancel"/>
+        <Button text="Add to Cart (Enter)" styleClass="btn-primary" onAction="#confirm" defaultButton="true"/>
+    </HBox>
+</VBox>
