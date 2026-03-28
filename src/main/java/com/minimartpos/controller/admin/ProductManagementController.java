@@ -36,79 +36,127 @@ import java.util.ResourceBundle;
  * Admin screen for managing products.
  *
  * Features:
- *  - Searchable + filterable product table (category, status)
- *  - Inline edit panel with full product form
- *  - Live margin/profit preview while editing prices
- *  - Barcode generation (random UUID-based EAN-13 style)
- *  - Add category inline
- *  - Import from Excel (Apache POI — skeleton hooked up)
- *  - Export to Excel
- *  - Activate / Deactivate products
- *  - Low-stock badge in header
+ * - Searchable + filterable product table (category, status)
+ * - Inline edit panel with full product form
+ * - Live margin/profit preview while editing prices
+ * - Barcode generation (random UUID-based EAN-13 style)
+ * - Add category inline
+ * - Import from Excel (Apache POI — skeleton hooked up)
+ * - Export to Excel
+ * - Activate / Deactivate products
+ * - Low-stock badge in header
  */
 public class ProductManagementController implements Initializable {
 
     private static final Logger logger = LogManager.getLogger(ProductManagementController.class);
 
     // ── FXML ─────────────────────────────────────────────────────────────────
-    @FXML private Label  sidebarUserLabel;
-    @FXML private TextField searchField;
-    @FXML private ComboBox<String>   categoryFilter;
-    @FXML private ComboBox<String>   statusFilter;
-    @FXML private Label  productCountLabel;
-    @FXML private Label  lowStockBadge;
+    @FXML
+    private Label sidebarUserLabel;
+    @FXML
+    private TextField searchField;
+    @FXML
+    private ComboBox<String> categoryFilter;
+    @FXML
+    private ComboBox<String> statusFilter;
+    @FXML
+    private Label productCountLabel;
+    @FXML
+    private Label lowStockBadge;
 
     // Table
-    @FXML private TableView<Product>            productTable;
-    @FXML private TableColumn<Product, String>  colBarcode;
-    @FXML private TableColumn<Product, String>  colName;
-    @FXML private TableColumn<Product, String>  colCategory;
-    @FXML private TableColumn<Product, String>  colPrice;
-    @FXML private TableColumn<Product, String>  colCost;
-    @FXML private TableColumn<Product, String>  colStock;
-    @FXML private TableColumn<Product, String>  colReorder;
-    @FXML private TableColumn<Product, String>  colExpiry;
-    @FXML private TableColumn<Product, String>  colStatus;
-    @FXML private TableColumn<Product, String>  colActions;
+    @FXML
+    private TableView<Product> productTable;
+    @FXML
+    private TableColumn<Product, String> colBarcode;
+    @FXML
+    private TableColumn<Product, String> colName;
+    @FXML
+    private TableColumn<Product, String> colCategory;
+    @FXML
+    private TableColumn<Product, String> colPrice;
+    @FXML
+    private TableColumn<Product, String> colCost;
+    @FXML
+    private TableColumn<Product, String> colStock;
+    @FXML
+    private TableColumn<Product, String> colReorder;
+    @FXML
+    private TableColumn<Product, String> colExpiry;
+    @FXML
+    private TableColumn<Product, String> colStatus;
+    @FXML
+    private TableColumn<Product, String> colActions;
 
     // Edit panel
-    @FXML private VBox        editPanel;
-    @FXML private Label       editPanelTitle;
-    @FXML private TextField   fieldBarcode;
-    @FXML private TextField   fieldName;
-    @FXML private TextField   fieldBrand;
-    @FXML private TextField   fieldSize;
-    @FXML private ComboBox<Category>  fieldCategory;
-    @FXML private ComboBox<Supplier>  fieldSupplier;
-    @FXML private TextField   fieldPrice;
-    @FXML private TextField   fieldCost;
-    @FXML private Label       marginPreviewLabel;
-    @FXML private Label       profitPreviewLabel;
-    @FXML private TextField   fieldTax;
-    @FXML private TextField   fieldMaxDiscount;
-    @FXML private CheckBox    fieldDiscountAllowed;
-    @FXML private TextField   fieldStock;
-    @FXML private TextField   fieldReorder;
-    @FXML private CheckBox    fieldIsWeightBased;
-    @FXML private VBox        weightSettingsBox;
-    @FXML private ComboBox<String> fieldWeightUnit;
-    @FXML private TextField   fieldPricePerUnit;
-    @FXML private TextField   fieldDefaultWeight;
-    @FXML private TextField   fieldMinWeight;
-    @FXML private TextField   fieldMaxWeight;
-    @FXML private DatePicker  fieldExpiry;
-    @FXML private TextField   fieldBatch;
-    @FXML private TextField   fieldLocation;
-    @FXML private CheckBox    fieldActive;
-    @FXML private Label       formErrorLabel;
-    @FXML private Button      deactivateBtn;
-    @FXML private Button      saveBtn;
+    @FXML
+    private VBox editPanel;
+    @FXML
+    private Label editPanelTitle;
+    @FXML
+    private TextField fieldBarcode;
+    @FXML
+    private TextField fieldName;
+    @FXML
+    private TextField fieldBrand;
+    @FXML
+    private TextField fieldSize;
+    @FXML
+    private ComboBox<Category> fieldCategory;
+    @FXML
+    private ComboBox<Supplier> fieldSupplier;
+    @FXML
+    private TextField fieldPrice;
+    @FXML
+    private TextField fieldCost;
+    @FXML
+    private Label marginPreviewLabel;
+    @FXML
+    private Label profitPreviewLabel;
+    @FXML
+    private TextField fieldTax;
+    @FXML
+    private TextField fieldMaxDiscount;
+    @FXML
+    private CheckBox fieldDiscountAllowed;
+    @FXML
+    private TextField fieldStock;
+    @FXML
+    private TextField fieldReorder;
+    @FXML
+    private CheckBox fieldIsWeightBased;
+    @FXML
+    private VBox weightSettingsBox;
+    @FXML
+    private ComboBox<String> fieldWeightUnit;
+    @FXML
+    private TextField fieldPricePerUnit;
+    @FXML
+    private TextField fieldDefaultWeight;
+    @FXML
+    private TextField fieldMinWeight;
+    @FXML
+    private TextField fieldMaxWeight;
+    @FXML
+    private DatePicker fieldExpiry;
+    @FXML
+    private TextField fieldBatch;
+    @FXML
+    private TextField fieldLocation;
+    @FXML
+    private CheckBox fieldActive;
+    @FXML
+    private Label formErrorLabel;
+    @FXML
+    private Button deactivateBtn;
+    @FXML
+    private Button saveBtn;
 
     // ── State ─────────────────────────────────────────────────────────────────
-    private final ProductService            productService = new ProductService();
-    private final ObservableList<Product>   allProducts    = FXCollections.observableArrayList();
-    private FilteredList<Product>           filteredProducts;
-    private Product                         editingProduct = null;
+    private final ProductService productService = new ProductService();
+    private final ObservableList<Product> allProducts = FXCollections.observableArrayList();
+    private FilteredList<Product> filteredProducts;
+    private Product editingProduct = null;
 
     // ── Init ──────────────────────────────────────────────────────────────────
 
@@ -126,7 +174,7 @@ public class ProductManagementController implements Initializable {
 
     private void setupFilters() {
         statusFilter.setItems(FXCollections.observableArrayList(
-            "Active", "Inactive", "All"));
+                "Active", "Inactive", "All"));
         statusFilter.getSelectionModel().selectFirst();
         fieldWeightUnit.setItems(FXCollections.observableArrayList("kg", "g", "pcs", "ltr", "ml"));
     }
@@ -136,18 +184,23 @@ public class ProductManagementController implements Initializable {
         colName.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getName()));
         colCategory.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getCategoryName()));
 
-        colPrice.setCellValueFactory(c ->
-            new SimpleStringProperty(CurrencyUtil.formatPlain(c.getValue().getUnitPrice())));
+        colPrice.setCellValueFactory(
+                c -> new SimpleStringProperty(CurrencyUtil.formatPlain(c.getValue().getUnitPrice())));
 
-        colCost.setCellValueFactory(c ->
-            new SimpleStringProperty(CurrencyUtil.formatPlain(c.getValue().getCostPrice())));
+        colCost.setCellValueFactory(
+                c -> new SimpleStringProperty(CurrencyUtil.formatPlain(c.getValue().getCostPrice())));
 
-        colStock.setCellValueFactory(c ->
-            new SimpleStringProperty(c.getValue().getStockQuantity() != null ? c.getValue().getStockQuantity().toString() : "0"));
+        colStock.setCellValueFactory(c -> new SimpleStringProperty(
+                c.getValue().getStockQuantity() != null ? c.getValue().getStockQuantity().toString() : "0"));
         colStock.setCellFactory(col -> new TableCell<>() {
-            @Override protected void updateItem(String v, boolean empty) {
+            @Override
+            protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
-                if (empty || v == null) { setText(null); setStyle(""); return; }
+                if (empty || v == null) {
+                    setText(null);
+                    setStyle("");
+                    return;
+                }
                 setText(v);
                 BigDecimal qty = new BigDecimal(v);
                 if (qty.compareTo(BigDecimal.ZERO) <= 0)
@@ -155,22 +208,28 @@ public class ProductManagementController implements Initializable {
                 else if (getTableView() != null && getIndex() < getTableView().getItems().size()) {
                     Product p = getTableView().getItems().get(getIndex());
                     setStyle(p.isLowStock()
-                        ? "-fx-text-fill:-pos-warning; -fx-font-weight:bold;"
-                        : "");
+                            ? "-fx-text-fill:-pos-warning; -fx-font-weight:bold;"
+                            : "");
                 }
             }
         });
 
-        colReorder.setCellValueFactory(c ->
-            new SimpleStringProperty(c.getValue().getReorderLevel() != null ? c.getValue().getReorderLevel().toString() : "0"));
+        colReorder.setCellValueFactory(c -> new SimpleStringProperty(
+                c.getValue().getReorderLevel() != null ? c.getValue().getReorderLevel().toString() : "0"));
 
         colExpiry.setCellValueFactory(c -> new SimpleStringProperty(
-            c.getValue().getExpiryDate() != null
-                ? DateUtil.formatDate(c.getValue().getExpiryDate()) : "—"));
+                c.getValue().getExpiryDate() != null
+                        ? DateUtil.formatDate(c.getValue().getExpiryDate())
+                        : "—"));
         colExpiry.setCellFactory(col -> new TableCell<>() {
-            @Override protected void updateItem(String v, boolean empty) {
+            @Override
+            protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
-                if (empty || v == null) { setText(null); setStyle(""); return; }
+                if (empty || v == null) {
+                    setText(null);
+                    setStyle("");
+                    return;
+                }
                 setText(v);
                 if (!v.equals("—") && getIndex() < getTableView().getItems().size()) {
                     Product p = getTableView().getItems().get(getIndex());
@@ -184,16 +243,20 @@ public class ProductManagementController implements Initializable {
             }
         });
 
-        colStatus.setCellValueFactory(c ->
-            new SimpleStringProperty(c.getValue().isActive() ? "Active" : "Inactive"));
+        colStatus.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().isActive() ? "Active" : "Inactive"));
         colStatus.setCellFactory(col -> new TableCell<>() {
-            @Override protected void updateItem(String v, boolean empty) {
+            @Override
+            protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
-                if (empty || v == null) { setText(null); setStyle(""); return; }
+                if (empty || v == null) {
+                    setText(null);
+                    setStyle("");
+                    return;
+                }
                 setText(v);
                 setStyle(v.equals("Active")
-                    ? "-fx-text-fill:-pos-success; -fx-font-weight:bold;"
-                    : "-fx-text-fill:-pos-danger;");
+                        ? "-fx-text-fill:-pos-success; -fx-font-weight:bold;"
+                        : "-fx-text-fill:-pos-danger;");
             }
         });
 
@@ -203,13 +266,15 @@ public class ProductManagementController implements Initializable {
             {
                 box.setAlignment(Pos.CENTER);
                 editBtn.setStyle("-fx-font-size:11px; -fx-padding:3 8; -fx-cursor:hand; " +
-                    "-fx-background-color:-pos-primary; -fx-text-fill:white; -fx-background-radius:4;");
+                        "-fx-background-color:-pos-primary; -fx-text-fill:white; -fx-background-radius:4;");
                 editBtn.setOnAction(e -> {
                     Product p = getTableView().getItems().get(getIndex());
                     openEditPanel(p);
                 });
             }
-            @Override protected void updateItem(String v, boolean empty) {
+
+            @Override
+            protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
                 setGraphic(empty ? null : box);
             }
@@ -228,7 +293,7 @@ public class ProductManagementController implements Initializable {
 
     private void loadReferenceData() {
         List<Category> categories = productService.getAllCategories();
-        List<Supplier> suppliers  = productService.getAllSuppliers();
+        List<Supplier> suppliers = productService.getAllSuppliers();
 
         // Category filter combo
         ObservableList<String> catNames = FXCollections.observableArrayList("All Categories");
@@ -260,30 +325,41 @@ public class ProductManagementController implements Initializable {
 
     private void applyFilters() {
         String search = searchField.getText() == null ? "" : searchField.getText().toLowerCase();
-        String cat    = categoryFilter.getValue();
+        String cat = categoryFilter.getValue();
         String status = statusFilter.getValue();
 
         filteredProducts.setPredicate(p -> {
             boolean matchSearch = search.isEmpty()
-                || p.getName().toLowerCase().contains(search)
-                || p.getBarcode().toLowerCase().contains(search)
-                || (p.getBrand() != null && p.getBrand().toLowerCase().contains(search));
+                    || p.getName().toLowerCase().contains(search)
+                    || p.getBarcode().toLowerCase().contains(search)
+                    || (p.getBrand() != null && p.getBrand().toLowerCase().contains(search));
             boolean matchCat = cat == null || cat.equals("All Categories")
-                || (p.getCategoryName() != null && p.getCategoryName().equals(cat));
+                    || (p.getCategoryName() != null && p.getCategoryName().equals(cat));
             boolean matchStatus = switch (status == null ? "Active" : status) {
                 case "Inactive" -> !p.isActive();
-                case "All"      -> true;
-                default         -> p.isActive();
+                case "All" -> true;
+                default -> p.isActive();
             };
             return matchSearch && matchCat && matchStatus;
         });
         productCountLabel.setText(filteredProducts.size() + " product" +
-                                  (filteredProducts.size() == 1 ? "" : "s"));
+                (filteredProducts.size() == 1 ? "" : "s"));
     }
 
-    @FXML private void onSearchChanged()         { applyFilters(); }
-    @FXML private void onCategoryFilterChanged() { applyFilters(); }
-    @FXML private void onStatusFilterChanged()   { applyFilters(); }
+    @FXML
+    private void onSearchChanged() {
+        applyFilters();
+    }
+
+    @FXML
+    private void onCategoryFilterChanged() {
+        applyFilters();
+    }
+
+    @FXML
+    private void onStatusFilterChanged() {
+        applyFilters();
+    }
 
     // ── Edit Panel ────────────────────────────────────────────────────────────
 
@@ -326,11 +402,12 @@ public class ProductManagementController implements Initializable {
         fieldCost.setText(p.getCostPrice() != null ? p.getCostPrice().toPlainString() : "");
         fieldTax.setText(p.getTaxRate() != null ? p.getTaxRate().toPlainString() : "0");
         fieldMaxDiscount.setText(p.getMaxDiscountPercent() != null
-            ? p.getMaxDiscountPercent().toPlainString() : "");
+                ? p.getMaxDiscountPercent().toPlainString()
+                : "");
         fieldDiscountAllowed.setSelected(p.isDiscountAllowed());
         fieldStock.setText(p.getStockQuantity() != null ? p.getStockQuantity().toString() : "0");
         fieldReorder.setText(p.getReorderLevel() != null ? p.getReorderLevel().toString() : "5");
-        
+
         fieldIsWeightBased.setSelected(p.isWeightBased());
         onWeightBasedToggle();
         fieldWeightUnit.setValue(p.getWeightUnit());
@@ -346,18 +423,25 @@ public class ProductManagementController implements Initializable {
 
         // Set category combo
         fieldCategory.getItems().stream()
-            .filter(c -> c.getId() == p.getCategoryId())
-            .findFirst().ifPresent(c -> fieldCategory.setValue(c));
+                .filter(c -> c.getId() == p.getCategoryId())
+                .findFirst().ifPresent(c -> fieldCategory.setValue(c));
 
         updateMarginPreview();
         clearFormError();
     }
 
     private void clearForm() {
-        fieldBarcode.clear(); fieldName.clear(); fieldBrand.clear(); fieldSize.clear();
-        fieldPrice.clear(); fieldCost.clear(); fieldTax.setText("0");
-        fieldMaxDiscount.clear(); fieldDiscountAllowed.setSelected(true);
-        fieldStock.setText("0"); fieldReorder.setText("5");
+        fieldBarcode.clear();
+        fieldName.clear();
+        fieldBrand.clear();
+        fieldSize.clear();
+        fieldPrice.clear();
+        fieldCost.clear();
+        fieldTax.setText("0");
+        fieldMaxDiscount.clear();
+        fieldDiscountAllowed.setSelected(true);
+        fieldStock.setText("0");
+        fieldReorder.setText("5");
         fieldIsWeightBased.setSelected(false);
         onWeightBasedToggle();
         fieldWeightUnit.setValue(null);
@@ -365,10 +449,14 @@ public class ProductManagementController implements Initializable {
         fieldDefaultWeight.clear();
         fieldMinWeight.clear();
         fieldMaxWeight.clear();
-        fieldExpiry.setValue(null); fieldBatch.clear(); fieldLocation.clear();
+        fieldExpiry.setValue(null);
+        fieldBatch.clear();
+        fieldLocation.clear();
         fieldActive.setSelected(true);
-        fieldCategory.setValue(null); fieldSupplier.setValue(null);
-        marginPreviewLabel.setText("—"); profitPreviewLabel.setText("—");
+        fieldCategory.setValue(null);
+        fieldSupplier.setValue(null);
+        marginPreviewLabel.setText("—");
+        profitPreviewLabel.setText("—");
         clearFormError();
     }
 
@@ -377,17 +465,18 @@ public class ProductManagementController implements Initializable {
     @FXML
     private void updateMarginPreview() {
         BigDecimal price = CurrencyUtil.parse(fieldPrice.getText());
-        BigDecimal cost  = CurrencyUtil.parse(fieldCost.getText());
+        BigDecimal cost = CurrencyUtil.parse(fieldCost.getText());
         if (price.compareTo(BigDecimal.ZERO) > 0 && cost.compareTo(BigDecimal.ZERO) > 0) {
             BigDecimal profit = price.subtract(cost);
             BigDecimal margin = profit.divide(price, 4, RoundingMode.HALF_UP)
-                                     .multiply(BigDecimal.valueOf(100))
-                                     .setScale(1, RoundingMode.HALF_UP);
+                    .multiply(BigDecimal.valueOf(100))
+                    .setScale(1, RoundingMode.HALF_UP);
             marginPreviewLabel.setText(margin.toPlainString() + "%");
             profitPreviewLabel.setText(CurrencyUtil.format(profit));
             marginPreviewLabel.setStyle("-fx-font-weight:bold; -fx-font-size:13px; " +
-                (margin.compareTo(BigDecimal.ZERO) > 0
-                    ? "-fx-text-fill:-pos-success;" : "-fx-text-fill:-pos-danger;"));
+                    (margin.compareTo(BigDecimal.ZERO) > 0
+                            ? "-fx-text-fill:-pos-success;"
+                            : "-fx-text-fill:-pos-danger;"));
         } else {
             marginPreviewLabel.setText("—");
             profitPreviewLabel.setText("—");
@@ -407,7 +496,8 @@ public class ProductManagementController implements Initializable {
     @FXML
     private void addCategory() {
         String name = AlertUtil.promptText("New Category", "Category name:", "");
-        if (name.isEmpty()) return;
+        if (name.isEmpty())
+            return;
         int id = productService.addCategory(name);
         if (id > 0) {
             Category newCat = new Category(id, name);
@@ -432,19 +522,34 @@ public class ProductManagementController implements Initializable {
         clearFormError();
 
         String barcode = fieldBarcode.getText().trim();
-        String name    = fieldName.getText().trim();
-        Category cat   = fieldCategory.getValue();
+        String name = fieldName.getText().trim();
+        Category cat = fieldCategory.getValue();
 
-        if (com.minimartpos.util.ValidationUtil.isNullOrBlank(barcode)) { showFormError("Barcode is required."); return; }
-        if (com.minimartpos.util.ValidationUtil.isNullOrBlank(name))    { showFormError("Product name is required."); return; }
-        if (cat == null)                           { showFormError("Please select a category."); return; }
+        if (com.minimartpos.util.ValidationUtil.isNullOrBlank(barcode)) {
+            showFormError("Barcode is required.");
+            return;
+        }
+        if (com.minimartpos.util.ValidationUtil.isNullOrBlank(name)) {
+            showFormError("Product name is required.");
+            return;
+        }
+        if (cat == null) {
+            showFormError("Please select a category.");
+            return;
+        }
 
         BigDecimal price = CurrencyUtil.parse(fieldPrice.getText());
-        BigDecimal cost  = CurrencyUtil.parse(fieldCost.getText());
-        if (!com.minimartpos.util.ValidationUtil.isPositive(price))     { showFormError("Selling price must be greater than 0."); return; }
-        if (!com.minimartpos.util.ValidationUtil.isNonNegative(cost))   { showFormError("Cost price cannot be negative."); return; }
+        BigDecimal cost = CurrencyUtil.parse(fieldCost.getText());
+        if (!com.minimartpos.util.ValidationUtil.isPositive(price)) {
+            showFormError("Selling price must be greater than 0.");
+            return;
+        }
+        if (!com.minimartpos.util.ValidationUtil.isNonNegative(cost)) {
+            showFormError("Cost price cannot be negative.");
+            return;
+        }
 
-        BigDecimal stock   = parseBigDecimalSafe(fieldStock.getText(), BigDecimal.ZERO);
+        BigDecimal stock = parseBigDecimalSafe(fieldStock.getText(), BigDecimal.ZERO);
         BigDecimal reorder = parseBigDecimalSafe(fieldReorder.getText(), BigDecimal.valueOf(5));
 
         Product p = editingProduct != null ? editingProduct : new Product();
@@ -478,7 +583,8 @@ public class ProductManagementController implements Initializable {
         p.setActive(fieldActive.isSelected());
 
         Supplier supplier = fieldSupplier.getValue();
-        if (supplier != null) p.setSupplierId(supplier.getId());
+        if (supplier != null)
+            p.setSupplierId(supplier.getId());
 
         int saved = productService.save(p);
         if (saved > 0) {
@@ -493,7 +599,8 @@ public class ProductManagementController implements Initializable {
 
     @FXML
     private void duplicateProduct() {
-        if (editingProduct == null || editingProduct.getId() == 0) return;
+        if (editingProduct == null || editingProduct.getId() == 0)
+            return;
 
         // Create a deep copy — clear id, barcode, and mark as new
         Product copy = new Product();
@@ -507,7 +614,7 @@ public class ProductManagementController implements Initializable {
         copy.setTaxRate(editingProduct.getTaxRate());
         copy.setDiscountAllowed(editingProduct.isDiscountAllowed());
         copy.setMaxDiscountPercent(editingProduct.getMaxDiscountPercent());
-        copy.setStockQuantity(BigDecimal.ZERO);                    // fresh stock = 0
+        copy.setStockQuantity(BigDecimal.ZERO); // fresh stock = 0
         copy.setReorderLevel(editingProduct.getReorderLevel());
         copy.setSupplierId(editingProduct.getSupplierId());
         copy.setSupplierName(editingProduct.getSupplierName());
@@ -518,7 +625,7 @@ public class ProductManagementController implements Initializable {
         copy.setBarcode(com.minimartpos.util.BarcodeUtil.generateEAN13());
 
         // Open the edit panel pre-populated with the copy (id=0 → will INSERT on save)
-        editingProduct = null;   // treat as new
+        editingProduct = null; // treat as new
         editPanelTitle.setText("Duplicate: " + copy.getName());
         populateForm(copy);
         deactivateBtn.setVisible(false);
@@ -527,9 +634,11 @@ public class ProductManagementController implements Initializable {
         editPanel.setManaged(true);
         setStatus("ℹ Edit the duplicated product, then click Save.");
     }
+
     @FXML
     private void deactivateProduct() {
-        if (editingProduct == null) return;
+        if (editingProduct == null)
+            return;
         boolean newState = !editingProduct.isActive();
         String action = newState ? "activate" : "deactivate";
         if (AlertUtil.confirm((newState ? "Activate" : "Deactivate") + " Product",
@@ -547,8 +656,8 @@ public class ProductManagementController implements Initializable {
             return;
         }
 
-        java.util.List<com.minimartpos.model.PriceHistoryEntry> history =
-            productService.getPriceHistory(editingProduct.getId());
+        java.util.List<com.minimartpos.model.PriceHistoryEntry> history = productService
+                .getPriceHistory(editingProduct.getId());
 
         // Build a custom dialog with a TableView
         javafx.scene.control.Dialog<Void> dialog = new javafx.scene.control.Dialog<>();
@@ -559,48 +668,47 @@ public class ProductManagementController implements Initializable {
 
         if (history.isEmpty()) {
             dialog.getDialogPane().setContent(
-                new javafx.scene.control.Label("No price changes recorded yet."));
+                    new javafx.scene.control.Label("No price changes recorded yet."));
             dialog.showAndWait();
             return;
         }
 
-        javafx.scene.control.TableView<com.minimartpos.model.PriceHistoryEntry> table =
-            new javafx.scene.control.TableView<>();
+        javafx.scene.control.TableView<com.minimartpos.model.PriceHistoryEntry> table = new javafx.scene.control.TableView<>();
         table.setColumnResizePolicy(javafx.scene.control.TableView.CONSTRAINED_RESIZE_POLICY);
         table.setItems(javafx.collections.FXCollections.observableArrayList(history));
 
-        addHistoryCol(table, "Date / Time",  180, e ->
-            e.getChangedAt() != null
-                ? com.minimartpos.util.DateUtil.formatDateTime(e.getChangedAt()) : "—");
-        addHistoryCol(table, "Old Price",     100, e ->
-            com.minimartpos.util.CurrencyUtil.format(e.getOldPrice()));
-        addHistoryCol(table, "New Price",     100, e ->
-            com.minimartpos.util.CurrencyUtil.format(e.getNewPrice()));
-        addHistoryCol(table, "Change",         85, e -> {
+        addHistoryCol(table, "Date / Time", 180, e -> e.getChangedAt() != null
+                ? com.minimartpos.util.DateUtil.formatDateTime(e.getChangedAt())
+                : "—");
+        addHistoryCol(table, "Old Price", 100, e -> com.minimartpos.util.CurrencyUtil.format(e.getOldPrice()));
+        addHistoryCol(table, "New Price", 100, e -> com.minimartpos.util.CurrencyUtil.format(e.getNewPrice()));
+        addHistoryCol(table, "Change", 85, e -> {
             java.math.BigDecimal pct = e.priceDeltaPct();
             String sign = pct.compareTo(java.math.BigDecimal.ZERO) >= 0 ? "▲ +" : "▼ ";
             return sign + pct.toPlainString() + "%";
         });
-        addHistoryCol(table, "Old Cost",       95, e ->
-            e.getOldCost() != null
-                ? com.minimartpos.util.CurrencyUtil.format(e.getOldCost()) : "—");
-        addHistoryCol(table, "New Cost",       95, e ->
-            e.getNewCost() != null
-                ? com.minimartpos.util.CurrencyUtil.format(e.getNewCost()) : "—");
-        addHistoryCol(table, "Changed By",    110, e ->
-            e.getChangedByName() != null ? e.getChangedByName() : "—");
-        addHistoryCol(table, "Reason",        160, e ->
-            e.getReason() != null ? e.getReason() : "—");
+        addHistoryCol(table, "Old Cost", 95, e -> e.getOldCost() != null
+                ? com.minimartpos.util.CurrencyUtil.format(e.getOldCost())
+                : "—");
+        addHistoryCol(table, "New Cost", 95, e -> e.getNewCost() != null
+                ? com.minimartpos.util.CurrencyUtil.format(e.getNewCost())
+                : "—");
+        addHistoryCol(table, "Changed By", 110, e -> e.getChangedByName() != null ? e.getChangedByName() : "—");
+        addHistoryCol(table, "Reason", 160, e -> e.getReason() != null ? e.getReason() : "—");
 
         // Colour rows: increase = red tint, decrease = green tint
         table.setRowFactory(tv -> new javafx.scene.control.TableRow<>() {
-            @Override protected void updateItem(
+            @Override
+            protected void updateItem(
                     com.minimartpos.model.PriceHistoryEntry item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty || item == null) { setStyle(""); return; }
+                if (empty || item == null) {
+                    setStyle("");
+                    return;
+                }
                 setStyle(item.isPriceIncrease()
-                    ? "-fx-background-color: #FFEBEE;"
-                    : "-fx-background-color: #E8F5E9;");
+                        ? "-fx-background-color: #FFEBEE;"
+                        : "-fx-background-color: #E8F5E9;");
             }
         });
 
@@ -612,14 +720,11 @@ public class ProductManagementController implements Initializable {
     private void addHistoryCol(
             javafx.scene.control.TableView<com.minimartpos.model.PriceHistoryEntry> table,
             String header, double width,
-            java.util.function.Function<
-                com.minimartpos.model.PriceHistoryEntry, String> fn) {
-        javafx.scene.control.TableColumn<
-            com.minimartpos.model.PriceHistoryEntry, String> col =
-                new javafx.scene.control.TableColumn<>(header);
+            java.util.function.Function<com.minimartpos.model.PriceHistoryEntry, String> fn) {
+        javafx.scene.control.TableColumn<com.minimartpos.model.PriceHistoryEntry, String> col = new javafx.scene.control.TableColumn<>(
+                header);
         col.setPrefWidth(width);
-        col.setCellValueFactory(c ->
-            new javafx.beans.property.SimpleStringProperty(fn.apply(c.getValue())));
+        col.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(fn.apply(c.getValue())));
         table.getColumns().add(col);
     }
 
@@ -631,14 +736,15 @@ public class ProductManagementController implements Initializable {
         fc.setTitle("Save Import Template");
         fc.setInitialFileName("product_import_template.xlsx");
         fc.getExtensionFilters().add(
-            new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
+                new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
         File file = fc.showSaveDialog(productTable.getScene().getWindow());
-        if (file == null) return;
+        if (file == null)
+            return;
         try {
             new ExcelService().writeImportTemplate(file.getAbsolutePath());
             AlertUtil.showInfo("Template Saved",
-                "Import template saved to:\n" + file.getName() +
-                "\n\nFill in your products and use '📥 Import Excel' to upload.");
+                    "Import template saved to:\n" + file.getName() +
+                            "\n\nFill in your products and use '📥 Import Excel' to upload.");
         } catch (Exception e) {
             AlertUtil.showError("Error", "Could not save template: " + e.getMessage());
         }
@@ -649,18 +755,20 @@ public class ProductManagementController implements Initializable {
         FileChooser fc = new FileChooser();
         fc.setTitle("Import Products from Excel");
         fc.getExtensionFilters().add(
-            new FileChooser.ExtensionFilter("Excel Files", "*.xlsx", "*.xls"));
+                new FileChooser.ExtensionFilter("Excel Files", "*.xlsx", "*.xls"));
         File file = fc.showOpenDialog(productTable.getScene().getWindow());
-        if (file == null) return;
+        if (file == null)
+            return;
 
         ExcelService.ImportResult result = new ExcelService().importProducts(file.getAbsolutePath());
 
         if (result.hasErrors()) {
             String errorMsg = String.join("\n", result.getErrors().subList(
-                0, Math.min(10, result.getErrors().size())));
+                    0, Math.min(10, result.getErrors().size())));
             if (!AlertUtil.confirm("Import Warnings",
                     result.successCount() + " products ready to import.\n\nWarnings:\n" +
-                    errorMsg + "\n\nContinue importing valid rows?")) return;
+                            errorMsg + "\n\nContinue importing valid rows?"))
+                return;
         }
 
         if (result.getProducts().isEmpty()) {
@@ -669,11 +777,35 @@ public class ProductManagementController implements Initializable {
         }
 
         int saved = 0;
+        List<Category> allCategories = new java.util.ArrayList<>(productService.getAllCategories());
         for (Product p : result.getProducts()) {
-            if (productService.save(p) > 0) saved++;
+            if (p.getCategoryName() != null && !p.getCategoryName().isBlank()) {
+                String catName = p.getCategoryName().trim();
+                java.util.Optional<Category> found = allCategories.stream()
+                        .filter(c -> c.getName().equalsIgnoreCase(catName))
+                        .findFirst();
+                if (found.isPresent()) {
+                    p.setCategoryId(found.get().getId());
+                } else {
+                    int newId = productService.addCategory(catName);
+                    if (newId > 0) {
+                        p.setCategoryId(newId);
+                        allCategories.add(new Category(newId, catName));
+                    }
+                }
+            }
+            // Check if product exists by barcode to perform UPSERT
+            if (p.getBarcode() != null && !p.getBarcode().isBlank()) {
+                java.util.Optional<Product> existing = productService.findByBarcode(p.getBarcode());
+                existing.ifPresent(product -> p.setId(product.getId()));
+            }
+
+            if (productService.save(p) > 0) {
+                saved++;
+            }
         }
         AlertUtil.showInfo("Import Complete",
-            saved + " of " + result.getProducts().size() + " products imported successfully.");
+                saved + " of " + result.getProducts().size() + " products imported successfully.");
         refreshProducts();
     }
 
@@ -683,32 +815,40 @@ public class ProductManagementController implements Initializable {
         fc.setTitle("Export Products to Excel");
         fc.setInitialFileName("products_" + java.time.LocalDate.now() + ".xlsx");
         fc.getExtensionFilters().add(
-            new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
+                new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
         File file = fc.showSaveDialog(productTable.getScene().getWindow());
-        if (file == null) return;
+        if (file == null)
+            return;
 
         try {
             List<Product> toExport = filteredProducts != null
-                ? new java.util.ArrayList<>(filteredProducts)
-                : productService.getAllActive();
+                    ? new java.util.ArrayList<>(filteredProducts)
+                    : productService.getAllActive();
             new ExcelService().exportProducts(toExport, file.getAbsolutePath(), true);
             AlertUtil.showInfo("Exported",
-                toExport.size() + " products exported to:\n" + file.getName());
+                    toExport.size() + " products exported to:\n" + file.getName());
         } catch (Exception e) {
             AlertUtil.showError("Export Failed", e.getMessage());
         }
     }
-// ── Helpers ───────────────────────────────────────────────────────────────
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private int parseIntSafe(String text, int fallback) {
-        try { return Integer.parseInt(text.trim()); }
-        catch (NumberFormatException e) { return fallback; }
+        try {
+            return Integer.parseInt(text.trim());
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
     }
 
     private BigDecimal parseBigDecimalSafe(String text, BigDecimal fallback) {
-        if (text == null || text.isBlank()) return fallback;
-        try { return new BigDecimal(text.trim()); }
-        catch (NumberFormatException e) { return fallback; }
+        if (text == null || text.isBlank())
+            return fallback;
+        try {
+            return new BigDecimal(text.trim());
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
     }
 
     private void showFormError(String msg) {
@@ -716,27 +856,76 @@ public class ProductManagementController implements Initializable {
         formErrorLabel.setVisible(true);
         formErrorLabel.setManaged(true);
     }
+
     private void clearFormError() {
         formErrorLabel.setVisible(false);
         formErrorLabel.setManaged(false);
     }
+
     private void setStatus(String msg) {
         // Update the product count label as a lightweight status
         productCountLabel.setText(msg);
     }
 
     // ── Navigation ────────────────────────────────────────────────────────────
-    @FXML private void navigateToDashboard()      { com.minimartpos.util.SceneManager.navigateTo("admin/AdminDashboard.fxml"); }
-    @FXML private void navigateToPOS()            { com.minimartpos.util.SceneManager.navigateTo("cashier/POSTerminal.fxml"); }
-    @FXML private void navigateToUsers()          { com.minimartpos.util.SceneManager.navigateTo("admin/UserManagement.fxml"); }
-    @FXML private void navigateToProducts()       { com.minimartpos.util.SceneManager.navigateTo("admin/ProductManagement.fxml"); }
-    @FXML private void navigateToCustomers()      { com.minimartpos.util.SceneManager.navigateTo("admin/CustomerManagement.fxml"); }
-    @FXML private void navigateToSuppliers()      { com.minimartpos.util.SceneManager.navigateTo("admin/SupplierManagement.fxml"); }
-    @FXML private void navigateToCashierMonitor() { com.minimartpos.util.SceneManager.navigateTo("admin/CashierMonitor.fxml"); }
-    @FXML private void navigateToBills()          { com.minimartpos.util.SceneManager.navigateTo("admin/BillHistory.fxml"); }
-    @FXML private void navigateToStock()          { com.minimartpos.util.SceneManager.navigateTo("admin/StockAdjustment.fxml"); }
-    @FXML private void navigateToReports()        { com.minimartpos.util.SceneManager.navigateTo("admin/Reports.fxml"); }
-    @FXML private void navigateToAudit()          { com.minimartpos.util.SceneManager.navigateTo("admin/AuditLog.fxml"); }
-    @FXML private void navigateToSettings()       { com.minimartpos.util.SceneManager.navigateTo("admin/Settings.fxml"); }
+    @FXML
+    private void navigateToDashboard() {
+        com.minimartpos.util.SceneManager.navigateTo("admin/AdminDashboard.fxml");
+    }
+
+    @FXML
+    private void navigateToPOS() {
+        com.minimartpos.util.SceneManager.navigateTo("cashier/POSTerminal.fxml");
+    }
+
+    @FXML
+    private void navigateToUsers() {
+        com.minimartpos.util.SceneManager.navigateTo("admin/UserManagement.fxml");
+    }
+
+    @FXML
+    private void navigateToProducts() {
+        com.minimartpos.util.SceneManager.navigateTo("admin/ProductManagement.fxml");
+    }
+
+    @FXML
+    private void navigateToCustomers() {
+        com.minimartpos.util.SceneManager.navigateTo("admin/CustomerManagement.fxml");
+    }
+
+    @FXML
+    private void navigateToSuppliers() {
+        com.minimartpos.util.SceneManager.navigateTo("admin/SupplierManagement.fxml");
+    }
+
+    @FXML
+    private void navigateToCashierMonitor() {
+        com.minimartpos.util.SceneManager.navigateTo("admin/CashierMonitor.fxml");
+    }
+
+    @FXML
+    private void navigateToBills() {
+        com.minimartpos.util.SceneManager.navigateTo("admin/BillHistory.fxml");
+    }
+
+    @FXML
+    private void navigateToStock() {
+        com.minimartpos.util.SceneManager.navigateTo("admin/StockAdjustment.fxml");
+    }
+
+    @FXML
+    private void navigateToReports() {
+        com.minimartpos.util.SceneManager.navigateTo("admin/Reports.fxml");
+    }
+
+    @FXML
+    private void navigateToAudit() {
+        com.minimartpos.util.SceneManager.navigateTo("admin/AuditLog.fxml");
+    }
+
+    @FXML
+    private void navigateToSettings() {
+        com.minimartpos.util.SceneManager.navigateTo("admin/Settings.fxml");
+    }
 
 }

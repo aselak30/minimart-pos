@@ -48,7 +48,7 @@ public class BillRepository {
         "SELECT * FROM bills WHERE DATE(created_at)=CURDATE() ORDER BY created_at DESC LIMIT 50";
 
     private static final String SQL_SEQUENCE =
-        "SELECT COUNT(*) + 1 FROM bills WHERE DATE(created_at)=?";
+        "SELECT COUNT(*) + 1 FROM bills WHERE bill_number LIKE ?";
 
     // ── Save (insert bill + all items atomically) ─────────────────────────────
 
@@ -295,7 +295,7 @@ public class BillRepository {
     public int getNextSequenceForDate(String date) {
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(SQL_SEQUENCE)) {
-            ps.setString(1, date);
+            ps.setString(1, "BILL-" + date + "-%");
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return rs.getInt(1);
             }
