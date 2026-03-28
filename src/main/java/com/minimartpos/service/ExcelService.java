@@ -17,10 +17,10 @@ import java.util.*;
  * Handles Excel (.xlsx) import and export using Apache POI.
  *
  * Features:
- *  - Export products to Excel with full formatting
- *  - Import products from template with validation
- *  - Export any report data (List<Map<String,Object>>) to Excel
- *  - Download a blank import template
+ * - Export products to Excel with full formatting
+ * - Import products from template with validation
+ * - Export any report data (List<Map<String,Object>>) to Excel
+ * - Download a blank import template
  */
 public class ExcelService {
 
@@ -28,11 +28,11 @@ public class ExcelService {
 
     // Product import/export column headers (must match template)
     private static final String[] PRODUCT_HEADERS = {
-        "Barcode", "Product Name", "Brand", "Size/Weight", "Category",
-        "Selling Price", "Cost Price", "Tax Rate (%)", "Stock Qty",
-        "Reorder Level", "Discount Allowed", "Max Discount (%)",
-        "Expiry Date", "Batch Number", "Location", "Active",
-        "Weight Based", "Weight Unit", "Price Per Unit", "Default Weight"
+            "Barcode", "Product Name", "Brand", "Size/Weight", "Category",
+            "Selling Price", "Cost Price", "Tax Rate (%)", "Stock Qty",
+            "Reorder Level", "Discount Allowed", "Max Discount (%)",
+            "Expiry Date", "Batch Number", "Location", "Active",
+            "Weight Based", "Weight Unit", "Price Per Unit", "Default Weight"
     };
 
     // ── Product Export ────────────────────────────────────────────────────────
@@ -40,12 +40,12 @@ public class ExcelService {
     /**
      * Exports a list of products to an Excel file.
      *
-     * @param products      Products to export
-     * @param outputPath    File path to write to
-     * @param includeCost   Whether to include cost price column (admin only)
+     * @param products    Products to export
+     * @param outputPath  File path to write to
+     * @param includeCost Whether to include cost price column (admin only)
      */
     public void exportProducts(List<Product> products, String outputPath,
-                               boolean includeCost) throws IOException {
+            boolean includeCost) throws IOException {
         try (XSSFWorkbook wb = new XSSFWorkbook()) {
 
             XSSFSheet sheet = wb.createSheet("Products");
@@ -53,15 +53,18 @@ public class ExcelService {
 
             // Styles
             CellStyle headerStyle = createHeaderStyle(wb);
-            CellStyle moneyStyle  = createMoneyStyle(wb);
-            CellStyle dateStyle   = createDateStyle(wb);
-            CellStyle altStyle    = createAltRowStyle(wb);
+            CellStyle moneyStyle = createMoneyStyle(wb);
+            CellStyle dateStyle = createDateStyle(wb);
+            CellStyle altStyle = createAltRowStyle(wb);
 
             // Header row
             Row hdr = sheet.createRow(0);
             int col = 0;
             for (String h : PRODUCT_HEADERS) {
-                if (!includeCost && h.equals("Cost Price")) { col++; continue; }
+                if (!includeCost && h.equals("Cost Price")) {
+                    col++;
+                    continue;
+                }
                 Cell c = hdr.createCell(col++);
                 c.setCellValue(h);
                 c.setCellStyle(headerStyle);
@@ -82,30 +85,38 @@ public class ExcelService {
 
                 Cell priceCell = row.createCell(col++);
                 priceCell.setCellValue(p.getUnitPrice() != null
-                    ? p.getUnitPrice().doubleValue() : 0.0);
+                        ? p.getUnitPrice().doubleValue()
+                        : 0.0);
                 priceCell.setCellStyle(moneyStyle);
 
                 if (includeCost) {
                     Cell costCell = row.createCell(col++);
                     costCell.setCellValue(p.getCostPrice() != null
-                        ? p.getCostPrice().doubleValue() : 0.0);
+                            ? p.getCostPrice().doubleValue()
+                            : 0.0);
                     costCell.setCellStyle(moneyStyle);
-                } else { col++; }
+                } else {
+                    col++;
+                }
 
                 setNumericCell(row, col++, p.getTaxRate() != null
-                    ? p.getTaxRate().doubleValue() : 0.0, rowStyle);
+                        ? p.getTaxRate().doubleValue()
+                        : 0.0, rowStyle);
                 setBigDecimalCell(row, col++, p.getStockQuantity(), rowStyle);
                 setBigDecimalCell(row, col++, p.getReorderLevel(), rowStyle);
                 setCell(row, col++, p.isDiscountAllowed() ? "YES" : "NO", rowStyle);
                 setNumericCell(row, col++, p.getMaxDiscountPercent() != null
-                    ? p.getMaxDiscountPercent().doubleValue() : 0.0, rowStyle);
+                        ? p.getMaxDiscountPercent().doubleValue()
+                        : 0.0, rowStyle);
 
                 if (p.getExpiryDate() != null) {
                     Cell dc = row.createCell(col++);
                     dc.setCellValue(java.util.Date.from(
-                        p.getExpiryDate().atStartOfDay(ZoneId.systemDefault()).toInstant()));
+                            p.getExpiryDate().atStartOfDay(ZoneId.systemDefault()).toInstant()));
                     dc.setCellStyle(dateStyle);
-                } else { row.createCell(col++).setCellValue(""); }
+                } else {
+                    row.createCell(col++).setCellValue("");
+                }
 
                 setCell(row, col++, p.getBatchNumber(), rowStyle);
                 setCell(row, col++, p.getLocation(), rowStyle);
@@ -119,7 +130,8 @@ public class ExcelService {
             }
 
             // Auto-size key columns
-            for (int i = 0; i < PRODUCT_HEADERS.length; i++) sheet.autoSizeColumn(i);
+            for (int i = 0; i < PRODUCT_HEADERS.length; i++)
+                sheet.autoSizeColumn(i);
             // Freeze header row
             sheet.createFreezePane(0, 1);
             // Auto-filter
@@ -140,7 +152,7 @@ public class ExcelService {
         ImportResult result = new ImportResult();
 
         try (FileInputStream fis = new FileInputStream(filePath);
-             XSSFWorkbook wb = new XSSFWorkbook(fis)) {
+                XSSFWorkbook wb = new XSSFWorkbook(fis)) {
 
             XSSFSheet sheet = wb.getSheetAt(0);
             if (sheet == null) {
@@ -157,17 +169,19 @@ public class ExcelService {
             Map<String, Integer> colMap = buildColumnMap(header);
 
             // Validate required columns exist
-            for (String required : new String[]{"Barcode", "Product Name", "Selling Price"}) {
+            for (String required : new String[] { "Barcode", "Product Name", "Selling Price" }) {
                 if (!colMap.containsKey(required)) {
                     result.addError(0, "Required column missing: " + required);
                 }
             }
-            if (!result.getErrors().isEmpty()) return result;
+            if (!result.getErrors().isEmpty())
+                return result;
 
             // Read data rows
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
-                if (row == null || isRowEmpty(row)) continue;
+                if (row == null || isRowEmpty(row))
+                    continue;
 
                 try {
                     Product p = parseProductRow(row, colMap, i);
@@ -178,7 +192,7 @@ public class ExcelService {
             }
 
             logger.info("Import parsed: {} valid products, {} errors",
-                        result.getProducts().size(), result.getErrors().size());
+                    result.getProducts().size(), result.getErrors().size());
 
         } catch (Exception e) {
             logger.error("importProducts error: {}", e.getMessage(), e);
@@ -192,20 +206,21 @@ public class ExcelService {
         Product p = new Product();
 
         String barcode = getString(row, cols, "Barcode");
-        String name    = getString(row, cols, "Product Name");
+        String name = getString(row, cols, "Product Name");
         if (barcode == null || barcode.isBlank())
-            throw new IllegalArgumentException("Row " + (rowNum+1) + ": Barcode is required");
+            throw new IllegalArgumentException("Row " + (rowNum + 1) + ": Barcode is required");
         if (name == null || name.isBlank())
-            throw new IllegalArgumentException("Row " + (rowNum+1) + ": Product Name is required");
+            throw new IllegalArgumentException("Row " + (rowNum + 1) + ": Product Name is required");
 
         p.setBarcode(barcode.trim());
         p.setName(name.trim());
         p.setBrand(getString(row, cols, "Brand"));
         p.setSizeWeight(getString(row, cols, "Size/Weight"));
+        p.setCategoryName(getString(row, cols, "Category"));
 
         double price = getDouble(row, cols, "Selling Price", 0.0);
         if (price <= 0)
-            throw new IllegalArgumentException("Row " + (rowNum+1) + ": Selling Price must be > 0");
+            throw new IllegalArgumentException("Row " + (rowNum + 1) + ": Selling Price must be > 0");
         p.setUnitPrice(BigDecimal.valueOf(price));
 
         double cost = getDouble(row, cols, "Cost Price", 0.0);
@@ -224,7 +239,25 @@ public class ExcelService {
         p.setDiscountAllowed(!"NO".equalsIgnoreCase(discAllowed));
 
         double maxDisc = getDouble(row, cols, "Max Discount (%)", 0.0);
-        if (maxDisc > 0) p.setMaxDiscountPercent(BigDecimal.valueOf(maxDisc));
+        if (maxDisc > 0)
+            p.setMaxDiscountPercent(BigDecimal.valueOf(maxDisc));
+
+        Integer expIdx = cols.get("Expiry Date");
+        if (expIdx != null && row.getCell(expIdx) != null) {
+            org.apache.poi.ss.usermodel.Cell c = row.getCell(expIdx);
+            try {
+                if (c.getCellType() == org.apache.poi.ss.usermodel.CellType.NUMERIC
+                        && org.apache.poi.ss.usermodel.DateUtil.isCellDateFormatted(c)) {
+                    p.setExpiryDate(c.getLocalDateTimeCellValue().toLocalDate());
+                } else if (c.getCellType() == org.apache.poi.ss.usermodel.CellType.STRING) {
+                    String dStr = c.getStringCellValue().trim();
+                    if (!dStr.isEmpty()) {
+                        p.setExpiryDate(java.time.LocalDate.parse(dStr));
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
 
         p.setBatchNumber(getString(row, cols, "Batch Number"));
         p.setLocation(getString(row, cols, "Location"));
@@ -258,15 +291,16 @@ public class ExcelService {
             // Example row
             Row ex = sheet.createRow(1);
             String[] example = {
-                "4890008100309", "Apple Red", "Fresh", "Per Kg", "Fruits",
-                "120.00", "85.00", "0", "50.5", "10", "YES", "0",
-                "", "", "Aisle 1", "YES", "YES", "kg", "120.00", "1.000"
+                    "4890008100309", "Apple Red", "Fresh", "Per Kg", "Fruits",
+                    "120.00", "85.00", "0", "50.5", "10", "YES", "0",
+                    "", "", "Aisle 1", "YES", "YES", "kg", "120.00", "1.000"
             };
             for (int i = 0; i < example.length; i++) {
                 ex.createCell(i).setCellValue(example[i]);
             }
 
-            for (int i = 0; i < PRODUCT_HEADERS.length; i++) sheet.autoSizeColumn(i);
+            for (int i = 0; i < PRODUCT_HEADERS.length; i++)
+                sheet.autoSizeColumn(i);
             sheet.createFreezePane(0, 1);
 
             writeFile(wb, outputPath);
@@ -277,10 +311,10 @@ public class ExcelService {
     // ── Stock Export ──────────────────────────────────────────────────────────
 
     private static final String[] STOCK_HEADERS = {
-        "Barcode", "Product Name", "Brand", "Category",
-        "Current Stock", "Reorder Level", "Status",
-        "Cost Price", "Selling Price", "Stock Value (Cost)",
-        "Batch Number", "Expiry Date", "Location"
+            "Barcode", "Product Name", "Brand", "Category",
+            "Current Stock", "Reorder Level", "Status",
+            "Cost Price", "Selling Price", "Stock Value (Cost)",
+            "Batch Number", "Expiry Date", "Location"
     };
 
     /**
@@ -292,12 +326,12 @@ public class ExcelService {
             XSSFSheet sheet = wb.createSheet("Stock Report");
             sheet.setDefaultColumnWidth(18);
 
-            CellStyle headerStyle   = createHeaderStyle(wb);
-            CellStyle moneyStyle    = createMoneyStyle(wb);
-            CellStyle dateStyle     = createDateStyle(wb);
-            CellStyle lowStyle      = createLowStockStyle(wb);
-            CellStyle outStyle      = createOutOfStockStyle(wb);
-            CellStyle altStyle      = createAltRowStyle(wb);
+            CellStyle headerStyle = createHeaderStyle(wb);
+            CellStyle moneyStyle = createMoneyStyle(wb);
+            CellStyle dateStyle = createDateStyle(wb);
+            CellStyle lowStyle = createLowStockStyle(wb);
+            CellStyle outStyle = createOutOfStockStyle(wb);
+            CellStyle altStyle = createAltRowStyle(wb);
 
             // Title
             Row titleRow = sheet.createRow(0);
@@ -325,14 +359,16 @@ public class ExcelService {
             for (Product p : products) {
                 Row row = sheet.createRow(rowNum);
                 boolean outOfStock = p.getStockQuantity().compareTo(BigDecimal.ZERO) <= 0;
-                boolean lowStock   = !outOfStock && p.getStockQuantity().compareTo(p.getReorderLevel()) <= 0;
+                boolean lowStock = !outOfStock && p.getStockQuantity().compareTo(p.getReorderLevel()) <= 0;
 
                 CellStyle rowStyle = outOfStock ? outStyle
-                                   : lowStock   ? lowStyle
-                                   : (rowNum % 2 == 0 ? altStyle : null);
+                        : lowStock ? lowStyle
+                                : (rowNum % 2 == 0 ? altStyle : null);
 
-                if (outOfStock) outCount++;
-                else if (lowStock) lowCount++;
+                if (outOfStock)
+                    outCount++;
+                else if (lowStock)
+                    lowCount++;
 
                 setStyledCell(row, 0, p.getBarcode(), rowStyle);
                 setStyledCell(row, 1, p.getName(), rowStyle);
@@ -342,15 +378,17 @@ public class ExcelService {
                 // Current Stock — numeric
                 Cell stockCell = row.createCell(4);
                 stockCell.setCellValue(p.getStockQuantity().doubleValue());
-                if (rowStyle != null) stockCell.setCellStyle(rowStyle);
+                if (rowStyle != null)
+                    stockCell.setCellStyle(rowStyle);
 
                 Cell reorderCell = row.createCell(5);
                 reorderCell.setCellValue(p.getReorderLevel().doubleValue());
-                if (rowStyle != null) reorderCell.setCellStyle(rowStyle);
+                if (rowStyle != null)
+                    reorderCell.setCellStyle(rowStyle);
 
                 setStyledCell(row, 6,
-                    outOfStock ? "OUT OF STOCK" : lowStock ? "LOW STOCK" : "OK",
-                    rowStyle);
+                        outOfStock ? "OUT OF STOCK" : lowStock ? "LOW STOCK" : "OK",
+                        rowStyle);
 
                 // Cost / Selling price — money style
                 Cell costCell = row.createCell(7);
@@ -364,7 +402,7 @@ public class ExcelService {
                 // Stock value = qty × cost
                 Cell valueCell = row.createCell(9);
                 BigDecimal stockValue = p.getStockQuantity().multiply(
-                    p.getCostPrice() != null ? p.getCostPrice() : BigDecimal.ZERO);
+                        p.getCostPrice() != null ? p.getCostPrice() : BigDecimal.ZERO);
                 valueCell.setCellValue(stockValue.doubleValue());
                 valueCell.setCellStyle(moneyStyle);
 
@@ -373,7 +411,7 @@ public class ExcelService {
                 if (p.getExpiryDate() != null) {
                     Cell dc = row.createCell(11);
                     dc.setCellValue(java.util.Date.from(
-                        p.getExpiryDate().atStartOfDay(ZoneId.systemDefault()).toInstant()));
+                            p.getExpiryDate().atStartOfDay(ZoneId.systemDefault()).toInstant()));
                     dc.setCellStyle(dateStyle);
                 } else {
                     setStyledCell(row, 11, "", rowStyle);
@@ -392,17 +430,18 @@ public class ExcelService {
 
             Cell sumLabel = totalRow.createCell(0);
             sumLabel.setCellValue("SUMMARY: " + products.size() + " products | " +
-                lowCount + " low stock | " + outCount + " out of stock");
+                    lowCount + " low stock | " + outCount + " out of stock");
             sumLabel.setCellStyle(summaryStyle);
             sheet.addMergedRegion(new CellRangeAddress(rowNum + 1, rowNum + 1, 0, 8));
 
-            for (int i = 0; i < STOCK_HEADERS.length; i++) sheet.autoSizeColumn(i);
+            for (int i = 0; i < STOCK_HEADERS.length; i++)
+                sheet.autoSizeColumn(i);
             sheet.createFreezePane(0, 2);
             sheet.setAutoFilter(new CellRangeAddress(1, rowNum - 1, 0, STOCK_HEADERS.length - 1));
 
             writeFile(wb, outputPath);
             logger.info("Stock exported: {} products ({} low, {} out) to {}",
-                        products.size(), lowCount, outCount, outputPath);
+                    products.size(), lowCount, outCount, outputPath);
         }
     }
 
@@ -423,7 +462,8 @@ public class ExcelService {
     private void setStyledCell(Row row, int col, String value, CellStyle style) {
         Cell c = row.createCell(col);
         c.setCellValue(value != null ? value : "");
-        if (style != null) c.setCellStyle(style);
+        if (style != null)
+            c.setCellStyle(style);
     }
 
     // ── Report Export ─────────────────────────────────────────────────────────
@@ -431,12 +471,12 @@ public class ExcelService {
     /**
      * Exports any list of Map data to Excel (e.g. from ReportService queries).
      *
-     * @param reportTitle  Title shown in the first row
-     * @param data         List of row maps (keys become column headers)
-     * @param outputPath   Output file path
+     * @param reportTitle Title shown in the first row
+     * @param data        List of row maps (keys become column headers)
+     * @param outputPath  Output file path
      */
     public void exportReport(String reportTitle, List<Map<String, Object>> data,
-                              String outputPath) throws IOException {
+            String outputPath) throws IOException {
         if (data.isEmpty()) {
             logger.warn("exportReport: no data to export for '{}'", reportTitle);
             return;
@@ -447,8 +487,8 @@ public class ExcelService {
             sheet.setDefaultColumnWidth(16);
 
             CellStyle headerStyle = createHeaderStyle(wb);
-            CellStyle moneyStyle  = createMoneyStyle(wb);
-            CellStyle altStyle    = createAltRowStyle(wb);
+            CellStyle moneyStyle = createMoneyStyle(wb);
+            CellStyle altStyle = createAltRowStyle(wb);
 
             // Title row
             Row titleRow = sheet.createRow(0);
@@ -477,20 +517,23 @@ public class ExcelService {
                         cell.setCellStyle(moneyStyle);
                     } else if (val instanceof Number n) {
                         cell.setCellValue(n.doubleValue());
-                        if (rowStyle != null) cell.setCellStyle(rowStyle);
+                        if (rowStyle != null)
+                            cell.setCellStyle(rowStyle);
                     } else if (val instanceof LocalDate ld) {
                         cell.setCellValue(java.util.Date.from(
-                            ld.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+                                ld.atStartOfDay(ZoneId.systemDefault()).toInstant()));
                         cell.setCellStyle(createDateStyle(wb));
                     } else {
                         cell.setCellValue(val != null ? val.toString() : "");
-                        if (rowStyle != null) cell.setCellStyle(rowStyle);
+                        if (rowStyle != null)
+                            cell.setCellStyle(rowStyle);
                     }
                 }
                 rowNum++;
             }
 
-            for (int i = 0; i < keys.size(); i++) sheet.autoSizeColumn(i);
+            for (int i = 0; i < keys.size(); i++)
+                sheet.autoSizeColumn(i);
             sheet.createFreezePane(0, 2);
             sheet.setAutoFilter(new CellRangeAddress(1, rowNum - 1, 0, keys.size() - 1));
 
@@ -548,7 +591,8 @@ public class ExcelService {
         Map<String, Integer> map = new LinkedHashMap<>();
         for (int i = 0; i < headerRow.getLastCellNum(); i++) {
             Cell c = headerRow.getCell(i);
-            if (c != null) map.put(c.getStringCellValue().trim(), i);
+            if (c != null)
+                map.put(c.getStringCellValue().trim(), i);
         }
         return map;
     }
@@ -556,43 +600,52 @@ public class ExcelService {
     private boolean isRowEmpty(Row row) {
         for (int i = row.getFirstCellNum(); i < row.getLastCellNum(); i++) {
             Cell c = row.getCell(i);
-            if (c != null && c.getCellType() != CellType.BLANK) return false;
+            if (c != null && c.getCellType() != CellType.BLANK)
+                return false;
         }
         return true;
     }
 
     private String getString(Row row, Map<String, Integer> cols, String key) {
         Integer idx = cols.get(key);
-        if (idx == null) return null;
+        if (idx == null)
+            return null;
         Cell c = row.getCell(idx);
-        if (c == null) return null;
+        if (c == null)
+            return null;
         return c.getCellType() == CellType.STRING
-            ? c.getStringCellValue().trim()
-            : String.valueOf((long) c.getNumericCellValue());
+                ? c.getStringCellValue().trim()
+                : String.valueOf((long) c.getNumericCellValue());
     }
 
     private double getDouble(Row row, Map<String, Integer> cols, String key, double def) {
         Integer idx = cols.get(key);
-        if (idx == null) return def;
+        if (idx == null)
+            return def;
         Cell c = row.getCell(idx);
-        if (c == null) return def;
+        if (c == null)
+            return def;
         try {
             return c.getCellType() == CellType.NUMERIC
-                ? c.getNumericCellValue()
-                : Double.parseDouble(c.getStringCellValue().trim());
-        } catch (Exception e) { return def; }
+                    ? c.getNumericCellValue()
+                    : Double.parseDouble(c.getStringCellValue().trim());
+        } catch (Exception e) {
+            return def;
+        }
     }
 
     private void setCell(Row row, int col, String value, CellStyle style) {
         Cell c = row.createCell(col);
         c.setCellValue(value != null ? value : "");
-        if (style != null) c.setCellStyle(style);
+        if (style != null)
+            c.setCellStyle(style);
     }
 
     private void setNumericCell(Row row, int col, double value, CellStyle style) {
         Cell c = row.createCell(col);
         c.setCellValue(value);
-        if (style != null) c.setCellStyle(style);
+        if (style != null)
+            c.setCellStyle(style);
     }
 
     private void setBigDecimalCell(Row row, int col, BigDecimal value, CellStyle style) {
@@ -600,20 +653,25 @@ public class ExcelService {
         if (value != null) {
             c.setCellValue(value.doubleValue());
         }
-        if (style != null) c.setCellStyle(style);
+        if (style != null)
+            c.setCellStyle(style);
     }
 
     private BigDecimal getBigDecimal(Row row, Map<String, Integer> cols, String key, BigDecimal def) {
         Integer idx = cols.get(key);
-        if (idx == null) return def;
+        if (idx == null)
+            return def;
         Cell c = row.getCell(idx);
-        if (c == null) return def;
+        if (c == null)
+            return def;
         try {
             if (c.getCellType() == CellType.NUMERIC)
                 return BigDecimal.valueOf(c.getNumericCellValue());
             else
                 return new BigDecimal(c.getStringCellValue().trim());
-        } catch (Exception e) { return def; }
+        } catch (Exception e) {
+            return def;
+        }
     }
 
     private String formatKey(String key) {
@@ -623,14 +681,31 @@ public class ExcelService {
     // ── ImportResult ──────────────────────────────────────────────────────────
 
     public static class ImportResult {
-        private final List<Product>          products = new ArrayList<>();
-        private final List<String>           errors   = new ArrayList<>();
+        private final List<Product> products = new ArrayList<>();
+        private final List<String> errors = new ArrayList<>();
 
-        public void addProduct(Product p)          { products.add(p); }
-        public void addError(int row, String msg)  { errors.add("Row " + row + ": " + msg); }
-        public List<Product> getProducts()         { return products; }
-        public List<String>  getErrors()           { return errors; }
-        public boolean       hasErrors()           { return !errors.isEmpty(); }
-        public int           successCount()        { return products.size(); }
+        public void addProduct(Product p) {
+            products.add(p);
+        }
+
+        public void addError(int row, String msg) {
+            errors.add("Row " + row + ": " + msg);
+        }
+
+        public List<Product> getProducts() {
+            return products;
+        }
+
+        public List<String> getErrors() {
+            return errors;
+        }
+
+        public boolean hasErrors() {
+            return !errors.isEmpty();
+        }
+
+        public int successCount() {
+            return products.size();
+        }
     }
 }

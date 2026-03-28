@@ -19,6 +19,9 @@ module com.minimartpos {
     requires java.sql;
     requires com.zaxxer.hikari;
 
+    // Security
+    requires bcrypt;
+
     // Logging
     requires org.apache.logging.log4j;
     requires org.apache.logging.log4j.core;
@@ -42,6 +45,11 @@ module com.minimartpos {
     requires java.net.http;
     requires java.desktop;
     requires java.prefs;
+
+    // iText PDF
+    requires kernel;
+    requires layout;
+    requires io;
 
     // Opens needed for JavaFX FXML reflection
     opens com.minimartpos.app to javafx.graphics, javafx.fxml;
