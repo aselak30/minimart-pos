@@ -99,15 +99,26 @@ public class SyncManager {
         if (running) return;
         try {
             multicastGroup = InetAddress.getByName(NetworkMonitor.MULTICAST_GROUP);
+            InetSocketAddress groupAddr = new InetSocketAddress(multicastGroup, NetworkMonitor.MULTICAST_PORT);
+            NetworkInterface ni = networkMonitor.getSelectedNetworkInterface();
 
             // Receive socket
             receiveSocket = new MulticastSocket(NetworkMonitor.MULTICAST_PORT);
             receiveSocket.setReuseAddress(true);
-            receiveSocket.joinGroup(multicastGroup);
+            
+            if (ni != null) {
+                logger.info("Binding multicast to interface: {} ({})", ni.getName(), ni.getDisplayName());
+                receiveSocket.setNetworkInterface(ni);
+                receiveSocket.joinGroup(groupAddr, ni);
+            } else {
+                logger.warn("No specific network interface detected; joining default group.");
+                receiveSocket.joinGroup(multicastGroup);
+            }
             receiveSocket.setSoTimeout(2000); // 2s read timeout so we can check 'running'
 
             // Send socket
             sendSocket = new DatagramSocket();
+            if (ni != null) sendSocket.setOption(StandardSocketOptions.IP_MULTICAST_IF, ni);
             sendSocket.setBroadcast(true);
 
             // Start receive thread

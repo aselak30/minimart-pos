@@ -79,4 +79,18 @@ public class UserService {
         auditService.log("PASSWORD_RESET", "users", userId, null, "temp password issued");
         return tempPwd;
     }
+
+    public boolean deleteUser(int userId) {
+        if (userId == SessionManager.getCurrentUser().getId()) {
+            logger.warn("deleteUser: attempt to delete self (userId={})", userId);
+            return false;
+        }
+        boolean ok = userRepo.delete(userId);
+        if (ok) {
+            auditService.log("USER_DELETE", "users", userId, null, null);
+            logger.info("User deleted: userId={} by {}",
+                        userId, SessionManager.getCurrentUser().getUsername());
+        }
+        return ok;
+    }
 }

@@ -5,8 +5,10 @@ import com.zaxxer.hikari.HikariDataSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
@@ -32,6 +34,12 @@ public final class DatabaseConfig {
     private static int    dbPort;
     private static String dbName;
     private static String dbUser;
+    private static String dbPassword; // cached for saveProperties()
+
+    /** Path to the external persistent config file (writable, outside the JAR). */
+    private static final Path EXTERNAL_CONFIG_PATH = Paths.get(
+        System.getProperty("user.home"), "MiniMartPOS", "config", "connection.properties"
+    );
 
     private DatabaseConfig() {}
 
@@ -51,6 +59,29 @@ public final class DatabaseConfig {
     }
 
     /**
+     * Saves the current connection settings to the external config file
+     * so they are reloaded automatically on next startup.
+     * Call this after a successful connection from the DatabaseSetup screen.
+     */
+    public static synchronized void saveProperties() {
+        try {
+            Files.createDirectories(EXTERNAL_CONFIG_PATH.getParent());
+            Properties props = new Properties();
+            props.setProperty("db.host",     dbHost != null  ? dbHost     : "localhost");
+            props.setProperty("db.port",     String.valueOf(dbPort > 0 ? dbPort : 3306));
+            props.setProperty("db.name",     dbName != null  ? dbName     : "minimart_pos");
+            props.setProperty("db.user",     dbUser != null  ? dbUser     : "pos_user");
+            props.setProperty("db.password", dbPassword != null ? dbPassword : "");
+            try (OutputStream out = new FileOutputStream(EXTERNAL_CONFIG_PATH.toFile())) {
+                props.store(out, "MiniMart POS - Database Connection (auto-saved)");
+            }
+            logger.info("Connection settings saved to: {}", EXTERNAL_CONFIG_PATH);
+        } catch (IOException e) {
+            logger.warn("Could not save connection properties: {}", e.getMessage());
+        }
+    }
+
+    /**
      * Initializes the pool with explicit parameters.
      * Used by DatabaseSetup screen when user configures connection.
      */
@@ -60,10 +91,11 @@ public final class DatabaseConfig {
             dataSource.close();
         }
 
-        DatabaseConfig.dbHost = host;
-        DatabaseConfig.dbPort = port;
-        DatabaseConfig.dbName = dbName;
-        DatabaseConfig.dbUser = user;
+        DatabaseConfig.dbHost     = host;
+        DatabaseConfig.dbPort     = port;
+        DatabaseConfig.dbName     = dbName;
+        DatabaseConfig.dbUser     = user;
+        DatabaseConfig.dbPassword = password; // cache for saveProperties()
 
         try {
             HikariConfig config = new HikariConfig();
@@ -152,10 +184,23 @@ public final class DatabaseConfig {
 
     private static Properties loadProperties() {
         Properties props = new Properties();
+
+        // 1. Try external (user-home) config first — this is written by saveProperties()
+        if (Files.exists(EXTERNAL_CONFIG_PATH)) {
+            try (InputStream is = new FileInputStream(EXTERNAL_CONFIG_PATH.toFile())) {
+                props.load(is);
+                logger.info("Loaded connection properties from external file: {}", EXTERNAL_CONFIG_PATH);
+                return props;
+            } catch (IOException e) {
+                logger.warn("Could not read external connection.properties: {}", e.getMessage());
+            }
+        }
+
+        // 2. Fall back to classpath defaults (inside JAR)
         try (InputStream is = DatabaseConfig.class.getResourceAsStream(AppConfig.CONFIG_FILE)) {
             if (is != null) {
                 props.load(is);
-                logger.info("Loaded connection properties from {}", AppConfig.CONFIG_FILE);
+                logger.info("Loaded connection properties from classpath: {}", AppConfig.CONFIG_FILE);
             } else {
                 logger.warn("connection.properties not found; using defaults.");
             }

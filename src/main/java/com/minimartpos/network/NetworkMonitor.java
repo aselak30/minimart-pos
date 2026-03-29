@@ -45,6 +45,7 @@ public class NetworkMonitor {
     private String localMachineCode;
     private String localIpAddress;
     private String localMacAddress;
+    private NetworkInterface selectedNetworkInterface;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -145,6 +146,7 @@ public class NetworkMonitor {
     public String getLocalMachineCode()  { return localMachineCode; }
     public String getLocalIpAddress()    { return localIpAddress; }
     public String getLocalMacAddress()   { return localMacAddress; }
+    public NetworkInterface getSelectedNetworkInterface() { return selectedNetworkInterface; }
     public boolean isRunning()           { return running; }
 
     // ── Private: Ping ─────────────────────────────────────────────────────────
@@ -169,13 +171,20 @@ public class NetworkMonitor {
     // ── Private: Stale sweep ──────────────────────────────────────────────────
 
     private void sweepStale() {
+        // First, check local multicast-based staleness
         for (MachineInfo m : knownMachines.values()) {
             if (m.getStatus() == MachineInfo.Status.ONLINE
                     && m.isStale(OFFLINE_TIMEOUT_S)) {
                 m.setStatus(MachineInfo.Status.OFFLINE);
-                logger.warn("Machine went OFFLINE (timeout): {}", m.getMachineCode());
-                notifyListeners(m);
             }
+        }
+        
+        // Second, refresh from DB to see if any machines are active but multicast is blocked
+        loadMachinesFromDb();
+        
+        // Notify listeners after full refresh
+        for (MachineInfo m : knownMachines.values()) {
+            notifyListeners(m);
         }
     }
 
@@ -192,6 +201,7 @@ public class NetworkMonitor {
                 while (addresses.hasMoreElements()) {
                     InetAddress addr = addresses.nextElement();
                     if (addr instanceof Inet4Address && !addr.isLoopbackAddress()) {
+                        selectedNetworkInterface = ni;
                         localIpAddress = addr.getHostAddress();
                         byte[] mac = ni.getHardwareAddress();
                         if (mac != null) {

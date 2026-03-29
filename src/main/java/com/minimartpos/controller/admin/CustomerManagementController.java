@@ -101,13 +101,34 @@ public class CustomerManagementController implements Initializable {
             }
         });
         colActions.setCellFactory(col -> new TableCell<>() {
-            private final Button editBtn = new Button("✏ Edit");
-            { editBtn.setStyle("-fx-font-size:11px; -fx-padding:3 8; -fx-cursor:hand; " +
-                "-fx-background-color:-pos-primary; -fx-text-fill:white; -fx-background-radius:4;");
-              editBtn.setOnAction(e -> openEditPanel(getTableView().getItems().get(getIndex()))); }
+            private final Button editBtn = new Button("✏");
+            private final Button delBtn  = new Button("🗑");
+            private final HBox box = new HBox(4, editBtn, delBtn);
+            { 
+                box.setAlignment(Pos.CENTER);
+                editBtn.setStyle("-fx-font-size:11px; -fx-padding:3 8; -fx-cursor:hand; " +
+                    "-fx-background-color:-pos-primary; -fx-text-fill:white; -fx-background-radius:4;");
+                delBtn.setStyle("-fx-font-size:11px; -fx-padding:3 8; -fx-cursor:hand; " +
+                    "-fx-background-color:#FFEBEE; -fx-text-fill:-pos-danger; -fx-background-radius:4;");
+
+                editBtn.setOnAction(e -> openEditPanel(getTableView().getItems().get(getIndex())));
+                delBtn.setOnAction(e -> {
+                    Customer c = getTableView().getItems().get(getIndex());
+                    final int id = c.getId();
+                    final String name = c.getName();
+                    if (com.minimartpos.util.AlertUtil.confirm("Delete Customer", "Delete: " + name + "? This cannot be undone.")) {
+                        if (new com.minimartpos.repository.CustomerRepository().delete(id)) {
+                            com.minimartpos.util.AlertUtil.showInfo("Deleted", "Customer deleted successfully.");
+                            refresh();
+                        } else {
+                            com.minimartpos.util.AlertUtil.showError("Error", "Could not delete customer. They may have existing bills.");
+                        }
+                    }
+                });
+            }
             @Override protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
-                setGraphic(empty ? null : editBtn);
+                setGraphic(empty ? null : box);
             }
         });
         customerTable.setRowFactory(tv -> {

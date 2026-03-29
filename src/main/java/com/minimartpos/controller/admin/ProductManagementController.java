@@ -262,14 +262,31 @@ public class ProductManagementController implements Initializable {
 
         colActions.setCellFactory(col -> new TableCell<>() {
             private final Button editBtn = new Button("✏ Edit");
-            private final HBox box = new HBox(4, editBtn);
+            private final Button delBtn  = new Button("🗑");
+            private final HBox box = new HBox(4, editBtn, delBtn);
             {
                 box.setAlignment(Pos.CENTER);
                 editBtn.setStyle("-fx-font-size:11px; -fx-padding:3 8; -fx-cursor:hand; " +
                         "-fx-background-color:-pos-primary; -fx-text-fill:white; -fx-background-radius:4;");
+                delBtn.setStyle("-fx-font-size:11px; -fx-padding:3 8; -fx-cursor:hand; " +
+                        "-fx-background-color:#FFEBEE; -fx-text-fill:-pos-danger; -fx-background-radius:4;");
+                
                 editBtn.setOnAction(e -> {
                     Product p = getTableView().getItems().get(getIndex());
                     openEditPanel(p);
+                });
+                delBtn.setOnAction(e -> {
+                    Product p = getTableView().getItems().get(getIndex());
+                    final int id = p.getId();
+                    final String name = p.getName();
+                    if (AlertUtil.confirm("Delete Product", "Delete product '" + name + "'? This cannot be undone.")) {
+                        if (productService.delete(id)) {
+                            AlertUtil.showInfo("Deleted", "Product deleted successfully.");
+                            refreshProducts();
+                        } else {
+                            AlertUtil.showError("Error", "Could not delete product. It may be part of an existing bill.");
+                        }
+                    }
                 });
             }
 
@@ -646,6 +663,22 @@ public class ProductManagementController implements Initializable {
             productService.setActive(editingProduct.getId(), newState);
             refreshProducts();
             closeEditPanel();
+        }
+    }
+
+    @FXML
+    private void deleteProduct() {
+        if (editingProduct == null || editingProduct.getId() == 0) return;
+        final int id = editingProduct.getId();
+        final String name = editingProduct.getName();
+        if (AlertUtil.confirm("Delete Product", "Delete product '" + name + "'? This cannot be undone.")) {
+            if (productService.delete(id)) {
+                AlertUtil.showInfo("Deleted", "Product deleted successfully.");
+                refreshProducts();
+                closeEditPanel();
+            } else {
+                AlertUtil.showError("Error", "Could not delete product. It may be part of an existing bill.");
+            }
         }
     }
 
