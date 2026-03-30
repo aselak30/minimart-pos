@@ -42,7 +42,7 @@
                         style="-fx-font-size:11px;" onAction="#clearSelection"/>
             </HBox>
             <TableView fx:id="itemsTable" VBox.vgrow="ALWAYS"
-                       style="-fx-border-color:-pos-border; -fx-background-color:white; -fx-border-radius:6;">
+                       style="-fx-border-color:-pos-border; -fx-background-color:-pos-surface; -fx-border-radius:6;">
                 <columns>
                     <TableColumn fx:id="colSelect"  text="Return" prefWidth="60"  style="-fx-alignment:CENTER;"/>
                     <TableColumn fx:id="colItem"    text="Product" prefWidth="180"/>

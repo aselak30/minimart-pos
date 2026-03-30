@@ -67,7 +67,7 @@
 
                 <!-- Report type list -->
                 <VBox prefWidth="190" minWidth="170"
-                      style="-fx-background-color:white; -fx-border-color:-pos-border; -fx-border-width:0 1 0 0; -fx-padding:12 0;">
+                      style="-fx-background-color:-pos-surface; -fx-border-color:-pos-border; -fx-border-width:0 1 0 0; -fx-padding:12 0;">
                     <Label text="REPORT TYPE" styleClass="sidebar-section-label"
                            style="-fx-padding:0 16 8 16;"/>
                     <ListView fx:id="reportTypeList" VBox.vgrow="ALWAYS"

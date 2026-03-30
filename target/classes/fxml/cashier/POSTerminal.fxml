@@ -88,7 +88,7 @@
 
     <!-- ═══════════════════════ MAIN CONTENT ═══════════════════════ -->
     <center>
-        <HBox spacing="0">
+        <SplitPane dividerPositions="0.65" style="-fx-box-border: transparent; -fx-padding: 0; -fx-background-color: transparent;">
 
             <!-- ═══════ LEFT: Product Search + Quick Grid ═══════ -->
             <VBox HBox.hgrow="ALWAYS" spacing="8" style="-fx-padding:10;">
@@ -146,7 +146,7 @@
                                    style="-fx-font-size:11px;"/>
                         </HBox>
                         <ListView fx:id="searchResultsList" VBox.vgrow="ALWAYS"
-                                  style="-fx-background-color:white; -fx-border-color:-pos-border;
+                                  style="-fx-background-color:-pos-surface; -fx-border-color:-pos-border;
                                          -fx-border-radius:8; -fx-background-radius:8;"/>
                     </VBox>
 
@@ -155,7 +155,7 @@
 
             <!-- ═══════ RIGHT: Cart Panel ═══════ -->
             <VBox prefWidth="430" minWidth="390"
-                  style="-fx-background-color:white; -fx-border-color:-pos-border;
+                  style="-fx-background-color:-pos-surface; -fx-border-color:-pos-border;
                          -fx-border-width:0 0 0 1;">
 
                 <!-- Cart header -->
@@ -172,7 +172,7 @@
 
                 <!-- Cart table -->
                 <TableView fx:id="cartTable" VBox.vgrow="ALWAYS"
-                           style="-fx-border-color:transparent; -fx-background-color:white;"
+                           style="-fx-border-color:transparent; -fx-background-color:-pos-surface;"
                            editable="true">
                     <columns>
                         <TableColumn fx:id="colProduct" text="Product"  prefWidth="155" minWidth="120"/>
@@ -308,14 +308,14 @@
                 </VBox>
 
             </VBox>
-        </HBox>
+        </SplitPane>
     </center>
 
     <!-- ═══════════════════════ STATUS BAR ═══════════════════════ -->
     <bottom>
         <VBox>
             <HBox alignment="CENTER_LEFT" spacing="16"
-                  style="-fx-background-color:white; -fx-padding:5 16;
+                  style="-fx-background-color:-pos-surface; -fx-padding:5 16;
                          -fx-border-color:-pos-border; -fx-border-width:1 0 0 0;">
                 <Label fx:id="statusLabel" text="Ready" styleClass="text-secondary"
                        style="-fx-font-size:12px;"/>

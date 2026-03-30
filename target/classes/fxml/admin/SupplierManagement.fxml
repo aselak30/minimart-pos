@@ -79,7 +79,7 @@
                 </VBox>
                 <!-- Edit panel -->
                 <VBox fx:id="editPanel" prefWidth="370"
-                      style="-fx-background-color:white; -fx-border-color:-pos-border; -fx-border-width:0 0 0 1;"
+                      style="-fx-background-color:-pos-surface; -fx-border-color:-pos-border; -fx-border-width:0 0 0 1;"
                       visible="false" managed="false">
                     <HBox styleClass="card-header" alignment="CENTER_LEFT" spacing="8"
                           style="-fx-padding:10 14;">

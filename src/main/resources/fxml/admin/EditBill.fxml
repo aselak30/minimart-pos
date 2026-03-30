@@ -169,7 +169,7 @@
     </ScrollPane>
 
     <!-- Footer buttons -->
-    <HBox spacing="10" style="-fx-padding:12 16; -fx-background-color:white;
+    <HBox spacing="10" style="-fx-padding:12 16; -fx-background-color:-pos-surface;
           -fx-border-color:-pos-border; -fx-border-width:1 0 0 0;">
         <Button text="Cancel" styleClass="btn-secondary, button"
                 HBox.hgrow="ALWAYS" maxWidth="Infinity" onAction="#cancel"/>

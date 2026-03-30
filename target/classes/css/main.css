@@ -53,7 +53,7 @@
 /* ── Buttons ──────────────────────────────────────────────────────────────── */
 .button {
     -fx-cursor: hand;
-    -fx-padding: 8 18 8 18;
+    -fx-padding: 8 12 8 12;
     -fx-background-radius: 6;
     -fx-border-radius: 6;
     -fx-font-size: 13px;
@@ -458,7 +458,7 @@
 
 /* Numpad button row in payment dialog */
 .quick-amt-btn {
-    -fx-background-color: white;
+    -fx-background-color: -pos-surface;
     -fx-border-color: -pos-primary;
     -fx-border-width: 1.5;
     -fx-border-radius: 6;
@@ -467,7 +467,7 @@
     -fx-font-size: 12px;
 }
 .quick-amt-btn:hover {
-    -fx-background-color: -pos-primary-light;
+    -fx-background-color: -pos-surface-alt;
 }
 
 /* Out-of-stock product tile */

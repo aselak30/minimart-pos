@@ -73,7 +73,7 @@
             </HBox>
 
             <!-- BODY: Table (left) + Edit panel (right) -->
-            <HBox VBox.vgrow="ALWAYS" spacing="0">
+            <SplitPane dividerPositions="0.65" VBox.vgrow="ALWAYS" style="-fx-box-border: transparent; -fx-padding: 0; -fx-background-color: transparent;">
 
                 <!-- ══ USER TABLE ══ -->
                 <VBox HBox.hgrow="ALWAYS" style="-fx-padding:16;" spacing="10">
@@ -206,7 +206,7 @@
                                 </HBox>
 
                                 <!-- Template buttons -->
-                                <HBox spacing="6" alignment="CENTER_LEFT">
+                                <FlowPane hgap="6" vgap="6" alignment="CENTER_LEFT">
                                     <Label text="Templates:" styleClass="text-secondary"
                                            style="-fx-font-size:11px;"/>
                                     <Button text="Trainee"    styleClass="btn-secondary, button"
@@ -217,7 +217,7 @@
                                             style="-fx-font-size:11px;" onAction="#applyTemplateSenior"/>
                                     <Button text="Supervisor" styleClass="btn-secondary, button"
                                             style="-fx-font-size:11px;" onAction="#applyTemplateSupervisor"/>
-                                </HBox>
+                                </FlowPane>
 
                                 <!-- Permission checkboxes (populated dynamically) -->
                                 <VBox fx:id="permissionGroupsBox" spacing="10"/>
@@ -244,7 +244,7 @@
                         </VBox>
                     </ScrollPane>
                 </VBox>
-            </HBox>
+            </SplitPane>
         </VBox>
     </center>
 

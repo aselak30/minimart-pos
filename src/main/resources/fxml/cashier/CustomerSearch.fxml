@@ -41,7 +41,7 @@
         <!-- Results list -->
         <Label text="CUSTOMERS" styleClass="label-form"/>
         <ListView fx:id="customerList" VBox.vgrow="ALWAYS"
-                  style="-fx-background-color:white; -fx-border-color:-pos-border;
+                  style="-fx-background-color:-pos-surface; -fx-border-color:-pos-border;
                          -fx-border-radius:8; -fx-background-radius:8;"/>
 
         <!-- Add new customer form (hidden by default) -->
