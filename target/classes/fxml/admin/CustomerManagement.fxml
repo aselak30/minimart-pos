@@ -131,6 +131,7 @@
                                    visible="false" managed="false" wrapText="true"/>
                             <HBox spacing="8">
                                 <Button text="Cancel" styleClass="btn-secondary, button" onAction="#closePanel"/>
+                                <Button text="🗑 Delete" styleClass="btn-danger, button" onAction="#deleteCustomer"/>
                                 <Region HBox.hgrow="ALWAYS"/>
                                 <Button text="💾 Save" styleClass="btn-primary, button" onAction="#saveCustomer"/>
                             </HBox>

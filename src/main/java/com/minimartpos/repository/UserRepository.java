@@ -249,6 +249,38 @@ public class UserRepository {
         }
     }
 
+
+    // ── Delete ────────────────────────────────────────────────────────────────
+
+    public boolean delete(int userId) {
+        try (Connection conn = DatabaseConfig.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                // Delete permissions first (FK constraint)
+                try (PreparedStatement ps = conn.prepareStatement(SQL_DELETE_PERMISSIONS)) {
+                    ps.setInt(1, userId);
+                    ps.executeUpdate();
+                }
+                // Delete user
+                try (PreparedStatement ps = conn.prepareStatement("DELETE FROM users WHERE id=?")) {
+                    ps.setInt(1, userId);
+                    ps.executeUpdate();
+                }
+                conn.commit();
+                logger.info("User deleted: id={}", userId);
+                return true;
+            } catch (SQLException e) {
+                conn.rollback();
+                logger.error("delete user error: {}", e.getMessage(), e);
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            logger.error("delete user connection error: {}", e.getMessage(), e);
+        }
+        return false;
+    }
+
     // ── Row Mapper ────────────────────────────────────────────────────────────
 
     private User mapRow(ResultSet rs) throws SQLException {

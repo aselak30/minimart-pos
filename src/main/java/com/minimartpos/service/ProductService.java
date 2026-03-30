@@ -151,6 +151,17 @@ public class ProductService {
         return ok;
     }
 
+    public boolean delete(int id) {
+        invalidateCache();
+        boolean ok = productRepo.delete(id);
+        if (ok) {
+            auditService.log("PRODUCT_DELETE", "products", id, null, null);
+            logger.info("Product deleted: id={}", id);
+            notify(SyncEvent.Type.PRODUCT_UPDATED, id); // Use UPDATED for simple deletion sync
+        }
+        return ok;
+    }
+
     // ── Reference Data ────────────────────────────────────────────────────────
 
     public List<Category> getAllCategories() { return categoryRepo.findAllActive(); }

@@ -171,11 +171,12 @@ public class UserManagementController implements Initializable {
             return new SimpleStringProperty(u.getPermissions().size() + " granted");
         });
 
-        // Actions column: Edit / Toggle Active buttons
+        // Actions column: Edit / Disable / Delete buttons
         colActions.setCellFactory(col -> new TableCell<>() {
             private final Button editBtn   = new Button("✏ Edit");
             private final Button toggleBtn = new Button();
-            private final HBox box = new HBox(4, editBtn, toggleBtn);
+            private final Button deleteBtnStatus = new Button("🗑");
+            private final HBox box = new HBox(4, editBtn, toggleBtn, deleteBtnStatus);
             {
                 box.setAlignment(Pos.CENTER);
                 editBtn.setStyle("-fx-font-size:11px; -fx-padding:3 8; -fx-cursor:hand; " +
@@ -183,6 +184,9 @@ public class UserManagementController implements Initializable {
                     "-fx-background-radius:4;");
                 toggleBtn.setStyle("-fx-font-size:11px; -fx-padding:3 8; -fx-cursor:hand; " +
                     "-fx-background-radius:4;");
+                deleteBtnStatus.setStyle("-fx-font-size:11px; -fx-padding:3 8; -fx-cursor:hand; " +
+                    "-fx-background-radius:4; -fx-background-color:#FFEBEE; -fx-text-fill:-pos-danger;");
+
                 editBtn.setOnAction(e -> {
                     User u = getTableView().getItems().get(getIndex());
                     openEditPanel(u);
@@ -190,6 +194,23 @@ public class UserManagementController implements Initializable {
                 toggleBtn.setOnAction(e -> {
                     User u = getTableView().getItems().get(getIndex());
                     toggleUserActive(u);
+                });
+                deleteBtnStatus.setOnAction(e -> {
+                    User u = getTableView().getItems().get(getIndex());
+                    final int userId = u.getId();
+                    final String username = u.getUsername();
+                    if (userId == SessionManager.getCurrentUser().getId()) {
+                        AlertUtil.showWarning("Cannot Delete", "You cannot delete your own account.");
+                        return;
+                    }
+                    if (AlertUtil.confirm("Delete User", "Delete user '" + username + "'? This cannot be undone.")) {
+                        if (userService.deleteUser(userId)) {
+                            AlertUtil.showInfo("Deleted", "User deleted successfully.");
+                            refreshUsers();
+                        } else {
+                            AlertUtil.showError("Error", "Could not delete user.");
+                        }
+                    }
                 });
             }
             @Override protected void updateItem(String v, boolean empty) {
@@ -199,7 +220,7 @@ public class UserManagementController implements Initializable {
                 toggleBtn.setText(u.isActive() ? "⛔ Disable" : "✅ Enable");
                 toggleBtn.setStyle(toggleBtn.getStyle() +
                     (u.isActive()
-                        ? " -fx-background-color:#FFEBEE; -fx-text-fill:-pos-danger;"
+                        ? " -fx-background-color:#FFF3E0; -fx-text-fill:#EF6C00;"
                         : " -fx-background-color:#E8F5E9; -fx-text-fill:-pos-success;"));
                 setGraphic(box);
             }
@@ -477,17 +498,21 @@ public class UserManagementController implements Initializable {
     @FXML
     private void deleteUser() {
         if (editingUser == null) return;
-        if (editingUser.getId() == SessionManager.getCurrentUser().getId()) {
+        final int userId = editingUser.getId();
+        final String username = editingUser.getUsername();
+        if (userId == SessionManager.getCurrentUser().getId()) {
             AlertUtil.showWarning("Cannot Delete", "You cannot delete your own account.");
             return;
         }
         if (AlertUtil.confirm("Delete User",
-                "Delete user '" + editingUser.getUsername() + "'? This cannot be undone.")) {
-            // Disable rather than hard-delete to preserve audit trail
-            userService.setActive(editingUser.getId(), false);
-            AlertUtil.showInfo("Disabled", "User account has been disabled.");
-            refreshUsers();
-            closeEditPanel();
+                "Delete user '" + username + "'? This cannot be undone.")) {
+            if (userService.deleteUser(userId)) {
+                AlertUtil.showInfo("Deleted", "User deleted successfully.");
+                refreshUsers();
+                closeEditPanel();
+            } else {
+                AlertUtil.showError("Error", "Could not delete user.");
+            }
         }
     }
 

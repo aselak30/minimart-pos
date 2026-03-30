@@ -96,6 +96,9 @@ public class CashierMonitorController implements Initializable {
                 loadData();
             }));
 
+        SyncManager.getInstance().addListener(SyncEvent.Type.SHUTDOWN, event -> refreshNow());
+        SyncManager.getInstance().addListener(SyncEvent.Type.PING, event -> refreshNow());
+
         loadData();
         logger.info("CashierMonitor initialized.");
     }

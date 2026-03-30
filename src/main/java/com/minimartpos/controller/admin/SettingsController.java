@@ -175,6 +175,11 @@ public class SettingsController implements Initializable {
     }
 
     @FXML
+    private void changeDbConnection() {
+        com.minimartpos.util.SceneManager.navigateTo("shared/DatabaseSetup.fxml");
+    }
+
+    @FXML
     private void backupNow() {
         showFeedback("Starting backup…", true);
         new Thread(() -> {

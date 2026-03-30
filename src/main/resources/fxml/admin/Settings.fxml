@@ -191,6 +191,7 @@
                         <HBox spacing="8">
                             <Button text="💾 Backup Database Now" styleClass="btn-secondary, button" onAction="#backupDatabase"/>
                             <Button text="🔗 Test Connection"     styleClass="btn-secondary, button" onAction="#testConnection"/>
+                            <Button text="🔧 Change DB Connection" styleClass="btn-secondary, button" onAction="#changeDbConnection"/>
                         </HBox>
                     </VBox>
 

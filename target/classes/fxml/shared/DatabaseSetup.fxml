@@ -9,6 +9,8 @@
         <Label text="🗄️  Database Setup" styleClass="login-title"/>
         <Label text="Could not connect to database. Please enter connection details."
                styleClass="login-subtitle" wrapText="true" maxWidth="320" textAlignment="CENTER"/>
+        <Label fx:id="localIpLabel" text="Detecting IP..." 
+               style="-fx-text-fill:-pos-primary; -fx-font-weight:bold; -fx-font-size:12px;"/>
         <VBox spacing="4">
             <Label text="HOST" styleClass="label-form"/>
             <TextField fx:id="hostField" styleClass="text-field" maxWidth="Infinity"/>

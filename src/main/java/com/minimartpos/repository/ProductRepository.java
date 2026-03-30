@@ -256,6 +256,17 @@ public class ProductRepository {
         ps.setInt(25,    p.getId());
     }
 
+    public boolean delete(int id) {
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement("DELETE FROM products WHERE id=?")) {
+            ps.setInt(1, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            logger.error("delete product error: {}", e.getMessage(), e);
+        }
+        return false;
+    }
+
     private Product mapRow(ResultSet rs) throws SQLException {
         Product p = new Product();
         p.setId(rs.getInt("id"));

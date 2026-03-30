@@ -289,8 +289,11 @@
 
                             <!-- Buttons -->
                             <HBox spacing="8">
-                                <Button fx:id="deactivateBtn" text="🚫 Deactivate"
+                                <Button text="🗑 Delete"
                                         styleClass="btn-danger, button"
+                                        onAction="#deleteProduct"/>
+                                <Button fx:id="deactivateBtn" text="🚫 Disable"
+                                        styleClass="btn-secondary, button"
                                         onAction="#deactivateProduct"/>
                                 <Button text="📋 Price History"
                                         styleClass="btn-secondary, button"
