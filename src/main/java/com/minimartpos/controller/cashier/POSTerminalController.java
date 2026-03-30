@@ -997,12 +997,7 @@ public class POSTerminalController implements Initializable {
         openPaymentDialog(Bill.PayType.CASH);
     }
 
-    @FXML
-    private void payByCard() {
-        if (!validateBillForPayment())
-            return;
-        openPaymentDialog(Bill.PayType.CARD);
-    }
+
 
     @FXML
     private void payByCredit() {
@@ -1016,12 +1011,7 @@ public class POSTerminalController implements Initializable {
         openPaymentDialog(Bill.PayType.CREDIT);
     }
 
-    @FXML
-    private void payByMobile() {
-        if (!validateBillForPayment())
-            return;
-        openPaymentDialog(Bill.PayType.MOBILE_MONEY);
-    }
+
 
     private boolean validateBillForPayment() {
         if (activeBill.getItems().isEmpty()) {

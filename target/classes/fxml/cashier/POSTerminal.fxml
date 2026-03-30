@@ -251,12 +251,6 @@
                         <Button text="💵  CASH" styleClass="pos-payment-btn, button"
                                 HBox.hgrow="ALWAYS" maxWidth="Infinity"
                                 onAction="#payByCash"/>
-                        <Button text="💳  CARD"
-                                HBox.hgrow="ALWAYS" maxWidth="Infinity"
-                                onAction="#payByCard"
-                                style="-fx-background-color:-pos-info; -fx-text-fill:white;
-                                       -fx-font-weight:bold; -fx-font-size:15px;
-                                       -fx-min-height:52px; -fx-background-radius:8; -fx-cursor:hand;"/>
                     </HBox>
 
                     <!-- Secondary: Credit | Mobile -->
@@ -265,12 +259,6 @@
                                 HBox.hgrow="ALWAYS" maxWidth="Infinity"
                                 onAction="#payByCredit"
                                 style="-fx-background-color:-pos-warning; -fx-text-fill:white;
-                                       -fx-font-weight:bold; -fx-font-size:13px;
-                                       -fx-min-height:42px; -fx-background-radius:8; -fx-cursor:hand;"/>
-                        <Button text="📱  MOBILE"
-                                HBox.hgrow="ALWAYS" maxWidth="Infinity"
-                                onAction="#payByMobile"
-                                style="-fx-background-color:#7B1FA2; -fx-text-fill:white;
                                        -fx-font-weight:bold; -fx-font-size:13px;
                                        -fx-min-height:42px; -fx-background-radius:8; -fx-cursor:hand;"/>
                     </HBox>
