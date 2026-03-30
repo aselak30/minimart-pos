@@ -12,39 +12,51 @@ import java.time.format.DateTimeFormatter;
  * sized for a standard 80mm (42-char) thermal receipt printer.
  *
  * The output can be:
- *  1. Sent directly to a PrinterManager for ESC/POS printing
- *  2. Previewed in a TextArea in the UI
- *  3. Saved to PDF via iText
+ * 1. Sent directly to a PrinterManager for ESC/POS printing
+ * 2. Previewed in a TextArea in the UI
+ * 3. Saved to PDF via iText
  */
 public final class PrintUtil {
 
-    private PrintUtil() {}
+    private PrintUtil() {
+    }
 
-    public static final int WIDTH = 42;  // characters per line for 80mm paper
+    public static final int WIDTH = 42; // characters per line for 80mm paper
 
-    private static final DateTimeFormatter RECEIPT_DT =
-        DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+    private static final DateTimeFormatter RECEIPT_DT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
     /**
      * Builds the full receipt text for a finalized bill.
      *
-     * @param bill         The finalized bill
-     * @param companyName  Company name (from settings)
-     * @param companyPhone Company phone
-     * @param footer       Receipt footer message
-     * @return             Multi-line receipt string
+     * @param bill           The finalized bill
+     * @param companyName    Company name (from settings)
+     * @param companyAddress Company address
+     * @param companyPhone   Company phone
+     * @param footer         Receipt footer message
+     * @return Multi-line receipt string
      */
     public static String buildReceipt(Bill bill, String companyName,
-                                      String companyPhone, String footer) {
+            String companyAddress, String companyPhone, String footer) {
         StringBuilder sb = new StringBuilder();
 
         // Header
-        sb.append(center(companyName)).append("\n");
+        sb.append(repeat("*", WIDTH)).append("\n");
+        sb.append(center(companyName.toUpperCase())).append("\n");
+        if (companyAddress != null && !companyAddress.isBlank()) {
+            sb.append(center(companyAddress)).append("\n");
+        }
         if (companyPhone != null && !companyPhone.isBlank()) {
             sb.append(center("Tel: " + companyPhone)).append("\n");
         }
-        sb.append(repeat("=", WIDTH)).append("\n");
-        sb.append(center("RECEIPT")).append("\n");
+        sb.append(repeat("*", WIDTH)).append("\n");
+
+        String header = "OFFICIAL RECEIPT";
+        if (bill.getStatus() == Bill.Status.VOIDED)
+            header = "VOIDED BILL";
+        else if (bill.getStatus() == Bill.Status.REFUNDED)
+            header = "REFUNDED BILL";
+
+        sb.append(center(header)).append("\n");
         sb.append(repeat("-", WIDTH)).append("\n");
 
         // Bill info
@@ -55,9 +67,10 @@ public final class PrintUtil {
             sb.append(padRight("Customer: " + bill.getCustomerName(), WIDTH)).append("\n");
         }
         sb.append(padRight("Date: " +
-            (bill.getFinalizedAt() != null
-                ? bill.getFinalizedAt().format(RECEIPT_DT)
-                : LocalDateTime.now().format(RECEIPT_DT)), WIDTH)).append("\n");
+                (bill.getFinalizedAt() != null
+                        ? bill.getFinalizedAt().format(RECEIPT_DT)
+                        : LocalDateTime.now().format(RECEIPT_DT)),
+                WIDTH)).append("\n");
         sb.append(repeat("-", WIDTH)).append("\n");
 
         // Column headers
@@ -68,18 +81,18 @@ public final class PrintUtil {
         for (BillItem item : bill.getItems()) {
             // Product name (may wrap)
             String name = item.getProductName();
-            if (name.length() > WIDTH) name = name.substring(0, WIDTH - 2) + "..";
+            if (name.length() > WIDTH)
+                name = name.substring(0, WIDTH - 2) + "..";
             sb.append(name).append("\n");
             sb.append(rowLine("",
-                String.valueOf(item.getQuantity()),
-                CurrencyUtil.formatPlain(item.getUnitPrice()),
-                CurrencyUtil.formatPlain(item.getLineTotal())
-            )).append("\n");
+                    String.valueOf(item.getQuantity()),
+                    CurrencyUtil.formatPlain(item.getUnitPrice()),
+                    CurrencyUtil.formatPlain(item.getLineTotal()))).append("\n");
 
             // Show discount if applied
             if (item.getDiscountPercent().compareTo(BigDecimal.ZERO) > 0) {
                 sb.append(padLeft("Disc: -" + item.getDiscountPercent().toPlainString() +
-                    "% = -" + CurrencyUtil.formatPlain(item.getDiscountAmount()), WIDTH)).append("\n");
+                        "% = -" + CurrencyUtil.formatPlain(item.getDiscountAmount()), WIDTH)).append("\n");
             }
         }
 
@@ -89,7 +102,7 @@ public final class PrintUtil {
         sb.append(totalLine("Subtotal:", CurrencyUtil.formatPlain(bill.getSubtotal()))).append("\n");
         if (bill.getDiscountAmount().compareTo(BigDecimal.ZERO) > 0) {
             sb.append(totalLine("Discount:",
-                "-" + CurrencyUtil.formatPlain(bill.getDiscountAmount()))).append("\n");
+                    "-" + CurrencyUtil.formatPlain(bill.getDiscountAmount()))).append("\n");
         }
         if (bill.getTaxAmount().compareTo(BigDecimal.ZERO) > 0) {
             sb.append(totalLine("Tax:", CurrencyUtil.formatPlain(bill.getTaxAmount()))).append("\n");
@@ -100,7 +113,7 @@ public final class PrintUtil {
 
         // Payment info
         sb.append(totalLine("Paid (" + bill.getPaymentType().name() + "):",
-            CurrencyUtil.formatPlain(bill.getPaidAmount()))).append("\n");
+                CurrencyUtil.formatPlain(bill.getPaidAmount()))).append("\n");
         if (bill.getChangeAmount().compareTo(BigDecimal.ZERO) > 0) {
             sb.append(totalLine("Change:", CurrencyUtil.formatPlain(bill.getChangeAmount()))).append("\n");
         }
@@ -115,7 +128,7 @@ public final class PrintUtil {
             sb.append(center(footer)).append("\n");
         }
         sb.append(center("Thank you!")).append("\n");
-        sb.append("\n\n\n");  // feed for cutter
+        sb.append("\n\n\n"); // feed for cutter
 
         return sb.toString();
     }
@@ -124,28 +137,33 @@ public final class PrintUtil {
 
     /** Centers text within WIDTH */
     public static String center(String text) {
-        if (text == null) text = "";
-        if (text.length() >= WIDTH) return text;
+        if (text == null)
+            text = "";
+        if (text.length() >= WIDTH)
+            return text;
         int padding = (WIDTH - text.length()) / 2;
         return " ".repeat(padding) + text;
     }
 
     /** Left-pads text */
     public static String padLeft(String text, int width) {
-        if (text.length() >= width) return text;
+        if (text.length() >= width)
+            return text;
         return " ".repeat(width - text.length()) + text;
     }
 
     /** Right-pads text */
     public static String padRight(String text, int width) {
-        if (text.length() >= width) return text.substring(0, width);
+        if (text.length() >= width)
+            return text.substring(0, width);
         return text + " ".repeat(width - text.length());
     }
 
-    /** Two-column total line: "Label:          value" */
+    /** Two-column total line: "Label: value" */
     public static String totalLine(String label, String value) {
         int space = WIDTH - label.length() - value.length();
-        if (space < 1) space = 1;
+        if (space < 1)
+            space = 1;
         return label + " ".repeat(space) + value;
     }
 
@@ -153,7 +171,7 @@ public final class PrintUtil {
     public static String rowLine(String name, String qty, String price, String total) {
         // Widths: name=18, qty=4, price=10, total=10
         return padRight(name, 18) + padLeft(qty, 4) +
-               padLeft(price, 10) + padLeft(total, 10);
+                padLeft(price, 10) + padLeft(total, 10);
     }
 
     /** Repeats a character N times */

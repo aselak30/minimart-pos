@@ -20,20 +20,20 @@ import java.util.Optional;
  * Core billing business logic for the POS terminal.
  *
  * Responsibilities:
- *  - Create / manage the active Bill in-memory
- *  - Add / remove / update cart items
- *  - Apply discounts (item-level and bill-level)
- *  - Override prices (with permission check)
- *  - Finalize bill (persist, deduct stock, generate bill number)
- *  - Void bills
+ * - Create / manage the active Bill in-memory
+ * - Add / remove / update cart items
+ * - Apply discounts (item-level and bill-level)
+ * - Override prices (with permission check)
+ * - Finalize bill (persist, deduct stock, generate bill number)
+ * - Void bills
  */
 public class BillingService {
 
     private static final Logger logger = LogManager.getLogger(BillingService.class);
 
-    private final BillRepository    billRepo    = new BillRepository();
+    private final BillRepository billRepo = new BillRepository();
     private final ProductRepository productRepo = new ProductRepository();
-    private final StockService      stockService = new StockService();
+    private final StockService stockService = new StockService();
 
     // ── Bill Lifecycle ────────────────────────────────────────────────────────
 
@@ -61,9 +61,9 @@ public class BillingService {
      * Generates the final persisted bill number: BILL-YYYYMMDD-NNNN.
      */
     public String generateFinalBillNumber() {
-        String date   = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        int    seqNum = billRepo.getNextSequenceForDate(date);
-        return String.format("BILL-%s-%04d", date, seqNum);
+        String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        int seqNum = billRepo.getNextSequenceForDate(date);
+        return String.format("%s%04d", date, seqNum);
     }
 
     // ── Cart Operations ───────────────────────────────────────────────────────
@@ -72,7 +72,7 @@ public class BillingService {
      * Adds a product to the bill. If the product already exists in the cart,
      * increments quantity instead.
      *
-     * @return  Result with success/failure and message.
+     * @return Result with success/failure and message.
      */
     public BillResult addProduct(Bill bill, Product product, BigDecimal quantity) {
         if (product == null) {
@@ -94,7 +94,7 @@ public class BillingService {
                 .findFirst();
 
         if (existing.isPresent()) {
-            BillItem item    = existing.get();
+            BillItem item = existing.get();
             BigDecimal newQty = item.getQuantity().add(quantity);
             if (product.getStockQuantity() != null && newQty.compareTo(product.getStockQuantity()) > 0) {
                 return BillResult.fail("Cannot add more. Available: " + product.getStockQuantity());
@@ -138,9 +138,10 @@ public class BillingService {
             return BillResult.fail("You do not have permission to add negative quantities.");
         }
 
-        BillItem item    = bill.getItems().get(itemIndex);
+        BillItem item = bill.getItems().get(itemIndex);
         Optional<Product> prod = productRepo.findById(item.getProductId());
-        if (prod.isPresent() && prod.get().getStockQuantity() != null && newQty.compareTo(prod.get().getStockQuantity()) > 0) {
+        if (prod.isPresent() && prod.get().getStockQuantity() != null
+                && newQty.compareTo(prod.get().getStockQuantity()) > 0) {
             return BillResult.fail("Insufficient stock. Available: " + prod.get().getStockQuantity());
         }
 
@@ -172,9 +173,9 @@ public class BillingService {
         item.setPriceOverride(true);
         bill.recalculate();
         logger.info("Price override on '{}' by user {} — new price: {}",
-                    item.getProductName(),
-                    SessionManager.getCurrentUser().getUsername(),
-                    newPrice);
+                item.getProductName(),
+                SessionManager.getCurrentUser().getUsername(),
+                newPrice);
         return BillResult.ok("Price updated.");
     }
 
@@ -182,20 +183,20 @@ public class BillingService {
      * Applies a percentage or fixed discount to a single cart item.
      */
     public BillResult applyItemDiscount(Bill bill, int itemIndex,
-                                        BigDecimal discountValue, boolean isPercent) {
+            BigDecimal discountValue, boolean isPercent) {
         if (!SessionManager.hasPermission(Permission.APPLY_LINE_ITEM_DISCOUNT)) {
             return BillResult.fail("You do not have permission to apply line discounts.");
         }
 
-        BillItem item    = bill.getItems().get(itemIndex);
-        Product  product = productRepo.findById(item.getProductId()).orElse(null);
+        BillItem item = bill.getItems().get(itemIndex);
+        Product product = productRepo.findById(item.getProductId()).orElse(null);
 
         // Check max discount limit
         if (product != null && isPercent && product.getMaxDiscountPercent() != null) {
             if (discountValue.compareTo(product.getMaxDiscountPercent()) > 0
                     && !SessionManager.hasPermission(Permission.OVERRIDE_DISCOUNT_LIMIT)) {
                 return BillResult.fail("Discount exceeds the maximum allowed ("
-                                       + product.getMaxDiscountPercent() + "%) for this product.");
+                        + product.getMaxDiscountPercent() + "%) for this product.");
             }
         }
 
@@ -230,8 +231,8 @@ public class BillingService {
             if (discountValue.compareTo(BigDecimal.valueOf(100)) > 0)
                 return BillResult.fail("Discount cannot exceed 100%.");
             amount = bill.getSubtotal()
-                        .multiply(discountValue)
-                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                    .multiply(discountValue)
+                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
         } else {
             if (discountValue.compareTo(bill.getSubtotal()) > 0)
                 return BillResult.fail("Discount cannot exceed subtotal.");
@@ -254,9 +255,9 @@ public class BillingService {
      * - Deducts stock for each item
      * - Updates customer credit if needed
      *
-     * @param bill         The bill to finalize
-     * @param paidAmount   Amount tendered by the customer
-     * @param paymentType  Payment method
+     * @param bill        The bill to finalize
+     * @param paidAmount  Amount tendered by the customer
+     * @param paymentType Payment method
      */
     public BillResult finalizeBill(Bill bill, BigDecimal paidAmount, Bill.PayType paymentType) {
 
@@ -287,7 +288,7 @@ public class BillingService {
             boolean queued = com.minimartpos.network.OfflineSync.getInstance().enqueue(bill);
             if (queued) {
                 logger.warn("DB save failed — bill {} queued offline for later sync.",
-                            bill.getBillNumber());
+                        bill.getBillNumber());
                 return BillResult.ok(finalBillNumber + " [OFFLINE]");
             }
             return BillResult.fail("Failed to save bill to database. Please try again.");
@@ -296,21 +297,21 @@ public class BillingService {
         // Deduct stock for each item (atomic per product)
         for (BillItem item : bill.getItems()) {
             BigDecimal qtyToDeduct = item.isWeightBased() ? item.getWeight() : item.getQuantity();
-            if (qtyToDeduct == null) qtyToDeduct = BigDecimal.ZERO;
-            
+            if (qtyToDeduct == null)
+                qtyToDeduct = BigDecimal.ZERO;
+
             boolean stockOk = stockService.deductStock(
                     item.getProductId(), qtyToDeduct,
                     bill.getId(), bill.getCashierId());
             if (!stockOk) {
                 logger.warn("Stock deduction failed for product {} on bill {}",
-                            item.getProductId(), bill.getBillNumber());
+                        item.getProductId(), bill.getBillNumber());
             }
         }
 
         // Broadcast sync events to other machines
         try {
-            com.minimartpos.network.SyncManager sm =
-                com.minimartpos.network.SyncManager.getInstance();
+            com.minimartpos.network.SyncManager sm = com.minimartpos.network.SyncManager.getInstance();
             sm.notifyBillFinalized(bill.getId());
             for (BillItem item : bill.getItems()) {
                 sm.notifyStockChanged(item.getProductId());
@@ -320,8 +321,8 @@ public class BillingService {
         }
 
         logger.info("Bill finalized: {} | Total: {} | Payment: {} | Cashier: {}",
-                    bill.getBillNumber(), bill.getTotalAmount(), paymentType,
-                    SessionManager.getCurrentUser().getUsername());
+                bill.getBillNumber(), bill.getTotalAmount(), paymentType,
+                SessionManager.getCurrentUser().getUsername());
 
         return BillResult.ok(finalBillNumber);
     }
@@ -350,16 +351,17 @@ public class BillingService {
         // Reverse stock deductions
         for (BillItem item : bill.getItems()) {
             BigDecimal qtyToAdd = item.isWeightBased() ? item.getWeight() : item.getQuantity();
-            if (qtyToAdd == null) qtyToAdd = BigDecimal.ZERO;
-            
+            if (qtyToAdd == null)
+                qtyToAdd = BigDecimal.ZERO;
+
             stockService.addStock(item.getProductId(), qtyToAdd,
-                                  bill.getId(), bill.getCashierId(), "RETURN");
+                    bill.getId(), bill.getCashierId(), "RETURN");
         }
 
         logger.info("Bill voided: {} by {} — reason: {}",
-                    bill.getBillNumber(),
-                    SessionManager.getCurrentUser().getUsername(),
-                    reason);
+                bill.getBillNumber(),
+                SessionManager.getCurrentUser().getUsername(),
+                reason);
         return BillResult.ok("Bill voided.");
     }
 
@@ -370,16 +372,16 @@ public class BillingService {
      * Bills are held per-cashier session; held bills are lost on logout.
      * Map: holdLabel → Bill
      */
-    private static final java.util.concurrent.ConcurrentHashMap<String, Bill> heldBills =
-        new java.util.concurrent.ConcurrentHashMap<>();
+    private static final java.util.concurrent.ConcurrentHashMap<String, Bill> heldBills = new java.util.concurrent.ConcurrentHashMap<>();
 
     /**
      * Parks the current active bill so the cashier can serve a different customer.
      * The bill is stored in memory with an optional label.
      * A fresh empty bill is returned for the next customer.
      *
-     * @param bill   The currently active bill (must have at least one item)
-     * @param label  A short label to identify the held bill (e.g. customer name or "Bill 1")
+     * @param bill  The currently active bill (must have at least one item)
+     * @param label A short label to identify the held bill (e.g. customer name or
+     *              "Bill 1")
      * @return BillResult.ok if held; BillResult.fail if bill is empty
      */
     public BillResult holdBill(Bill bill, String label) {
@@ -387,11 +389,11 @@ public class BillingService {
             return BillResult.fail("Cannot hold an empty bill.");
         }
         String key = label != null && !label.isBlank()
-            ? label.trim()
-            : "Held " + (heldBills.size() + 1) + " — " + bill.getBillNumber();
+                ? label.trim()
+                : "Held " + (heldBills.size() + 1) + " — " + bill.getBillNumber();
         heldBills.put(key, bill);
         logger.info("Bill held: {} items={} label='{}'",
-            bill.getBillNumber(), bill.getItems().size(), key);
+                bill.getBillNumber(), bill.getItems().size(), key);
         return BillResult.ok(key);
     }
 
@@ -403,7 +405,8 @@ public class BillingService {
      */
     public java.util.Optional<Bill> retrieveHeldBill(String label) {
         Bill b = heldBills.remove(label);
-        if (b != null) logger.info("Bill retrieved from hold: '{}'", label);
+        if (b != null)
+            logger.info("Bill retrieved from hold: '{}'", label);
         return java.util.Optional.ofNullable(b);
     }
 
@@ -420,7 +423,8 @@ public class BillingService {
     public void clearHeldBills() {
         int count = heldBills.size();
         heldBills.clear();
-        if (count > 0) logger.info("Cleared {} held bills on logout.", count);
+        if (count > 0)
+            logger.info("Cleared {} held bills on logout.", count);
     }
 
     // ── Cash limit helper ─────────────────────────────────────────────────────
@@ -432,21 +436,80 @@ public class BillingService {
         return billRepo.getTodayCashCollected(cashierId);
     }
 
+    // ── Search ────────────────────────────────────────────────────────────────
+
+    /**
+     * Finds a bill by its number (exact match).
+     */
+    public java.util.Optional<Bill> findByBillNumber(String billNumber) {
+        return billRepo.findByBillNumber(billNumber);
+    }
+
+    /**
+     * Flexible search for a bill by number or fragment.
+     * Tries exact match first, then partial.
+     */
+    public java.util.Optional<Bill> findByNumber(String query) {
+        if (query == null || query.isBlank())
+            return java.util.Optional.empty();
+
+        var exact = billRepo.findByBillNumber(query);
+        if (exact.isPresent())
+            return exact;
+
+        var partials = billRepo.searchByBillNumber(query);
+        if (!partials.isEmpty()) {
+            return billRepo.findById(partials.get(0).getId());
+        }
+        return java.util.Optional.empty();
+    }
+
+    /**
+     * Returns a list of bills matching the fragment.
+     */
+    public java.util.List<Bill> searchByBillNumber(String fragment) {
+        return billRepo.searchByBillNumber(fragment);
+    }
+
+    /**
+     * Advanced search: bill number, customer name, or phone.
+     */
+    public java.util.List<Bill> searchBills(String query) {
+        return billRepo.searchBillsAdvanced(query);
+    }
+
+    /**
+     * Returns the 10 most recent finalized bills.
+     */
+    public java.util.List<Bill> getRecentBills(int limit) {
+        return billRepo.findRecent(limit);
+    }
+
     // ── Result Type ───────────────────────────────────────────────────────────
 
     public static class BillResult {
         private final boolean success;
-        private final String  message;
+        private final String message;
 
         private BillResult(boolean success, String message) {
             this.success = success;
             this.message = message;
         }
 
-        public static BillResult ok(String message)   { return new BillResult(true,  message); }
-        public static BillResult fail(String message) { return new BillResult(false, message); }
+        public static BillResult ok(String message) {
+            return new BillResult(true, message);
+        }
 
-        public boolean isSuccess() { return success; }
-        public String  getMessage(){ return message; }
+        public static BillResult fail(String message) {
+            return new BillResult(false, message);
+        }
+
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public String getMessage() {
+            return message;
+        }
     }
 }

@@ -29,86 +29,118 @@ import java.util.stream.Collectors;
  * Admin screen for managing users.
  *
  * Features:
- *  - Table of all users with search + role filter
- *  - Inline edit panel: basic info form + live password strength
- *  - Cashier permission matrix grouped by category
- *  - Permission templates (Trainee / Regular / Senior / Supervisor)
- *  - Enable / disable accounts
- *  - Password reset (generates temp password)
- *  - Delete user (with self-delete protection)
+ * - Table of all users with search + role filter
+ * - Inline edit panel: basic info form + live password strength
+ * - Cashier permission matrix grouped by category
+ * - Permission templates (Trainee / Regular / Senior / Supervisor)
+ * - Enable / disable accounts
+ * - Password reset (generates temp password)
+ * - Delete user (with self-delete protection)
  */
 public class UserManagementController implements Initializable {
 
     private static final Logger logger = LogManager.getLogger(UserManagementController.class);
 
     // ── FXML ─────────────────────────────────────────────────────────────────
-    @FXML private Label     sidebarUserLabel;
-    @FXML private TextField searchField;
-    @FXML private ComboBox<String> roleFilter;
-    @FXML private Label     userCountLabel;
+    @FXML
+    private Label sidebarUserLabel;
+    @FXML
+    private TextField searchField;
+    @FXML
+    private ComboBox<String> roleFilter;
+    @FXML
+    private Label userCountLabel;
 
     // Table
-    @FXML private TableView<User>            userTable;
-    @FXML private TableColumn<User, String>  colName;
-    @FXML private TableColumn<User, String>  colUsername;
-    @FXML private TableColumn<User, String>  colRole;
-    @FXML private TableColumn<User, String>  colStatus;
-    @FXML private TableColumn<User, String>  colLastLogin;
-    @FXML private TableColumn<User, String>  colPerms;
-    @FXML private TableColumn<User, String>  colActions;
+    @FXML
+    private TableView<User> userTable;
+    @FXML
+    private TableColumn<User, String> colName;
+    @FXML
+    private TableColumn<User, String> colUsername;
+    @FXML
+    private TableColumn<User, String> colRole;
+    @FXML
+    private TableColumn<User, String> colStatus;
+    @FXML
+    private TableColumn<User, String> colLastLogin;
+    @FXML
+    private TableColumn<User, String> colPerms;
+    @FXML
+    private TableColumn<User, String> colActions;
 
     // Edit panel
-    @FXML private VBox      editPanel;
-    @FXML private Label     editPanelTitle;
-    @FXML private TextField fieldFullName;
-    @FXML private TextField fieldUsername;
-    @FXML private ComboBox<Role> fieldRole;
-    @FXML private TextField fieldTimeout;
-    @FXML private TextField fieldCashLimit;
-    @FXML private TextField fieldDailyTarget;
-    @FXML private TextField fieldEmail;
-    @FXML private TextField fieldPhone;
-    @FXML private VBox      passwordSection;
-    @FXML private PasswordField fieldPassword;
-    @FXML private Label     passwordStrengthLabel;
-    @FXML private CheckBox  fieldActive;
-    @FXML private Button    resetPwdBtn;
-    @FXML private Button    deleteBtn;
-    @FXML private Button    saveBtn;
-    @FXML private Label     formErrorLabel;
-    @FXML private VBox      permissionsSection;
-    @FXML private VBox      permissionGroupsBox;
+    @FXML
+    private VBox editPanel;
+    @FXML
+    private Label editPanelTitle;
+    @FXML
+    private TextField fieldFullName;
+    @FXML
+    private TextField fieldUsername;
+    @FXML
+    private ComboBox<Role> fieldRole;
+    @FXML
+    private TextField fieldTimeout;
+    @FXML
+    private TextField fieldCashLimit;
+    @FXML
+    private TextField fieldDailyTarget;
+    @FXML
+    private TextField fieldEmail;
+    @FXML
+    private TextField fieldPhone;
+    @FXML
+    private VBox passwordSection;
+    @FXML
+    private PasswordField fieldPassword;
+    @FXML
+    private Label passwordStrengthLabel;
+    @FXML
+    private CheckBox fieldActive;
+    @FXML
+    private Button resetPwdBtn;
+    @FXML
+    private Button deleteBtn;
+    @FXML
+    private Button saveBtn;
+    @FXML
+    private Label formErrorLabel;
+    @FXML
+    private VBox permissionsSection;
+    @FXML
+    private VBox permissionGroupsBox;
 
     // ── State ─────────────────────────────────────────────────────────────────
-    private final UserService             userService  = new UserService();
-    private final AuthService             authService  = new AuthService();
-    private final ObservableList<User>    allUsers     = FXCollections.observableArrayList();
-    private FilteredList<User>            filteredUsers;
-    private User                          editingUser  = null;   // null = new user
+    private final UserService userService = new UserService();
+    private final AuthService authService = new AuthService();
+    private final ObservableList<User> allUsers = FXCollections.observableArrayList();
+    private FilteredList<User> filteredUsers;
+    private User editingUser = null; // null = new user
     private final Map<Permission, CheckBox> permCheckboxes = new LinkedHashMap<>();
 
     // ── Permission Templates ──────────────────────────────────────────────────
     private static final Set<Permission> TEMPLATE_TRAINEE = Set.of(
-        Permission.VIEW_LOW_STOCK_ALERTS
-    );
+            Permission.VIEW_LOW_STOCK_ALERTS);
     private static final Set<Permission> TEMPLATE_REGULAR = Set.of(
-        Permission.VIEW_LOW_STOCK_ALERTS,
-        Permission.APPLY_PERCENTAGE_DISCOUNT,
-        Permission.APPLY_FIXED_DISCOUNT,
-        Permission.APPLY_LINE_ITEM_DISCOUNT,
-        Permission.APPLY_BILL_DISCOUNT,
-        Permission.ADD_CUSTOMER,
-        Permission.REPRINT_OLD_BILL
-    );
-    private static final Set<Permission> TEMPLATE_SENIOR = new HashSet<>(TEMPLATE_REGULAR) {{
-        add(Permission.CHANGE_SELLING_PRICE);
-        add(Permission.VOID_BILL);
-        add(Permission.DELETE_OWN_BILL);
-        add(Permission.VIEW_CUSTOMER_CREDIT);
-        add(Permission.EDIT_CUSTOMER);
-        add(Permission.ACCESS_BASIC_REPORTS);
-        add(Permission.VIEW_BILL_PROFIT);
-    }};
+            Permission.VIEW_LOW_STOCK_ALERTS,
+            Permission.APPLY_PERCENTAGE_DISCOUNT,
+            Permission.APPLY_FIXED_DISCOUNT,
+            Permission.APPLY_LINE_ITEM_DISCOUNT,
+            Permission.APPLY_BILL_DISCOUNT,
+            Permission.ADD_CUSTOMER,
+            Permission.REPRINT_OLD_BILL);
+    private static final Set<Permission> TEMPLATE_SENIOR = new HashSet<>(TEMPLATE_REGULAR) {
+        {
+            add(Permission.CHANGE_SELLING_PRICE);
+            add(Permission.VOID_BILL);
+            add(Permission.DELETE_OWN_BILL);
+            add(Permission.VIEW_CUSTOMER_CREDIT);
+            add(Permission.EDIT_CUSTOMER);
+            add(Permission.ACCESS_BASIC_REPORTS);
+            add(Permission.VIEW_BILL_PROFIT);
+        }
+    };
     private static final Set<Permission> TEMPLATE_SUPERVISOR = EnumSet.allOf(Permission.class);
 
     // ── Init ──────────────────────────────────────────────────────────────────
@@ -135,57 +167,67 @@ public class UserManagementController implements Initializable {
         colName.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getFullName()));
         colUsername.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getUsername()));
 
-        colRole.setCellValueFactory(c ->
-            new SimpleStringProperty(c.getValue().getRole().getDisplayName()));
+        colRole.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getRole().getDisplayName()));
         colRole.setCellFactory(col -> new TableCell<>() {
-            @Override protected void updateItem(String v, boolean empty) {
+            @Override
+            protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
-                if (empty || v == null) { setText(null); setStyle(""); return; }
+                if (empty || v == null) {
+                    setText(null);
+                    setStyle("");
+                    return;
+                }
                 setText(v);
                 setStyle(v.equals("Administrator")
-                    ? "-fx-text-fill:-pos-primary; -fx-font-weight:bold;"
-                    : "-fx-text-fill:-pos-text-secondary;");
+                        ? "-fx-text-fill:-pos-primary; -fx-font-weight:bold;"
+                        : "-fx-text-fill:-pos-text-secondary;");
             }
         });
 
-        colStatus.setCellValueFactory(c ->
-            new SimpleStringProperty(c.getValue().isActive() ? "Active" : "Disabled"));
+        colStatus.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().isActive() ? "Active" : "Disabled"));
         colStatus.setCellFactory(col -> new TableCell<>() {
-            @Override protected void updateItem(String v, boolean empty) {
+            @Override
+            protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
-                if (empty || v == null) { setText(null); setStyle(""); return; }
+                if (empty || v == null) {
+                    setText(null);
+                    setStyle("");
+                    return;
+                }
                 setText(v);
                 setStyle(v.equals("Active")
-                    ? "-fx-text-fill:-pos-success; -fx-font-weight:bold;"
-                    : "-fx-text-fill:-pos-danger;");
+                        ? "-fx-text-fill:-pos-success; -fx-font-weight:bold;"
+                        : "-fx-text-fill:-pos-danger;");
             }
         });
 
         colLastLogin.setCellValueFactory(c -> new SimpleStringProperty(
-            c.getValue().getLastLogin() != null
-                ? DateUtil.formatDateTime(c.getValue().getLastLogin()) : "Never"));
+                c.getValue().getLastLogin() != null
+                        ? DateUtil.formatDateTime(c.getValue().getLastLogin())
+                        : "Never"));
 
         colPerms.setCellValueFactory(c -> {
             User u = c.getValue();
-            if (u.getRole() == Role.ADMIN) return new SimpleStringProperty("All");
+            if (u.getRole() == Role.ADMIN)
+                return new SimpleStringProperty("All");
             return new SimpleStringProperty(u.getPermissions().size() + " granted");
         });
 
         // Actions column: Edit / Disable / Delete buttons
         colActions.setCellFactory(col -> new TableCell<>() {
-            private final Button editBtn   = new Button("✏ Edit");
+            private final Button editBtn = new Button("✏ Edit");
             private final Button toggleBtn = new Button();
             private final Button deleteBtnStatus = new Button("🗑");
             private final HBox box = new HBox(4, editBtn, toggleBtn, deleteBtnStatus);
             {
                 box.setAlignment(Pos.CENTER);
                 editBtn.setStyle("-fx-font-size:11px; -fx-padding:3 8; -fx-cursor:hand; " +
-                    "-fx-background-color:-pos-primary; -fx-text-fill:white; " +
-                    "-fx-background-radius:4;");
+                        "-fx-background-color:-pos-primary; -fx-text-fill:white; " +
+                        "-fx-background-radius:4;");
                 toggleBtn.setStyle("-fx-font-size:11px; -fx-padding:3 8; -fx-cursor:hand; " +
-                    "-fx-background-radius:4;");
+                        "-fx-background-radius:4;");
                 deleteBtnStatus.setStyle("-fx-font-size:11px; -fx-padding:3 8; -fx-cursor:hand; " +
-                    "-fx-background-radius:4; -fx-background-color:#FFEBEE; -fx-text-fill:-pos-danger;");
+                        "-fx-background-radius:4; -fx-background-color:#FFEBEE; -fx-text-fill:-pos-danger;");
 
                 editBtn.setOnAction(e -> {
                     User u = getTableView().getItems().get(getIndex());
@@ -213,15 +255,20 @@ public class UserManagementController implements Initializable {
                     }
                 });
             }
-            @Override protected void updateItem(String v, boolean empty) {
+
+            @Override
+            protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
-                if (empty) { setGraphic(null); return; }
+                if (empty) {
+                    setGraphic(null);
+                    return;
+                }
                 User u = getTableView().getItems().get(getIndex());
                 toggleBtn.setText(u.isActive() ? "⛔ Disable" : "✅ Enable");
                 toggleBtn.setStyle(toggleBtn.getStyle() +
-                    (u.isActive()
-                        ? " -fx-background-color:#FFF3E0; -fx-text-fill:#EF6C00;"
-                        : " -fx-background-color:#E8F5E9; -fx-text-fill:-pos-success;"));
+                        (u.isActive()
+                                ? " -fx-background-color:#FFF3E0; -fx-text-fill:#EF6C00;"
+                                : " -fx-background-color:#E8F5E9; -fx-text-fill:-pos-success;"));
                 setGraphic(box);
             }
         });
@@ -240,13 +287,13 @@ public class UserManagementController implements Initializable {
         for (Map.Entry<String, List<Permission>> entry : grouped.entrySet()) {
             VBox groupBox = new VBox(6);
             groupBox.setStyle("-fx-background-color:-pos-surface-alt; -fx-background-radius:6; " +
-                              "-fx-border-color:-pos-border; -fx-border-radius:6; -fx-padding:10;");
+                    "-fx-border-color:-pos-border; -fx-border-radius:6; -fx-padding:10;");
 
             // Category header with select-all toggle
             HBox header = new HBox(8);
             header.setAlignment(Pos.CENTER_LEFT);
             CheckBox groupToggle = new CheckBox(entry.getKey());
-            groupToggle.setStyle("-fx-font-weight:bold; -fx-font-size:12px;");
+            groupToggle.setStyle("-fx-font-weight:bold; -fx-font-size:12px; -fx-text-fill: -pos-text-primary;");
             header.getChildren().add(groupToggle);
             groupBox.getChildren().add(header);
 
@@ -256,7 +303,7 @@ public class UserManagementController implements Initializable {
 
             for (Permission perm : entry.getValue()) {
                 CheckBox cb = new CheckBox(perm.getDescription());
-                cb.setStyle("-fx-font-size:12px;");
+                cb.setStyle("-fx-font-size:12px; -fx-text-fill: -pos-text-primary;");
                 cb.setWrapText(true);
                 permCheckboxes.put(perm, cb);
                 groupBoxes.add(cb);
@@ -292,22 +339,29 @@ public class UserManagementController implements Initializable {
 
     private void applyFilters() {
         String search = searchField.getText() == null ? "" : searchField.getText().toLowerCase();
-        String role   = roleFilter.getValue();
+        String role = roleFilter.getValue();
 
         filteredUsers.setPredicate(u -> {
             boolean matchSearch = search.isEmpty()
-                || u.getFullName().toLowerCase().contains(search)
-                || u.getUsername().toLowerCase().contains(search);
+                    || u.getFullName().toLowerCase().contains(search)
+                    || u.getUsername().toLowerCase().contains(search);
             boolean matchRole = role == null || role.equals("All Roles")
-                || u.getRole().name().equals(role);
+                    || u.getRole().name().equals(role);
             return matchSearch && matchRole;
         });
         userCountLabel.setText(filteredUsers.size() + " user" +
-                               (filteredUsers.size() == 1 ? "" : "s"));
+                (filteredUsers.size() == 1 ? "" : "s"));
     }
 
-    @FXML private void onSearchChanged()      { applyFilters(); }
-    @FXML private void onRoleFilterChanged()  { applyFilters(); }
+    @FXML
+    private void onSearchChanged() {
+        applyFilters();
+    }
+
+    @FXML
+    private void onRoleFilterChanged() {
+        applyFilters();
+    }
 
     // ── Edit Panel ────────────────────────────────────────────────────────────
 
@@ -354,9 +408,11 @@ public class UserManagementController implements Initializable {
         fieldRole.setValue(u.getRole());
         fieldTimeout.setText(String.valueOf(u.getSessionTimeoutMinutes()));
         fieldCashLimit.setText(u.getCashLimit() != null
-            ? u.getCashLimit().toPlainString() : "0");
+                ? u.getCashLimit().toPlainString()
+                : "0");
         fieldDailyTarget.setText(u.getDailySalesTarget() != null
-            ? u.getDailySalesTarget().toPlainString() : "0");
+                ? u.getDailySalesTarget().toPlainString()
+                : "0");
         fieldEmail.setText(u.getEmail() != null ? u.getEmail() : "");
         fieldPhone.setText(u.getPhone() != null ? u.getPhone() : "");
         fieldActive.setSelected(u.isActive());
@@ -401,7 +457,8 @@ public class UserManagementController implements Initializable {
     @FXML
     private void onRoleChanged() {
         Role selected = fieldRole.getValue();
-        if (selected != null) updatePermissionVisibility(selected);
+        if (selected != null)
+            updatePermissionVisibility(selected);
     }
 
     private void updatePermissionVisibility(Role role) {
@@ -420,28 +477,47 @@ public class UserManagementController implements Initializable {
         String fullName = fieldFullName.getText().trim();
         String username = fieldUsername.getText().trim();
         String password = fieldPassword.getText();
-        Role   role     = fieldRole.getValue();
+        Role role = fieldRole.getValue();
 
-        if (fullName.isEmpty()) { showFormError("Full name is required."); return; }
-        if (username.isEmpty()) { showFormError("Username is required."); return; }
-        if (username.length() < 3) { showFormError("Username must be at least 3 characters."); return; }
-        if (role == null)       { showFormError("Please select a role."); return; }
+        if (fullName.isEmpty()) {
+            showFormError("Full name is required.");
+            return;
+        }
+        if (username.isEmpty()) {
+            showFormError("Username is required.");
+            return;
+        }
+        if (username.length() < 3) {
+            showFormError("Username must be at least 3 characters.");
+            return;
+        }
+        if (role == null) {
+            showFormError("Please select a role.");
+            return;
+        }
         if (editingUser == null && password.isEmpty()) {
-            showFormError("Password is required for new users."); return;
+            showFormError("Password is required for new users.");
+            return;
         }
         // No minimum strength requirement — any password is accepted
 
         int timeout = 30;
-        try { timeout = Integer.parseInt(fieldTimeout.getText().trim()); }
-        catch (NumberFormatException ignored) {}
+        try {
+            timeout = Integer.parseInt(fieldTimeout.getText().trim());
+        } catch (NumberFormatException ignored) {
+        }
 
         java.math.BigDecimal cashLimit = java.math.BigDecimal.ZERO;
-        try { cashLimit = new java.math.BigDecimal(fieldCashLimit.getText().trim()); }
-        catch (NumberFormatException ignored) {}
+        try {
+            cashLimit = new java.math.BigDecimal(fieldCashLimit.getText().trim());
+        } catch (NumberFormatException ignored) {
+        }
 
         java.math.BigDecimal dailyTarget = java.math.BigDecimal.ZERO;
-        try { dailyTarget = new java.math.BigDecimal(fieldDailyTarget.getText().trim()); }
-        catch (NumberFormatException ignored) {}
+        try {
+            dailyTarget = new java.math.BigDecimal(fieldDailyTarget.getText().trim());
+        } catch (NumberFormatException ignored) {
+        }
 
         // Build/update user object
         User u = editingUser != null ? editingUser : new User();
@@ -458,10 +534,9 @@ public class UserManagementController implements Initializable {
         // Collect permissions if cashier
         if (role == Role.CASHIER) {
             Set<Permission> selected = permCheckboxes.entrySet().stream()
-                .filter(e -> e.getValue().isSelected())
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toCollection(() ->
-                    EnumSet.noneOf(Permission.class)));
+                    .filter(e -> e.getValue().isSelected())
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toCollection(() -> EnumSet.noneOf(Permission.class)));
             u.setPermissions(selected);
         }
 
@@ -470,19 +545,27 @@ public class UserManagementController implements Initializable {
             // Create new user
             int newId = userService.createUser(u, password);
             success = newId > 0;
-            if (!success) {
+            if (success) {
+                // Save permissions for new cashier
+                if (role == Role.CASHIER) {
+                    userService.savePermissions(newId, u.getPermissions());
+                }
+            } else {
                 showFormError("Username already exists or save failed.");
                 return;
             }
         } else {
             // Update existing
             success = userService.updateUser(u);
-            if (!password.isEmpty()) {
-                authService.changePassword(u, "", password); // admin reset — skip old pwd check
-            }
-            // Save permissions separately
-            if (role == Role.CASHIER) {
-                userService.savePermissions(u.getId(), u.getPermissions());
+            if (success) {
+                // Admin password override
+                if (!password.isEmpty()) {
+                    userService.adminResetPassword(u.getId(), password);
+                }
+                // Update permissions separately
+                if (role == Role.CASHIER) {
+                    userService.savePermissions(u.getId(), u.getPermissions());
+                }
             }
         }
 
@@ -497,7 +580,8 @@ public class UserManagementController implements Initializable {
 
     @FXML
     private void deleteUser() {
-        if (editingUser == null) return;
+        if (editingUser == null)
+            return;
         final int userId = editingUser.getId();
         final String username = editingUser.getUsername();
         if (userId == SessionManager.getCurrentUser().getId()) {
@@ -518,12 +602,14 @@ public class UserManagementController implements Initializable {
 
     @FXML
     private void resetPassword() {
-        if (editingUser == null) return;
+        if (editingUser == null)
+            return;
         if (AlertUtil.confirm("Reset Password",
                 "Generate a new temporary password for '" + editingUser.getUsername() + "'?")) {
             String tempPwd = userService.resetPassword(editingUser.getId());
             AlertUtil.showInfo("Password Reset",
-                "Temporary password: " + tempPwd + "\n\nGive this to the user and ask them to change it immediately.");
+                    "Temporary password: " + tempPwd
+                            + "\n\nGive this to the user and ask them to change it immediately.");
         }
     }
 
@@ -543,12 +629,35 @@ public class UserManagementController implements Initializable {
 
     // ── Permission Templates ──────────────────────────────────────────────────
 
-    @FXML private void grantAllPermissions()       { applyTemplate(TEMPLATE_SUPERVISOR); }
-    @FXML private void revokeAllPermissions()      { permCheckboxes.values().forEach(cb -> cb.setSelected(false)); }
-    @FXML private void applyTemplateTrainee()      { applyTemplate(TEMPLATE_TRAINEE); }
-    @FXML private void applyTemplateRegular()      { applyTemplate(TEMPLATE_REGULAR); }
-    @FXML private void applyTemplateSenior()       { applyTemplate(TEMPLATE_SENIOR); }
-    @FXML private void applyTemplateSupervisor()   { applyTemplate(TEMPLATE_SUPERVISOR); }
+    @FXML
+    private void grantAllPermissions() {
+        applyTemplate(TEMPLATE_SUPERVISOR);
+    }
+
+    @FXML
+    private void revokeAllPermissions() {
+        permCheckboxes.values().forEach(cb -> cb.setSelected(false));
+    }
+
+    @FXML
+    private void applyTemplateTrainee() {
+        applyTemplate(TEMPLATE_TRAINEE);
+    }
+
+    @FXML
+    private void applyTemplateRegular() {
+        applyTemplate(TEMPLATE_REGULAR);
+    }
+
+    @FXML
+    private void applyTemplateSenior() {
+        applyTemplate(TEMPLATE_SENIOR);
+    }
+
+    @FXML
+    private void applyTemplateSupervisor() {
+        applyTemplate(TEMPLATE_SUPERVISOR);
+    }
 
     private void applyTemplate(Set<Permission> template) {
         permCheckboxes.forEach((perm, cb) -> cb.setSelected(template.contains(perm)));
@@ -559,42 +668,94 @@ public class UserManagementController implements Initializable {
     @FXML
     private void onPasswordChanged() {
         String pwd = fieldPassword.getText();
-        if (pwd.isEmpty()) { passwordStrengthLabel.setText(""); return; }
+        if (pwd.isEmpty()) {
+            passwordStrengthLabel.setText("");
+            return;
+        }
         String strength = authService.getPasswordStrength(pwd);
         String[] display = switch (strength) {
-            case "WEAK"       -> new String[]{ "⚠ Weak",       "-fx-text-fill:-pos-danger;" };
-            case "FAIR"       -> new String[]{ "◑ Fair",       "-fx-text-fill:-pos-warning;" };
-            case "STRONG"     -> new String[]{ "✔ Strong",     "-fx-text-fill:-pos-success;" };
-            case "VERY_STRONG"-> new String[]{ "✔✔ Very Strong","-fx-text-fill:-pos-success; -fx-font-weight:bold;" };
-            default           -> new String[]{ "", "" };
+            case "WEAK" -> new String[] { "⚠ Weak", "-fx-text-fill:-pos-danger;" };
+            case "FAIR" -> new String[] { "◑ Fair", "-fx-text-fill:-pos-warning;" };
+            case "STRONG" -> new String[] { "✔ Strong", "-fx-text-fill:-pos-success;" };
+            case "VERY_STRONG" ->
+                new String[] { "✔✔ Very Strong", "-fx-text-fill:-pos-success; -fx-font-weight:bold;" };
+            default -> new String[] { "", "" };
         };
         passwordStrengthLabel.setText(display[0]);
         passwordStrengthLabel.setStyle(display[1] + " -fx-font-size:11px;");
     }
-// ── Helpers ───────────────────────────────────────────────────────────────
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private void showFormError(String msg) {
         formErrorLabel.setText(msg);
         formErrorLabel.setVisible(true);
         formErrorLabel.setManaged(true);
     }
+
     private void clearFormError() {
         formErrorLabel.setVisible(false);
         formErrorLabel.setManaged(false);
     }
 
     // ── Navigation ────────────────────────────────────────────────────────────
-    @FXML private void navigateToDashboard()      { com.minimartpos.util.SceneManager.navigateTo("admin/AdminDashboard.fxml"); }
-    @FXML private void navigateToPOS()            { com.minimartpos.util.SceneManager.navigateTo("cashier/POSTerminal.fxml"); }
-    @FXML private void navigateToUsers()          { com.minimartpos.util.SceneManager.navigateTo("admin/UserManagement.fxml"); }
-    @FXML private void navigateToProducts()       { com.minimartpos.util.SceneManager.navigateTo("admin/ProductManagement.fxml"); }
-    @FXML private void navigateToCustomers()      { com.minimartpos.util.SceneManager.navigateTo("admin/CustomerManagement.fxml"); }
-    @FXML private void navigateToSuppliers()      { com.minimartpos.util.SceneManager.navigateTo("admin/SupplierManagement.fxml"); }
-    @FXML private void navigateToCashierMonitor() { com.minimartpos.util.SceneManager.navigateTo("admin/CashierMonitor.fxml"); }
-    @FXML private void navigateToBills()          { com.minimartpos.util.SceneManager.navigateTo("admin/BillHistory.fxml"); }
-    @FXML private void navigateToStock()          { com.minimartpos.util.SceneManager.navigateTo("admin/StockAdjustment.fxml"); }
-    @FXML private void navigateToReports()        { com.minimartpos.util.SceneManager.navigateTo("admin/Reports.fxml"); }
-    @FXML private void navigateToAudit()          { com.minimartpos.util.SceneManager.navigateTo("admin/AuditLog.fxml"); }
-    @FXML private void navigateToSettings()       { com.minimartpos.util.SceneManager.navigateTo("admin/Settings.fxml"); }
+    @FXML
+    private void navigateToDashboard() {
+        com.minimartpos.util.SceneManager.navigateTo("admin/AdminDashboard.fxml");
+    }
+
+    @FXML
+    private void navigateToPOS() {
+        com.minimartpos.util.SceneManager.navigateTo("cashier/POSTerminal.fxml");
+    }
+
+    @FXML
+    private void navigateToUsers() {
+        com.minimartpos.util.SceneManager.navigateTo("admin/UserManagement.fxml");
+    }
+
+    @FXML
+    private void navigateToProducts() {
+        com.minimartpos.util.SceneManager.navigateTo("admin/ProductManagement.fxml");
+    }
+
+    @FXML
+    private void navigateToCustomers() {
+        com.minimartpos.util.SceneManager.navigateTo("admin/CustomerManagement.fxml");
+    }
+
+    @FXML
+    private void navigateToSuppliers() {
+        com.minimartpos.util.SceneManager.navigateTo("admin/SupplierManagement.fxml");
+    }
+
+    @FXML
+    private void navigateToCashierMonitor() {
+        com.minimartpos.util.SceneManager.navigateTo("admin/CashierMonitor.fxml");
+    }
+
+    @FXML
+    private void navigateToBills() {
+        com.minimartpos.util.SceneManager.navigateTo("admin/BillHistory.fxml");
+    }
+
+    @FXML
+    private void navigateToStock() {
+        com.minimartpos.util.SceneManager.navigateTo("admin/StockAdjustment.fxml");
+    }
+
+    @FXML
+    private void navigateToReports() {
+        com.minimartpos.util.SceneManager.navigateTo("admin/Reports.fxml");
+    }
+
+    @FXML
+    private void navigateToAudit() {
+        com.minimartpos.util.SceneManager.navigateTo("admin/AuditLog.fxml");
+    }
+
+    @FXML
+    private void navigateToSettings() {
+        com.minimartpos.util.SceneManager.navigateTo("admin/Settings.fxml");
+    }
 
 }

@@ -18,12 +18,12 @@ import java.util.List;
  * Manages printing to thermal receipt printers.
  *
  * Two printing paths:
- *  1. RAW ESC/POS bytes — fastest, works with most thermal printers
- *  2. Java Print Service (text) — fallback for non-ESC/POS printers
+ * 1. RAW ESC/POS bytes — fastest, works with most thermal printers
+ * 2. Java Print Service (text) — fallback for non-ESC/POS printers
  *
  * Usage:
- *   PrinterManager pm = new PrinterManager();
- *   pm.printReceipt(bill);
+ * PrinterManager pm = new PrinterManager();
+ * pm.printReceipt(bill);
  *
  * Printer name is configured in settings ("receipt_printer").
  * If blank, uses the system default printer.
@@ -35,14 +35,15 @@ public class PrinterManager {
     private final SettingsService settingsService = new SettingsService();
 
     // ESC/POS command bytes
-    private static final byte[] ESC_INIT        = {0x1B, 0x40};              // Initialize
-    private static final byte[] ESC_BOLD_ON     = {0x1B, 0x45, 0x01};       // Bold on
-    private static final byte[] ESC_BOLD_OFF    = {0x1B, 0x45, 0x00};       // Bold off
-    private static final byte[] ESC_CENTER      = {0x1B, 0x61, 0x01};       // Align center
-    private static final byte[] ESC_LEFT        = {0x1B, 0x61, 0x00};       // Align left
-    private static final byte[] ESC_DOUBLE_HEIGHT= {0x1B, 0x21, 0x10};      // Double height
-    private static final byte[] ESC_NORMAL_SIZE = {0x1B, 0x21, 0x00};       // Normal size
-    private static final byte[] ESC_FEED_CUT    = {0x1B, 0x64, 0x04, 0x1D, 0x56, 0x42, 0x00}; // Feed 4 lines + partial cut
+    private static final byte[] ESC_INIT = { 0x1B, 0x40 }; // Initialize
+    private static final byte[] ESC_BOLD_ON = { 0x1B, 0x45, 0x01 }; // Bold on
+    private static final byte[] ESC_BOLD_OFF = { 0x1B, 0x45, 0x00 }; // Bold off
+    private static final byte[] ESC_CENTER = { 0x1B, 0x61, 0x01 }; // Align center
+    private static final byte[] ESC_LEFT = { 0x1B, 0x61, 0x00 }; // Align left
+    private static final byte[] ESC_DOUBLE_HEIGHT = { 0x1B, 0x21, 0x10 }; // Double height
+    private static final byte[] ESC_NORMAL_SIZE = { 0x1B, 0x21, 0x00 }; // Normal size
+    private static final byte[] ESC_FEED_CUT = { 0x1B, 0x64, 0x04, 0x1D, 0x56, 0x42, 0x00 }; // Feed 4 lines + partial
+                                                                                             // cut
 
     // ── Public API ────────────────────────────────────────────────────────────
 
@@ -54,12 +55,13 @@ public class PrinterManager {
      */
     public boolean printReceipt(Bill bill) {
         String printerName = settingsService.get("receipt_printer", "");
-        String company     = settingsService.company();
-        String phone       = settingsService.get("company_phone", "");
-        String footer      = settingsService.receiptFooter();
+        String company = settingsService.company();
+        String address = settingsService.address();
+        String phone = settingsService.phone();
+        String footer = settingsService.receiptFooter();
 
         // Build receipt text
-        String receiptText = PrintUtil.buildReceipt(bill, company, phone, footer);
+        String receiptText = PrintUtil.buildReceipt(bill, company, address, phone, footer);
         logger.info("Printing receipt for bill: {}", bill.getBillNumber());
 
         // Try raw ESC/POS first
@@ -85,7 +87,7 @@ public class PrinterManager {
             logger.warn("No printer found to open cash drawer.");
             return false;
         }
-        byte[] drawerCmd = {0x1B, 0x70, 0x00, 0x19, (byte) 0xFA};  // ESC p 0 25 250
+        byte[] drawerCmd = { 0x1B, 0x70, 0x00, 0x19, (byte) 0xFA }; // ESC p 0 25 250
         return sendRawBytes(printer, drawerCmd);
     }
 
@@ -117,7 +119,7 @@ public class PrinterManager {
             chunks.add(ESC_CENTER);
             chunks.add(ESC_BOLD_ON);
             chunks.add(ESC_DOUBLE_HEIGHT);
-            // text as UTF-8 bytes  
+            // text as UTF-8 bytes
             chunks.add(text.getBytes(Charset.forName("UTF-8")));
             chunks.add(ESC_NORMAL_SIZE);
             chunks.add(ESC_BOLD_OFF);
@@ -188,7 +190,8 @@ public class PrinterManager {
         }
         PrintService[] services = PrintServiceLookup.lookupPrintServices(null, null);
         for (PrintService s : services) {
-            if (s.getName().equalsIgnoreCase(name.trim())) return s;
+            if (s.getName().equalsIgnoreCase(name.trim()))
+                return s;
         }
         logger.warn("Printer '{}' not found. Using default.", name);
         return PrintServiceLookup.lookupDefaultPrintService();
@@ -198,9 +201,11 @@ public class PrinterManager {
         try {
             printer.getSupportedDocFlavors();
             for (DocFlavor f : printer.getSupportedDocFlavors()) {
-                if (DocFlavor.BYTE_ARRAY.AUTOSENSE.equals(f)) return true;
+                if (DocFlavor.BYTE_ARRAY.AUTOSENSE.equals(f))
+                    return true;
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         return false;
     }
 }

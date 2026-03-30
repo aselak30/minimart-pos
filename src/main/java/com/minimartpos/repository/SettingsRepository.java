@@ -19,10 +19,11 @@ public class SettingsRepository {
     public Map<String, String> loadAll() {
         Map<String, String> map = new LinkedHashMap<>();
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(
-                 "SELECT setting_key, setting_value FROM settings ORDER BY setting_key");
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) map.put(rs.getString(1), rs.getString(2));
+                PreparedStatement ps = conn.prepareStatement(
+                        "SELECT setting_key, setting_value FROM settings ORDER BY setting_key");
+                ResultSet rs = ps.executeQuery()) {
+            while (rs.next())
+                map.put(rs.getString(1), rs.getString(2));
         } catch (SQLException e) {
             logger.error("loadAll settings error: {}", e.getMessage(), e);
         }
@@ -31,11 +32,12 @@ public class SettingsRepository {
 
     public String get(String key, String defaultValue) {
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(
-                 "SELECT setting_value FROM settings WHERE setting_key=?")) {
+                PreparedStatement ps = conn.prepareStatement(
+                        "SELECT setting_value FROM settings WHERE setting_key=?")) {
             ps.setString(1, key);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return rs.getString(1);
+                if (rs.next())
+                    return rs.getString(1);
             }
         } catch (SQLException e) {
             logger.error("get setting '{}' error: {}", key, e.getMessage(), e);
@@ -45,43 +47,60 @@ public class SettingsRepository {
 
     public void set(String key, String value) {
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(
-                 "INSERT INTO settings (setting_key, setting_value, updated_by) VALUES (?,?,?) " +
-                 "ON DUPLICATE KEY UPDATE setting_value=?, updated_by=?")) {
-            int userId = SessionManager.isLoggedIn() ? SessionManager.getCurrentUser().getId() : 0;
+                PreparedStatement ps = conn.prepareStatement(
+                        "INSERT INTO settings (setting_key, setting_value, updated_by) VALUES (?,?,?) " +
+                                "ON DUPLICATE KEY UPDATE setting_value=?, updated_by=?")) {
+            Integer userId = SessionManager.isLoggedIn() ? SessionManager.getCurrentUser().getId() : null;
             ps.setString(1, key);
             ps.setString(2, value);
-            ps.setInt(3, userId);
+            if (userId != null)
+                ps.setInt(3, userId);
+            else
+                ps.setNull(3, Types.INTEGER);
             ps.setString(4, value);
-            ps.setInt(5, userId);
+            if (userId != null)
+                ps.setInt(5, userId);
+            else
+                ps.setNull(5, Types.INTEGER);
             ps.executeUpdate();
         } catch (SQLException e) {
             logger.error("set setting '{}' error: {}", key, e.getMessage(), e);
         }
     }
 
-    public void setAll(Map<String, String> settings) {
+    public boolean setAll(Map<String, String> settings) {
         try (Connection conn = DatabaseConfig.getConnection()) {
             conn.setAutoCommit(false);
             try (PreparedStatement ps = conn.prepareStatement(
-                 "INSERT INTO settings (setting_key, setting_value, updated_by) VALUES (?,?,?) " +
-                 "ON DUPLICATE KEY UPDATE setting_value=?, updated_by=?")) {
-                int userId = SessionManager.isLoggedIn() ? SessionManager.getCurrentUser().getId() : 0;
+                    "INSERT INTO settings (setting_key, setting_value, updated_by) VALUES (?,?,?) " +
+                            "ON DUPLICATE KEY UPDATE setting_value=?, updated_by=?")) {
+                Integer userId = SessionManager.isLoggedIn() ? SessionManager.getCurrentUser().getId() : null;
                 for (Map.Entry<String, String> e : settings.entrySet()) {
                     ps.setString(1, e.getKey());
                     ps.setString(2, e.getValue());
-                    ps.setInt(3, userId);
+                    if (userId != null)
+                        ps.setInt(3, userId);
+                    else
+                        ps.setNull(3, Types.INTEGER);
                     ps.setString(4, e.getValue());
-                    ps.setInt(5, userId);
+                    if (userId != null)
+                        ps.setInt(5, userId);
+                    else
+                        ps.setNull(5, Types.INTEGER);
                     ps.addBatch();
                 }
                 ps.executeBatch();
                 conn.commit();
+                return true;
             } catch (SQLException e) {
-                conn.rollback(); throw e;
-            } finally { conn.setAutoCommit(true); }
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
         } catch (SQLException e) {
             logger.error("setAll settings error: {}", e.getMessage(), e);
+            return false;
         }
     }
 }

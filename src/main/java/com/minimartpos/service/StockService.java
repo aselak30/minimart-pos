@@ -8,21 +8,20 @@ import java.math.BigDecimal;
 import java.sql.*;
 
 /**
- * Handles all stock quantity operations and records adjustments in stock_adjustments table.
+ * Handles all stock quantity operations and records adjustments in
+ * stock_adjustments table.
  */
 public class StockService {
 
     private static final Logger logger = LogManager.getLogger(StockService.class);
 
-    private static final String SQL_GET_STOCK =
-        "SELECT stock_quantity FROM products WHERE id=? FOR UPDATE";
+    private static final String SQL_GET_STOCK = "SELECT stock_quantity FROM products WHERE id=? FOR UPDATE";
 
-    private static final String SQL_ADJUST_STOCK =
-        "UPDATE products SET stock_quantity = stock_quantity + ?, updated_at=NOW() WHERE id=?";
+    private static final String SQL_ADJUST_STOCK = "UPDATE products SET stock_quantity = stock_quantity + ?, updated_at=NOW() WHERE id=?";
 
-    private static final String SQL_INSERT_ADJUSTMENT =
-        "INSERT INTO stock_adjustments (product_id, adjustment, reason, reference_id, " +
-        "old_quantity, new_quantity, adjusted_by) VALUES (?,?,?,?,?,?,?)";
+    private static final String SQL_INSERT_ADJUSTMENT = "INSERT INTO stock_adjustments (product_id, adjustment, reason, reference_id, "
+            +
+            "old_quantity, new_quantity, adjusted_by) VALUES (?,?,?,?,?,?,?)";
 
     /**
      * Deducts stock after a successful sale.
@@ -36,12 +35,12 @@ public class StockService {
                 if (current.compareTo(quantity) < 0) {
                     conn.rollback();
                     logger.warn("Stock deduction failed: product={} has {} but need {}",
-                                productId, current, quantity);
+                            productId, current, quantity);
                     return false;
                 }
                 adjustStock(conn, productId, quantity.negate());
                 recordAdjustment(conn, productId, quantity.negate(), "SALE", billId,
-                                 current, current.subtract(quantity), userId);
+                        current, current.subtract(quantity), userId);
                 conn.commit();
                 return true;
             } catch (SQLException e) {
@@ -66,7 +65,7 @@ public class StockService {
                 BigDecimal current = getCurrentStock(conn, productId);
                 adjustStock(conn, productId, quantity);
                 recordAdjustment(conn, productId, quantity, reason, referenceId,
-                                 current, current.add(quantity), userId);
+                        current, current.add(quantity), userId);
                 conn.commit();
                 return true;
             } catch (SQLException e) {
@@ -81,6 +80,39 @@ public class StockService {
         }
     }
 
+    public boolean addDamagedStock(int productId, BigDecimal quantity, int referenceId, int userId) {
+        try (Connection conn = DatabaseConfig.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                // We don't change products.stock_quantity for damaged items,
+                // but we increment products.damaged_quantity if we want to track it.
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "UPDATE products SET damaged_quantity = damaged_quantity + ?, updated_at=NOW() WHERE id=?")) {
+                    ps.setBigDecimal(1, quantity);
+                    ps.setInt(2, productId);
+                    ps.executeUpdate();
+                }
+
+                // Get current stock for recording purposes (though it didn't change)
+                BigDecimal current = getCurrentStock(conn, productId);
+
+                recordAdjustment(conn, productId, quantity, "DAMAGE", referenceId,
+                        current, current, userId); // new quantity is same as old for main stock
+
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            logger.error("addDamagedStock error product {}: {}", productId, e.getMessage(), e);
+            return false;
+        }
+    }
+
     /**
      * Manual stock set by admin/cashier with permission.
      */
@@ -89,7 +121,7 @@ public class StockService {
             conn.setAutoCommit(false);
             try {
                 BigDecimal current = getCurrentStock(conn, productId);
-                BigDecimal delta   = newQuantity.subtract(current);
+                BigDecimal delta = newQuantity.subtract(current);
                 try (PreparedStatement ps = conn.prepareStatement(
                         "UPDATE products SET stock_quantity=?, updated_at=NOW() WHERE id=?")) {
                     ps.setBigDecimal(1, newQuantity);
@@ -97,7 +129,7 @@ public class StockService {
                     ps.executeUpdate();
                 }
                 recordAdjustment(conn, productId, delta, "ADJUSTMENT", 0,
-                                 current, newQuantity, userId);
+                        current, newQuantity, userId);
                 conn.commit();
                 return true;
             } catch (SQLException e) {
@@ -132,16 +164,16 @@ public class StockService {
     }
 
     private void recordAdjustment(Connection conn, int productId, BigDecimal adjustment,
-                                   String reason, int refId, BigDecimal oldQty, BigDecimal newQty,
-                                   int userId) throws SQLException {
+            String reason, int refId, BigDecimal oldQty, BigDecimal newQty,
+            int userId) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(SQL_INSERT_ADJUSTMENT)) {
-            ps.setInt(1,    productId);
-            ps.setBigDecimal(2,    adjustment);
+            ps.setInt(1, productId);
+            ps.setBigDecimal(2, adjustment);
             ps.setString(3, reason);
-            ps.setInt(4,    refId);
-            ps.setBigDecimal(5,    oldQty);
-            ps.setBigDecimal(6,    newQty);
-            ps.setInt(7,    userId);
+            ps.setInt(4, refId);
+            ps.setBigDecimal(5, oldQty);
+            ps.setBigDecimal(6, newQty);
+            ps.setInt(7, userId);
             ps.executeUpdate();
         }
     }

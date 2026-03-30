@@ -17,27 +17,29 @@ import java.util.function.Consumer;
  * Multi-machine event synchronization via UDP multicast.
  *
  * Architecture:
- *  ┌─────────────┐      UDP multicast       ┌─────────────┐
- *  │  Machine A  │ ──── SyncEvent JSON ───▶ │  Machine B  │
- *  │ (Admin PC)  │ ◀─── SyncEvent JSON ──── │  (Cashier)  │
- *  └─────────────┘     239.255.1.1:45678    └─────────────┘
+ * ┌─────────────┐ UDP multicast ┌─────────────┐
+ * │ Machine A │ ──── SyncEvent JSON ───▶ │ Machine B │
+ * │ (Admin PC) │ ◀─── SyncEvent JSON ──── │ (Cashier) │
+ * └─────────────┘ 239.255.1.1:45678 └─────────────┘
  *
  * When to use:
- *  - Product price/stock changes → other machines refresh their cache
- *  - New bill finalized → Admin Dashboard KPIs update live
- *  - Settings changed → all machines reload settings
- *  - User logged in/out → Admin sees live cashier status
+ * - Product price/stock changes → other machines refresh their cache
+ * - New bill finalized → Admin Dashboard KPIs update live
+ * - Settings changed → all machines reload settings
+ * - User logged in/out → Admin sees live cashier status
  *
  * What is NOT synced here (handled by shared DB):
- *  - The actual bill/product data itself (always from DB)
- *  - This is purely a "please refresh cache X" notification system
+ * - The actual bill/product data itself (always from DB)
+ * - This is purely a "please refresh cache X" notification system
  *
  * Usage:
- *   SyncManager sync = SyncManager.getInstance();
- *   sync.start();
- *   sync.broadcast(new SyncEvent(SyncEvent.Type.STOCK_CHANGED, productId, machineCode));
- *   sync.addListener(SyncEvent.Type.STOCK_CHANGED, event -> refreshProductCache());
- *   sync.stop();
+ * SyncManager sync = SyncManager.getInstance();
+ * sync.start();
+ * sync.broadcast(new SyncEvent(SyncEvent.Type.STOCK_CHANGED, productId,
+ * machineCode));
+ * sync.addListener(SyncEvent.Type.STOCK_CHANGED, event ->
+ * refreshProductCache());
+ * sync.stop();
  */
 public class SyncManager {
 
@@ -46,27 +48,27 @@ public class SyncManager {
     // Singleton
     private static volatile SyncManager instance;
 
-    private final ObjectMapper    json;
-    private final NetworkMonitor  networkMonitor;
+    private final ObjectMapper json;
+    private final NetworkMonitor networkMonitor;
 
     // Multicast socket
-    private MulticastSocket       receiveSocket;
-    private InetAddress           multicastGroup;
-    private DatagramSocket        sendSocket;
+    private MulticastSocket receiveSocket;
+    private InetAddress multicastGroup;
+    private DatagramSocket sendSocket;
 
     // Event listeners per type
-    private final Map<SyncEvent.Type, List<Consumer<SyncEvent>>> listeners =
-        new ConcurrentHashMap<>();
+    private final Map<SyncEvent.Type, List<Consumer<SyncEvent>>> listeners = new ConcurrentHashMap<>();
 
     // Duplicate suppression: track recently seen event IDs
-    private final Set<String>        seenEventIds = Collections.newSetFromMap(
-        new LinkedHashMap<>() {
-            @Override protected boolean removeEldestEntry(Map.Entry<String, Boolean> e) {
-                return size() > 500;
-            }
-        });
+    private final Set<String> seenEventIds = Collections.newSetFromMap(
+            new LinkedHashMap<>() {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, Boolean> e) {
+                    return size() > 500;
+                }
+            });
 
-    private ExecutorService  receiveExecutor;
+    private ExecutorService receiveExecutor;
     private volatile boolean running = false;
 
     // ── Singleton ─────────────────────────────────────────────────────────────
@@ -82,7 +84,8 @@ public class SyncManager {
     public static SyncManager getInstance() {
         if (instance == null) {
             synchronized (SyncManager.class) {
-                if (instance == null) instance = new SyncManager();
+                if (instance == null)
+                    instance = new SyncManager();
             }
         }
         return instance;
@@ -96,7 +99,8 @@ public class SyncManager {
      * Safe to call multiple times.
      */
     public synchronized void start() {
-        if (running) return;
+        if (running)
+            return;
         try {
             multicastGroup = InetAddress.getByName(NetworkMonitor.MULTICAST_GROUP);
             InetSocketAddress groupAddr = new InetSocketAddress(multicastGroup, NetworkMonitor.MULTICAST_PORT);
@@ -105,7 +109,7 @@ public class SyncManager {
             // Receive socket
             receiveSocket = new MulticastSocket(NetworkMonitor.MULTICAST_PORT);
             receiveSocket.setReuseAddress(true);
-            
+
             if (ni != null) {
                 logger.info("Binding multicast to interface: {} ({})", ni.getName(), ni.getDisplayName());
                 receiveSocket.setNetworkInterface(ni);
@@ -118,7 +122,8 @@ public class SyncManager {
 
             // Send socket
             sendSocket = new DatagramSocket();
-            if (ni != null) sendSocket.setOption(StandardSocketOptions.IP_MULTICAST_IF, ni);
+            if (ni != null)
+                sendSocket.setOption(StandardSocketOptions.IP_MULTICAST_IF, ni);
             sendSocket.setBroadcast(true);
 
             // Start receive thread
@@ -131,7 +136,7 @@ public class SyncManager {
 
             running = true;
             logger.info("SyncManager started on {}:{}", NetworkMonitor.MULTICAST_GROUP,
-                        NetworkMonitor.MULTICAST_PORT);
+                    NetworkMonitor.MULTICAST_PORT);
 
             // Start network monitor
             networkMonitor.start();
@@ -146,7 +151,8 @@ public class SyncManager {
      * Gracefully stops listening and leaves the multicast group.
      */
     public synchronized void stop() {
-        if (!running) return;
+        if (!running)
+            return;
         running = false;
 
         networkMonitor.markSelfOffline();
@@ -155,17 +161,29 @@ public class SyncManager {
         try {
             // Broadcast shutdown notification
             broadcast(new SyncEvent(SyncEvent.Type.SHUTDOWN, 0,
-                networkMonitor.getLocalMachineCode()));
-        } catch (Exception ignored) {}
+                    networkMonitor.getLocalMachineCode()));
+        } catch (Exception ignored) {
+        }
 
-        try { if (receiveSocket != null) receiveSocket.close(); } catch (Exception ignored) {}
-        try { if (sendSocket    != null) sendSocket.close();    } catch (Exception ignored) {}
-        if (receiveExecutor != null) receiveExecutor.shutdownNow();
+        try {
+            if (receiveSocket != null)
+                receiveSocket.close();
+        } catch (Exception ignored) {
+        }
+        try {
+            if (sendSocket != null)
+                sendSocket.close();
+        } catch (Exception ignored) {
+        }
+        if (receiveExecutor != null)
+            receiveExecutor.shutdownNow();
 
         logger.info("SyncManager stopped.");
     }
 
-    public boolean isRunning() { return running; }
+    public boolean isRunning() {
+        return running;
+    }
 
     // ── Broadcasting ──────────────────────────────────────────────────────────
 
@@ -174,11 +192,12 @@ public class SyncManager {
      * Non-blocking — serialize and send on calling thread (fast UDP).
      */
     public void broadcast(SyncEvent event) {
-        if (!running || sendSocket == null) return;
+        if (!running || sendSocket == null)
+            return;
         try {
             byte[] data = json.writeValueAsBytes(event);
             DatagramPacket packet = new DatagramPacket(
-                data, data.length, multicastGroup, NetworkMonitor.MULTICAST_PORT);
+                    data, data.length, multicastGroup, NetworkMonitor.MULTICAST_PORT);
             sendSocket.send(packet);
             logger.debug("Broadcast: {}", event);
         } catch (Exception e) {
@@ -191,7 +210,7 @@ public class SyncManager {
      */
     public void notifyStockChanged(int productId) {
         broadcast(new SyncEvent(SyncEvent.Type.STOCK_CHANGED, productId,
-            networkMonitor.getLocalMachineCode()));
+                networkMonitor.getLocalMachineCode()));
     }
 
     /**
@@ -199,7 +218,7 @@ public class SyncManager {
      */
     public void notifyProductUpdated(int productId) {
         broadcast(new SyncEvent(SyncEvent.Type.PRODUCT_UPDATED, productId,
-            networkMonitor.getLocalMachineCode()));
+                networkMonitor.getLocalMachineCode()));
     }
 
     /**
@@ -207,7 +226,15 @@ public class SyncManager {
      */
     public void notifyBillFinalized(int billId) {
         broadcast(new SyncEvent(SyncEvent.Type.BILL_FINALIZED, billId,
-            networkMonitor.getLocalMachineCode()));
+                networkMonitor.getLocalMachineCode()));
+    }
+
+    /**
+     * Convenience: broadcast a BILL_VOIDED event.
+     */
+    public void notifyBillVoided(int billId) {
+        broadcast(new SyncEvent(SyncEvent.Type.BILL_VOIDED, billId,
+                networkMonitor.getLocalMachineCode()));
     }
 
     /**
@@ -215,7 +242,7 @@ public class SyncManager {
      */
     public void notifySettingsChanged() {
         broadcast(new SyncEvent(SyncEvent.Type.SETTINGS_CHANGED, 0,
-            networkMonitor.getLocalMachineCode()));
+                networkMonitor.getLocalMachineCode()));
     }
 
     // ── Listeners ─────────────────────────────────────────────────────────────
@@ -233,7 +260,8 @@ public class SyncManager {
 
     public void removeListener(SyncEvent.Type type, Consumer<SyncEvent> listener) {
         List<Consumer<SyncEvent>> list = listeners.get(type);
-        if (list != null) list.remove(listener);
+        if (list != null)
+            list.remove(listener);
     }
 
     /**
@@ -245,7 +273,9 @@ public class SyncManager {
 
     // ── Network Monitor ───────────────────────────────────────────────────────
 
-    public NetworkMonitor getNetworkMonitor() { return networkMonitor; }
+    public NetworkMonitor getNetworkMonitor() {
+        return networkMonitor;
+    }
 
     // ── Private: Receive Loop ─────────────────────────────────────────────────
 
@@ -263,14 +293,15 @@ public class SyncManager {
 
                 // Ignore our own events
                 if (networkMonitor.getLocalMachineCode() != null &&
-                    networkMonitor.getLocalMachineCode().equals(event.getSourceMachine())) {
+                        networkMonitor.getLocalMachineCode().equals(event.getSourceMachine())) {
                     continue;
                 }
 
                 // Deduplicate
                 if (event.getEventId() != null) {
                     synchronized (seenEventIds) {
-                        if (seenEventIds.contains(event.getEventId())) continue;
+                        if (seenEventIds.contains(event.getEventId()))
+                            continue;
                         seenEventIds.add(event.getEventId());
                     }
                 }
@@ -281,7 +312,8 @@ public class SyncManager {
             } catch (SocketTimeoutException e) {
                 // Normal — allows while(running) check
             } catch (Exception e) {
-                if (running) logger.debug("Receive error: {}", e.getMessage());
+                if (running)
+                    logger.debug("Receive error: {}", e.getMessage());
             }
         }
         logger.debug("Sync receive loop ended.");
@@ -303,8 +335,11 @@ public class SyncManager {
         if (typeListeners != null && !typeListeners.isEmpty()) {
             Platform.runLater(() -> {
                 for (Consumer<SyncEvent> l : typeListeners) {
-                    try { l.accept(event); }
-                    catch (Exception e) { logger.warn("Listener error: {}", e.getMessage()); }
+                    try {
+                        l.accept(event);
+                    } catch (Exception e) {
+                        logger.warn("Listener error: {}", e.getMessage());
+                    }
                 }
             });
         }
@@ -338,13 +373,14 @@ public class SyncManager {
                 String code = event.getSourceMachine();
                 if (code != null) {
                     networkMonitor.getAllMachines().stream()
-                        .filter(m -> code.equals(m.getMachineCode()))
-                        .findFirst()
-                        .ifPresent(m -> m.setStatus(MachineInfo.Status.OFFLINE));
+                            .filter(m -> code.equals(m.getMachineCode()))
+                            .findFirst()
+                            .ifPresent(m -> m.setStatus(MachineInfo.Status.OFFLINE));
                     logger.info("Machine went offline gracefully: {}", code);
                 }
             }
-            default -> {}
+            default -> {
+            }
         }
     }
 }

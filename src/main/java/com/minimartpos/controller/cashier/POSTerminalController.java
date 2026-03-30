@@ -28,7 +28,6 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,6 +37,7 @@ import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 /**
@@ -997,8 +997,6 @@ public class POSTerminalController implements Initializable {
         openPaymentDialog(Bill.PayType.CASH);
     }
 
-
-
     @FXML
     private void payByCredit() {
         if (!validateBillForPayment())
@@ -1010,8 +1008,6 @@ public class POSTerminalController implements Initializable {
         }
         openPaymentDialog(Bill.PayType.CREDIT);
     }
-
-
 
     private boolean validateBillForPayment() {
         if (activeBill.getItems().isEmpty()) {
@@ -1161,18 +1157,43 @@ public class POSTerminalController implements Initializable {
             AlertUtil.showWarning("Permission Denied", "You do not have permission to void bills.");
             return;
         }
-        if (activeBill.getStatus() == Bill.Status.DRAFT && activeBill.getItems().isEmpty()) {
-            AlertUtil.showInfo("Void Bill", "The bill is already empty.");
-            return;
+
+        // 1. Decide what to void: Current Bill or Past Bill?
+        boolean canVoidCurrent = (activeBill.getStatus() == Bill.Status.DRAFT && !activeBill.getItems().isEmpty())
+                || (activeBill.getStatus() == Bill.Status.FINALIZED);
+
+        if (canVoidCurrent) {
+            // Ask user: current or another?
+            ButtonType btnCurrent = new ButtonType("Void Current Cart");
+            ButtonType btnOther = new ButtonType("Void Past Bill...");
+            ButtonType btnCancel = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "What would you like to void?", btnCurrent, btnOther,
+                    btnCancel);
+            alert.setTitle("Void Bill");
+            alert.setHeaderText(null);
+            Optional<ButtonType> result = alert.showAndWait();
+
+            if (result.isPresent() && result.get() == btnCurrent) {
+                voidCurrentBill();
+            } else if (result.isPresent() && result.get() == btnOther) {
+                voidPastBill();
+            }
+        } else {
+            // Current is empty - just ask for past bill
+            voidPastBill();
         }
-        String reason = AlertUtil.promptText("Void Bill", "Reason for voiding:", "");
-        if (reason.isEmpty())
+    }
+
+    private void voidCurrentBill() {
+        String reason = AlertUtil.promptText("Void Current Bill", "Reason for voiding:", "");
+        if (reason == null || reason.isEmpty())
             return;
 
         if (activeBill.getStatus() == Bill.Status.FINALIZED) {
             BillingService.BillResult r = billingService.voidBill(activeBill, reason);
             if (r.isSuccess()) {
-                AlertUtil.showInfo("Voided", "Bill has been voided.");
+                AlertUtil.showInfo("Voided", "Current bill has been voided.");
                 newBill();
             } else {
                 AlertUtil.showError("Void Failed", r.getMessage());
@@ -1183,6 +1204,66 @@ public class POSTerminalController implements Initializable {
             activeBill.recalculate();
             refreshCart();
             setStatus("Bill cleared.");
+        }
+    }
+
+    @FXML
+    private void voidPastBill() {
+        String billNum = AlertUtil.promptText("Void Past Bill", "Enter Full Bill Number:", "");
+        if (billNum == null || billNum.trim().isEmpty())
+            return;
+
+        // Try exact match or fragment
+        Optional<Bill> opt = billingService.findByNumber(billNum);
+        if (opt.isEmpty()) {
+            AlertUtil.showWarning("Not Found", "No bill found for: " + billNum);
+            return;
+        }
+
+        Bill target = opt.get();
+        if (target.getStatus() == Bill.Status.VOIDED) {
+            AlertUtil.showWarning("Already Voided", "Bill " + target.getBillNumber() + " is already voided.");
+            return;
+        }
+
+        openDetailedVoidDialog(target);
+    }
+
+    private void openDetailedVoidDialog(Bill bill) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/cashier/Return.fxml"));
+            Parent root = loader.load();
+
+            com.minimartpos.controller.cashier.ReturnController ctrl = loader.getController();
+            ctrl.setMode(com.minimartpos.controller.cashier.ReturnController.Mode.VOID);
+            ctrl.loadBill(bill);
+
+            Stage stage = new Stage();
+            stage.setTitle("Void Bill " + bill.getBillNumber());
+            stage.initModality(Modality.WINDOW_MODAL);
+            stage.initOwner(SceneManager.getPrimaryStage());
+
+            Scene scene = new Scene(root);
+            // Apply current theme and global CSS
+            com.minimartpos.util.ThemeManager.applyCurrentUserTheme(scene);
+            URL css = getClass().getResource("/css/main.css");
+            if (css != null)
+                scene.getStylesheets().add(0, css.toExternalForm());
+
+            stage.setScene(scene);
+            stage.setResizable(false);
+            stage.showAndWait();
+
+            // Refresh if bill was voided
+            Optional<Bill> updated = billingService.findByBillNumber(bill.getBillNumber());
+            if (updated.isPresent() && updated.get().getStatus() == Bill.Status.VOIDED) {
+                if (activeBill.getId() == bill.getId()) {
+                    newBill();
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Failed to open detailed void dialog", e);
+            AlertUtil.showError("Error", "Could not open void dialog: " + e.getMessage());
         }
     }
 
@@ -1275,7 +1356,14 @@ public class POSTerminalController implements Initializable {
             stage.setTitle("Return / Refund");
             stage.initModality(javafx.stage.Modality.WINDOW_MODAL);
             stage.initOwner(SceneManager.getPrimaryStage());
-            stage.setScene(new javafx.scene.Scene(root));
+
+            javafx.scene.Scene scene = new javafx.scene.Scene(root);
+            com.minimartpos.util.ThemeManager.applyCurrentUserTheme(scene);
+            URL css = getClass().getResource("/css/main.css");
+            if (css != null)
+                scene.getStylesheets().add(0, css.toExternalForm());
+
+            stage.setScene(scene);
             stage.setResizable(false);
             stage.showAndWait();
         } catch (Exception e) {

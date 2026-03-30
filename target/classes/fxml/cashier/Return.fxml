@@ -23,9 +23,11 @@
             <HBox spacing="8">
                 <TextField fx:id="billSearchField" HBox.hgrow="ALWAYS"
                            styleClass="text-field"
-                           promptText="Enter bill number (e.g. BILL-20240316-0001)"/>
+                           promptText="Search by Bill #, Customer Name, or Phone"/>
                 <Button text="🔍 Search" styleClass="btn-primary, button"
                         onAction="#searchBill"/>
+                <Button text="📋 Recent" styleClass="btn-secondary, button"
+                        onAction="#showRecentBills"/>
             </HBox>
             <Label fx:id="billInfoLabel" text="" styleClass="text-secondary"
                    style="-fx-font-size:11px;"/>
@@ -34,7 +36,7 @@
         <!-- Step 2: Select items to return -->
         <VBox fx:id="itemsSection" visible="false" managed="false" spacing="6" VBox.vgrow="ALWAYS">
             <HBox alignment="CENTER_LEFT" spacing="8">
-                <Label text="STEP 2 — Select Items to Return" styleClass="label-form"/>
+                <Label fx:id="processItemLabel" text="STEP 2 — Select Items to Return" styleClass="label-form"/>
                 <Region HBox.hgrow="ALWAYS"/>
                 <Button text="Select All" styleClass="btn-flat, button"
                         style="-fx-font-size:11px;" onAction="#selectAll"/>
@@ -44,12 +46,13 @@
             <TableView fx:id="itemsTable" VBox.vgrow="ALWAYS"
                        style="-fx-border-color:-pos-border; -fx-background-color:-pos-surface; -fx-border-radius:6;">
                 <columns>
-                    <TableColumn fx:id="colSelect"  text="Return" prefWidth="60"  style="-fx-alignment:CENTER;"/>
-                    <TableColumn fx:id="colItem"    text="Product" prefWidth="180"/>
-                    <TableColumn fx:id="colQtyOrig" text="Sold"    prefWidth="55"  style="-fx-alignment:CENTER;"/>
-                    <TableColumn fx:id="colQtyRet"  text="Return"  prefWidth="70"  style="-fx-alignment:CENTER;"/>
-                    <TableColumn fx:id="colUnit"    text="Price"   prefWidth="80"  style="-fx-alignment:CENTER_RIGHT;"/>
-                    <TableColumn fx:id="colRefund"  text="Refund"  prefWidth="85"  style="-fx-alignment:CENTER_RIGHT;"/>
+                    <TableColumn fx:id="colSelect"    text="Return"  prefWidth="50"  style="-fx-alignment:CENTER;"/>
+                    <TableColumn fx:id="colItem"      text="Product" prefWidth="150"/>
+                    <TableColumn fx:id="colQtyOrig"   text="Sold"    prefWidth="50"  style="-fx-alignment:CENTER;"/>
+                    <TableColumn fx:id="colQtyRet"    text="Return"  prefWidth="60"  style="-fx-alignment:CENTER;"/>
+                    <TableColumn fx:id="colCondition" text="Condition" prefWidth="90" style="-fx-alignment:CENTER;"/>
+                    <TableColumn fx:id="colUnit"      text="Price"   prefWidth="70"  style="-fx-alignment:CENTER_RIGHT;"/>
+                    <TableColumn fx:id="colRefund"    text="Refund"  prefWidth="80"  style="-fx-alignment:CENTER_RIGHT;"/>
                 </columns>
                 <placeholder>
                     <Label text="Search for a bill above to load items"

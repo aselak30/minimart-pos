@@ -21,8 +21,8 @@ import java.util.ResourceBundle;
  * Receipt preview dialog shown after every completed bill.
  *
  * Shows the formatted receipt text and offers:
- *  - 🖨 Print  — sends to printer (ESC/POS or fallback)
- *  - ⏭ Skip   — closes without printing
+ * - 🖨 Print — sends to printer (ESC/POS or fallback)
+ * - ⏭ Skip — closes without printing
  *
  * Also used for Reprint from the POS toolbar.
  */
@@ -30,14 +30,22 @@ public class ReceiptPreviewController implements Initializable {
 
     private static final Logger logger = LogManager.getLogger(ReceiptPreviewController.class);
 
-    @FXML private Label    billNumberLabel;
-    @FXML private Label    totalLabel;
-    @FXML private Label    printerStatusLabel;
-    @FXML private TextArea receiptPreview;
-    @FXML private Button   printBtn;
-    @FXML private Button   skipBtn;
-    @FXML private Label    printResultLabel;
-    @FXML private VBox     root;
+    @FXML
+    private Label billNumberLabel;
+    @FXML
+    private Label totalLabel;
+    @FXML
+    private Label printerStatusLabel;
+    @FXML
+    private TextArea receiptPreview;
+    @FXML
+    private Button printBtn;
+    @FXML
+    private Button skipBtn;
+    @FXML
+    private Label printResultLabel;
+    @FXML
+    private VBox root;
 
     private Bill bill;
     private String receiptText;
@@ -67,10 +75,11 @@ public class ReceiptPreviewController implements Initializable {
         this.bill = bill;
 
         String company = settingsService.get("company_name", "MiniMart");
-        String phone   = settingsService.get("company_phone", "");
-        String footer  = settingsService.get("receipt_footer", "Thank you for your visit!");
+        String address = settingsService.get("company_address", "");
+        String phone = settingsService.get("company_phone", "");
+        String footer = settingsService.get("receipt_footer", "Thank you for your visit!");
 
-        this.receiptText = PrintUtil.buildReceipt(bill, company, phone, footer);
+        this.receiptText = PrintUtil.buildReceipt(bill, company, address, phone, footer);
 
         billNumberLabel.setText("Bill #" + bill.getBillNumber());
         totalLabel.setText("Total: " + com.minimartpos.util.CurrencyUtil.format(bill.getTotalAmount()));
@@ -102,7 +111,7 @@ public class ReceiptPreviewController implements Initializable {
                     // Auto-close after 1.5 s
                     new javafx.animation.PauseTransition(
                             javafx.util.Duration.seconds(1.5))
-                        .play();
+                            .play();
                     closeAfterDelay(1500);
                 } else {
                     printResultLabel.setText("✖ Print failed — check printer connection");
@@ -121,7 +130,10 @@ public class ReceiptPreviewController implements Initializable {
 
     private void closeAfterDelay(long ms) {
         new Thread(() -> {
-            try { Thread.sleep(ms); } catch (InterruptedException ignored) {}
+            try {
+                Thread.sleep(ms);
+            } catch (InterruptedException ignored) {
+            }
             Platform.runLater(this::close);
         }).start();
     }

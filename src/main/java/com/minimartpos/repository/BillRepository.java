@@ -6,6 +6,7 @@ import com.minimartpos.model.BillItem;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,36 +20,30 @@ public class BillRepository {
 
     private static final Logger logger = LogManager.getLogger(BillRepository.class);
 
-    private static final String SQL_INSERT_BILL =
-        "INSERT INTO bills (bill_number, cashier_id, customer_id, machine_id, " +
-        "subtotal, discount_percent, discount_amount, tax_amount, total_amount, " +
-        "paid_amount, change_amount, cost_total, profit_total, payment_type, " +
-        "status, void_reason, notes, created_at, finalized_at, is_editable) " +
-        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    private static final String SQL_INSERT_BILL = "INSERT INTO bills (bill_number, cashier_id, customer_id, machine_id, "
+            +
+            "subtotal, discount_percent, discount_amount, tax_amount, total_amount, " +
+            "paid_amount, change_amount, cost_total, profit_total, payment_type, " +
+            "status, void_reason, notes, created_at, finalized_at, is_editable) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
-    private static final String SQL_INSERT_ITEM =
-        "INSERT INTO bill_items (bill_id, product_id, product_name, product_barcode, " +
-        "quantity, unit_price, original_price, cost_price, discount_percent, discount_amount, " +
-        "tax_rate, tax_amount, line_total, is_price_override, is_weight_based, weight, weight_unit) " +
-        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    private static final String SQL_INSERT_ITEM = "INSERT INTO bill_items (bill_id, product_id, product_name, product_barcode, "
+            +
+            "quantity, unit_price, original_price, cost_price, discount_percent, discount_amount, " +
+            "tax_rate, tax_amount, line_total, is_price_override, is_weight_based, weight, weight_unit) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
-    private static final String SQL_UPDATE_STATUS =
-        "UPDATE bills SET status=?, void_reason=?, updated_at=NOW() WHERE id=?";
+    private static final String SQL_UPDATE_STATUS = "UPDATE bills SET status=?, void_reason=?, updated_at=NOW() WHERE id=?";
 
-    private static final String SQL_FIND_BY_ID =
-        "SELECT * FROM bills WHERE id=?";
+    private static final String SQL_FIND_BY_ID = "SELECT * FROM bills WHERE id=?";
 
-    private static final String SQL_FIND_ITEMS =
-        "SELECT * FROM bill_items WHERE bill_id=? ORDER BY id";
+    private static final String SQL_FIND_ITEMS = "SELECT * FROM bill_items WHERE bill_id=? ORDER BY id";
 
-    private static final String SQL_FIND_BY_CASHIER_TODAY =
-        "SELECT * FROM bills WHERE cashier_id=? AND DATE(created_at)=CURDATE() ORDER BY created_at DESC";
+    private static final String SQL_FIND_BY_CASHIER_TODAY = "SELECT * FROM bills WHERE cashier_id=? AND DATE(created_at)=CURDATE() ORDER BY created_at DESC";
 
-    private static final String SQL_FIND_TODAY_ALL =
-        "SELECT * FROM bills WHERE DATE(created_at)=CURDATE() ORDER BY created_at DESC LIMIT 50";
+    private static final String SQL_FIND_TODAY_ALL = "SELECT * FROM bills WHERE DATE(created_at)=CURDATE() ORDER BY created_at DESC LIMIT 50";
 
-    private static final String SQL_SEQUENCE =
-        "SELECT COUNT(*) + 1 FROM bills WHERE bill_number LIKE ?";
+    private static final String SQL_SEQUENCE = "SELECT COUNT(*) + 1 FROM bills WHERE bill_number LIKE ?";
 
     // ── Save (insert bill + all items atomically) ─────────────────────────────
 
@@ -92,9 +87,9 @@ public class BillRepository {
 
     private int insertBillHeader(Connection conn, Bill bill) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(SQL_INSERT_BILL,
-                                                          Statement.RETURN_GENERATED_KEYS)) {
-            ps.setString(1,  bill.getBillNumber());
-            ps.setInt(2,     bill.getCashierId());
+                Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, bill.getBillNumber());
+            ps.setInt(2, bill.getCashierId());
             if (bill.getCustomerId() > 0)
                 ps.setInt(3, bill.getCustomerId());
             else
@@ -103,12 +98,13 @@ public class BillRepository {
                 ps.setInt(4, bill.getMachineId());
             else
                 ps.setNull(4, Types.INTEGER);
-            ps.setBigDecimal(5,  bill.getSubtotal());
-            ps.setBigDecimal(6,  bill.getDiscountPercent() != null
-                                 ? bill.getDiscountPercent() : java.math.BigDecimal.ZERO);
-            ps.setBigDecimal(7,  bill.getDiscountAmount());
-            ps.setBigDecimal(8,  bill.getTaxAmount());
-            ps.setBigDecimal(9,  bill.getTotalAmount());
+            ps.setBigDecimal(5, bill.getSubtotal());
+            ps.setBigDecimal(6, bill.getDiscountPercent() != null
+                    ? bill.getDiscountPercent()
+                    : java.math.BigDecimal.ZERO);
+            ps.setBigDecimal(7, bill.getDiscountAmount());
+            ps.setBigDecimal(8, bill.getTaxAmount());
+            ps.setBigDecimal(9, bill.getTotalAmount());
             ps.setBigDecimal(10, bill.getPaidAmount());
             ps.setBigDecimal(11, bill.getChangeAmount());
             ps.setBigDecimal(12, bill.getCostTotal());
@@ -119,12 +115,14 @@ public class BillRepository {
             ps.setString(17, bill.getNotes());
             ps.setTimestamp(18, Timestamp.valueOf(bill.getCreatedAt()));
             ps.setTimestamp(19, bill.getFinalizedAt() != null
-                                ? Timestamp.valueOf(bill.getFinalizedAt()) : null);
+                    ? Timestamp.valueOf(bill.getFinalizedAt())
+                    : null);
             ps.setBoolean(20, bill.isEditable());
             ps.executeUpdate();
 
             try (ResultSet keys = ps.getGeneratedKeys()) {
-                if (keys.next()) return keys.getInt(1);
+                if (keys.next())
+                    return keys.getInt(1);
             }
         }
         return -1;
@@ -133,19 +131,19 @@ public class BillRepository {
     private void insertBillItems(Connection conn, int billId, List<BillItem> items)
             throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(SQL_INSERT_ITEM,
-                                                          Statement.RETURN_GENERATED_KEYS)) {
+                Statement.RETURN_GENERATED_KEYS)) {
             for (BillItem item : items) {
-                ps.setInt(1,     billId);
-                ps.setInt(2,     item.getProductId());
-                ps.setString(3,  item.getProductName());
-                ps.setString(4,  item.getProductBarcode());
-                ps.setBigDecimal(5,  item.getQuantity());
-                ps.setBigDecimal(6,  item.getUnitPrice());
-                ps.setBigDecimal(7,  item.getOriginalPrice());
-                ps.setBigDecimal(8,  item.getCostPrice() != null
-                                     ? item.getCostPrice()
-                                     : java.math.BigDecimal.ZERO);
-                ps.setBigDecimal(9,  item.getDiscountPercent());
+                ps.setInt(1, billId);
+                ps.setInt(2, item.getProductId());
+                ps.setString(3, item.getProductName());
+                ps.setString(4, item.getProductBarcode());
+                ps.setBigDecimal(5, item.getQuantity());
+                ps.setBigDecimal(6, item.getUnitPrice());
+                ps.setBigDecimal(7, item.getOriginalPrice());
+                ps.setBigDecimal(8, item.getCostPrice() != null
+                        ? item.getCostPrice()
+                        : java.math.BigDecimal.ZERO);
+                ps.setBigDecimal(9, item.getDiscountPercent());
                 ps.setBigDecimal(10, item.getDiscountAmount());
                 ps.setBigDecimal(11, item.getTaxRate());
                 ps.setBigDecimal(12, item.getTaxAmount());
@@ -172,10 +170,10 @@ public class BillRepository {
 
     public boolean updateBillStatus(Bill bill) {
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_UPDATE_STATUS)) {
+                PreparedStatement ps = conn.prepareStatement(SQL_UPDATE_STATUS)) {
             ps.setString(1, bill.getStatus().name());
             ps.setString(2, bill.getVoidReason());
-            ps.setInt(3,    bill.getId());
+            ps.setInt(3, bill.getId());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             logger.error("updateBillStatus error: {}", e.getMessage(), e);
@@ -189,11 +187,10 @@ public class BillRepository {
      * Restores old stock and deducts new stock is handled by BillingService.
      */
     public boolean updateBill(Bill bill) {
-        String updateBillSql =
-            "UPDATE bills SET customer_id=?, payment_type=?, " +
-            "  subtotal=?, discount_amount=?, discount_percent=?, " +
-            "  tax_amount=?, total_amount=?, notes=?, updated_at=NOW() " +
-            "WHERE id=?";
+        String updateBillSql = "UPDATE bills SET customer_id=?, payment_type=?, " +
+                "  subtotal=?, discount_amount=?, discount_percent=?, " +
+                "  tax_amount=?, total_amount=?, notes=?, updated_at=NOW() " +
+                "WHERE id=?";
         String deleteItemsSql = "DELETE FROM bill_items WHERE bill_id=?";
 
         try (Connection conn = DatabaseConfig.getConnection()) {
@@ -201,17 +198,20 @@ public class BillRepository {
             try {
                 // 1. Update bill header
                 try (PreparedStatement ps = conn.prepareStatement(updateBillSql)) {
-                    if (bill.getCustomerId() > 0) ps.setInt(1, bill.getCustomerId());
-                    else                          ps.setNull(1, java.sql.Types.INTEGER);
+                    if (bill.getCustomerId() > 0)
+                        ps.setInt(1, bill.getCustomerId());
+                    else
+                        ps.setNull(1, java.sql.Types.INTEGER);
                     ps.setString(2, bill.getPaymentType() != null
-                        ? bill.getPaymentType().name() : "CASH");
-                    ps.setBigDecimal(3,  bill.getSubtotal());
-                    ps.setBigDecimal(4,  bill.getDiscountAmount());
-                    ps.setBigDecimal(5,  bill.getDiscountPercent());
-                    ps.setBigDecimal(6,  bill.getTaxAmount());
-                    ps.setBigDecimal(7,  bill.getTotalAmount());
-                    ps.setString(8,      bill.getNotes());
-                    ps.setInt(9,         bill.getId());
+                            ? bill.getPaymentType().name()
+                            : "CASH");
+                    ps.setBigDecimal(3, bill.getSubtotal());
+                    ps.setBigDecimal(4, bill.getDiscountAmount());
+                    ps.setBigDecimal(5, bill.getDiscountPercent());
+                    ps.setBigDecimal(6, bill.getTaxAmount());
+                    ps.setBigDecimal(7, bill.getTotalAmount());
+                    ps.setString(8, bill.getNotes());
+                    ps.setInt(9, bill.getId());
                     ps.executeUpdate();
                 }
 
@@ -226,7 +226,7 @@ public class BillRepository {
 
                 conn.commit();
                 logger.info("Bill {} updated: {} items, total={}",
-                    bill.getBillNumber(), bill.getItems().size(), bill.getTotalAmount());
+                        bill.getBillNumber(), bill.getItems().size(), bill.getTotalAmount());
                 return true;
 
             } catch (SQLException e) {
@@ -245,8 +245,13 @@ public class BillRepository {
     // ── Queries ───────────────────────────────────────────────────────────────
 
     public Optional<Bill> findById(int id) {
+        String sql = "SELECT b.*, c.name AS customer_name, u.full_name AS cashier_name " +
+                "FROM bills b " +
+                "LEFT JOIN customers c ON b.customer_id = c.id " +
+                "LEFT JOIN users u ON b.cashier_id = u.id " +
+                "WHERE b.id = ?";
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_FIND_BY_ID)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -261,13 +266,130 @@ public class BillRepository {
         return Optional.empty();
     }
 
+    public Optional<Bill> findByBillNumber(String billNumber) {
+        String sql = "SELECT b.*, c.name AS customer_name, u.full_name AS cashier_name " +
+                "FROM bills b " +
+                "LEFT JOIN customers c ON b.customer_id = c.id " +
+                "LEFT JOIN users u ON b.cashier_id = u.id " +
+                "WHERE b.bill_number = ?";
+        try (Connection conn = DatabaseConfig.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, billNumber);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Bill bill = mapBillRow(rs);
+                    bill.setItems(findItemsByBillId(conn, bill.getId()));
+                    return Optional.of(bill);
+                }
+            }
+        } catch (SQLException e) {
+            logger.error("findByBillNumber error: {}", e.getMessage(), e);
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Searches for bills by a fragment of the bill number.
+     * Useful for finding "0001" or "20240316".
+     */
+    public List<Bill> searchByBillNumber(String fragment) {
+        List<Bill> bills = new ArrayList<>();
+        String sql = "SELECT * FROM bills WHERE bill_number LIKE ? ORDER BY created_at DESC LIMIT 20";
+        try (Connection conn = DatabaseConfig.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, "%" + fragment + "%");
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    bills.add(mapBillRow(rs));
+                }
+            }
+        } catch (SQLException e) {
+            logger.error("searchByBillNumber error: {}", e.getMessage(), e);
+        }
+        return bills;
+    }
+
+    public List<Bill> searchBillsAdvanced(String query) {
+        List<Bill> bills = new ArrayList<>();
+        String sql = "SELECT DISTINCT b.*, c.name AS customer_name, u.full_name AS cashier_name " +
+                "FROM bills b " +
+                "LEFT JOIN customers c ON b.customer_id = c.id " +
+                "LEFT JOIN users u ON b.cashier_id = u.id " +
+                "LEFT JOIN bill_items bi ON b.id = bi.bill_id " +
+                "WHERE b.bill_number LIKE ? " +
+                "   OR c.name LIKE ? " +
+                "   OR c.phone LIKE ? " +
+                "   OR bi.product_name LIKE ? " +
+                "   OR bi.product_barcode LIKE ? " +
+                "   OR b.id = ? " +
+                "   OR b.total_amount = ? " +
+                "ORDER BY b.created_at DESC LIMIT 100";
+
+        try (Connection conn = DatabaseConfig.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            String term = "%" + query + "%";
+            ps.setString(1, term);
+            ps.setString(2, term);
+            ps.setString(3, term);
+            ps.setString(4, term);
+            ps.setString(5, term);
+
+            int idVal = -1;
+            BigDecimal amtVal = BigDecimal.ZERO;
+            try {
+                idVal = Integer.parseInt(query);
+                amtVal = new BigDecimal(query);
+            } catch (Exception e) {
+            }
+
+            ps.setInt(6, idVal);
+            ps.setBigDecimal(7, amtVal);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    bills.add(mapBillRow(rs));
+                }
+            }
+        } catch (SQLException e) {
+            logger.error("searchBillsAdvanced error: {}", e.getMessage(), e);
+        }
+        return bills;
+    }
+
+    /**
+     * Returns the N most recent finalized bills.
+     */
+    public List<Bill> findRecent(int limit) {
+        List<Bill> bills = new ArrayList<>();
+        String sql = "SELECT b.*, c.name AS customer_name, u.full_name AS cashier_name " +
+                "FROM bills b " +
+                "LEFT JOIN customers c ON b.customer_id = c.id " +
+                "LEFT JOIN users u ON b.cashier_id = u.id " +
+                "WHERE b.status = 'FINALIZED' " +
+                "ORDER BY b.created_at DESC LIMIT ?";
+
+        try (Connection conn = DatabaseConfig.getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    bills.add(mapBillRow(rs));
+                }
+            }
+        } catch (SQLException e) {
+            logger.error("findRecent error: {}", e.getMessage(), e);
+        }
+        return bills;
+    }
+
     public List<Bill> findByCashierToday(int cashierId) {
         List<Bill> bills = new ArrayList<>();
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_FIND_BY_CASHIER_TODAY)) {
+                PreparedStatement ps = conn.prepareStatement(SQL_FIND_BY_CASHIER_TODAY)) {
             ps.setInt(1, cashierId);
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) bills.add(mapBillRow(rs));
+                while (rs.next())
+                    bills.add(mapBillRow(rs));
             }
         } catch (SQLException e) {
             logger.error("findByCashierToday error: {}", e.getMessage(), e);
@@ -279,9 +401,10 @@ public class BillRepository {
     public List<Bill> findTodayAll() {
         List<Bill> bills = new ArrayList<>();
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_FIND_TODAY_ALL);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) bills.add(mapBillRow(rs));
+                PreparedStatement ps = conn.prepareStatement(SQL_FIND_TODAY_ALL);
+                ResultSet rs = ps.executeQuery()) {
+            while (rs.next())
+                bills.add(mapBillRow(rs));
         } catch (SQLException e) {
             logger.error("findTodayAll error: {}", e.getMessage(), e);
         }
@@ -294,10 +417,11 @@ public class BillRepository {
      */
     public int getNextSequenceForDate(String date) {
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_SEQUENCE)) {
-            ps.setString(1, "BILL-" + date + "-%");
+                PreparedStatement ps = conn.prepareStatement(SQL_SEQUENCE)) {
+            ps.setString(1, date + "%");
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return rs.getInt(1);
+                if (rs.next())
+                    return rs.getInt(1);
             }
         } catch (SQLException e) {
             logger.error("getNextSequence error: {}", e.getMessage(), e);
@@ -312,7 +436,8 @@ public class BillRepository {
         try (PreparedStatement ps = conn.prepareStatement(SQL_FIND_ITEMS)) {
             ps.setInt(1, billId);
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) items.add(mapItemRow(rs));
+                while (rs.next())
+                    items.add(mapItemRow(rs));
             }
         }
         return items;
@@ -327,7 +452,8 @@ public class BillRepository {
         b.setMachineId(rs.getInt("machine_id"));
         b.setSubtotal(rs.getBigDecimal("subtotal"));
         b.setDiscountPercent(rs.getBigDecimal("discount_percent") != null
-            ? rs.getBigDecimal("discount_percent") : java.math.BigDecimal.ZERO);
+                ? rs.getBigDecimal("discount_percent")
+                : java.math.BigDecimal.ZERO);
         b.setDiscountAmount(rs.getBigDecimal("discount_amount"));
         b.setTaxAmount(rs.getBigDecimal("tax_amount"));
         b.setTotalAmount(rs.getBigDecimal("total_amount"));
@@ -338,13 +464,21 @@ public class BillRepository {
         b.setVoidReason(rs.getString("void_reason"));
         b.setNotes(rs.getString("notes"));
         // Denormalised name columns — present when joined, null when not
-        try { b.setCashierName(rs.getString("cashier_name")); } catch (Exception ignored) {}
-        try { b.setCustomerName(rs.getString("customer_name")); } catch (Exception ignored) {}
+        try {
+            b.setCashierName(rs.getString("cashier_name"));
+        } catch (Exception ignored) {
+        }
+        try {
+            b.setCustomerName(rs.getString("customer_name"));
+        } catch (Exception ignored) {
+        }
         Timestamp created = rs.getTimestamp("created_at");
-        if (created != null) b.setCreatedAt(created.toLocalDateTime());
+        if (created != null)
+            b.setCreatedAt(created.toLocalDateTime());
         Timestamp finalized = rs.getTimestamp("finalized_at");
-        if (finalized != null) b.setFinalizedAt(finalized.toLocalDateTime());
-        
+        if (finalized != null)
+            b.setFinalizedAt(finalized.toLocalDateTime());
+
         try {
             b.setEditable(rs.getBoolean("is_editable"));
             b.setDeletedBy(rs.getInt("deleted_by"));
@@ -370,7 +504,7 @@ public class BillRepository {
         i.setDiscountAmount(rs.getBigDecimal("discount_amount"));
         i.setTaxRate(rs.getBigDecimal("tax_rate"));
         i.setPriceOverride(rs.getBoolean("is_price_override"));
-        
+
         try {
             i.setWeightBased(rs.getBoolean("is_weight_based"));
             i.setWeight(rs.getBigDecimal("weight"));
@@ -387,13 +521,14 @@ public class BillRepository {
      */
     public java.math.BigDecimal getTodayCashCollected(int cashierId) {
         String sql = "SELECT COALESCE(SUM(total_amount),0) FROM bills " +
-                     "WHERE cashier_id=? AND payment_type='CASH' " +
-                     "AND status='COMPLETED' AND DATE(created_at)=CURDATE()";
+                "WHERE cashier_id=? AND payment_type='CASH' " +
+                "AND status='COMPLETED' AND DATE(created_at)=CURDATE()";
         try (var conn = com.minimartpos.config.DatabaseConfig.getConnection();
-             var ps   = conn.prepareStatement(sql)) {
+                var ps = conn.prepareStatement(sql)) {
             ps.setInt(1, cashierId);
             try (var rs = ps.executeQuery()) {
-                if (rs.next()) return rs.getBigDecimal(1);
+                if (rs.next())
+                    return rs.getBigDecimal(1);
             }
         } catch (Exception e) {
             logger.error("getTodayCashCollected error: {}", e.getMessage());

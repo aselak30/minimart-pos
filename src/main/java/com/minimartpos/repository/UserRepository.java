@@ -21,54 +21,47 @@ public class UserRepository {
 
     // ── Queries ───────────────────────────────────────────────────────────────
 
-    private static final String SQL_FIND_BY_USERNAME =
-        "SELECT * FROM users WHERE username = ? LIMIT 1";
+    private static final String SQL_FIND_BY_USERNAME = "SELECT * FROM users WHERE username = ? LIMIT 1";
 
-    private static final String SQL_FIND_BY_ID =
-        "SELECT * FROM users WHERE id = ? LIMIT 1";
+    private static final String SQL_FIND_BY_ID = "SELECT * FROM users WHERE id = ? LIMIT 1";
 
-    private static final String SQL_FIND_ALL =
-        "SELECT * FROM users ORDER BY full_name";
+    private static final String SQL_FIND_ALL = "SELECT * FROM users ORDER BY full_name";
 
-    private static final String SQL_INSERT =
-        "INSERT INTO users (username, password_hash, full_name, role, email, phone, active, " +
-        "session_timeout_minutes, cash_limit, daily_sales_target, theme_preference) " +
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    private static final String SQL_INSERT = "INSERT INTO users (username, password_hash, full_name, role, email, phone, active, "
+            +
+            "session_timeout_minutes, cash_limit, daily_sales_target, theme_preference) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-    private static final String SQL_UPDATE =
-        "UPDATE users SET full_name=?, role=?, email=?, phone=?, active=?, " +
-        "session_timeout_minutes=?, cash_limit=?, daily_sales_target=?, " +
-        "theme_preference=?, updated_at=NOW() WHERE id=?";
+    private static final String SQL_UPDATE = "UPDATE users SET full_name=?, role=?, email=?, phone=?, active=?, " +
+            "session_timeout_minutes=?, cash_limit=?, daily_sales_target=?, " +
+            "theme_preference=?, updated_at=NOW() WHERE id=?";
 
-    private static final String SQL_UPDATE_PASSWORD =
-        "UPDATE users SET password_hash=?, updated_at=NOW() WHERE id=?";
+    private static final String SQL_UPDATE_PASSWORD = "UPDATE users SET password_hash=?, updated_at=NOW() WHERE id=?";
 
-    private static final String SQL_UPDATE_LOGIN_SUCCESS =
-        "UPDATE users SET last_login=?, failed_login_attempts=0, locked_until=NULL WHERE id=?";
+    private static final String SQL_UPDATE_LOGIN_SUCCESS = "UPDATE users SET last_login=?, failed_login_attempts=0, locked_until=NULL WHERE id=?";
 
-    private static final String SQL_UPDATE_FAILED_LOGIN =
-        "UPDATE users SET failed_login_attempts=?, locked_until=? WHERE id=?";
+    private static final String SQL_UPDATE_FAILED_LOGIN = "UPDATE users SET failed_login_attempts=?, locked_until=? WHERE id=?";
 
-    private static final String SQL_UPDATE_THEME =
-        "UPDATE users SET theme_preference=?, last_theme_change=NOW() WHERE id=?";
+    private static final String SQL_UPDATE_THEME = "UPDATE users SET theme_preference=?, last_theme_change=NOW() WHERE id=?";
 
-    private static final String SQL_DELETE_PERMISSIONS =
-        "DELETE FROM user_permissions WHERE user_id=?";
+    private static final String SQL_DELETE_PERMISSIONS = "DELETE FROM user_permissions WHERE user_id=?";
 
-    private static final String SQL_INSERT_PERMISSION =
-        "INSERT INTO user_permissions (user_id, permission, granted_by) VALUES (?, ?, ?)";
+    private static final String SQL_INSERT_PERMISSION = "INSERT INTO user_permissions (user_id, permission, granted_by) VALUES (?, ?, ?)";
 
-    private static final String SQL_LOAD_PERMISSIONS =
-        "SELECT permission FROM user_permissions WHERE user_id=?";
+    private static final String SQL_LOAD_PERMISSIONS = "SELECT permission FROM user_permissions WHERE user_id=?";
 
     // ── Public Methods ────────────────────────────────────────────────────────
 
     public Optional<User> findByUsername(String username) {
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_FIND_BY_USERNAME)) {
+                PreparedStatement ps = conn.prepareStatement(SQL_FIND_BY_USERNAME)) {
             ps.setString(1, username);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return Optional.of(mapRow(rs));
+                if (rs.next()) {
+                    User u = mapRow(rs);
+                    loadPermissions(u);
+                    return Optional.of(u);
+                }
             }
         } catch (SQLException e) {
             logger.error("findByUsername error: {}", e.getMessage(), e);
@@ -78,10 +71,14 @@ public class UserRepository {
 
     public Optional<User> findById(int id) {
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_FIND_BY_ID)) {
+                PreparedStatement ps = conn.prepareStatement(SQL_FIND_BY_ID)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return Optional.of(mapRow(rs));
+                if (rs.next()) {
+                    User u = mapRow(rs);
+                    loadPermissions(u);
+                    return Optional.of(u);
+                }
             }
         } catch (SQLException e) {
             logger.error("findById error: {}", e.getMessage(), e);
@@ -92,9 +89,10 @@ public class UserRepository {
     public List<User> findAll() {
         List<User> users = new ArrayList<>();
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_FIND_ALL);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) users.add(mapRow(rs));
+                PreparedStatement ps = conn.prepareStatement(SQL_FIND_ALL);
+                ResultSet rs = ps.executeQuery()) {
+            while (rs.next())
+                users.add(mapRow(rs));
         } catch (SQLException e) {
             logger.error("findAll error: {}", e.getMessage(), e);
         }
@@ -103,7 +101,7 @@ public class UserRepository {
 
     public int insert(User user) {
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS)) {
+                PreparedStatement ps = conn.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, user.getUsername());
             ps.setString(2, user.getPasswordHash());
             ps.setString(3, user.getFullName());
@@ -111,8 +109,8 @@ public class UserRepository {
             ps.setString(5, user.getEmail());
             ps.setString(6, user.getPhone());
             ps.setBoolean(7, user.isActive());
-            ps.setInt(8,     user.getSessionTimeoutMinutes());
-            ps.setBigDecimal(9,  user.getCashLimit());
+            ps.setInt(8, user.getSessionTimeoutMinutes());
+            ps.setBigDecimal(9, user.getCashLimit());
             ps.setBigDecimal(10, user.getDailySalesTarget());
             ps.setString(11, user.getThemePreference());
             ps.executeUpdate();
@@ -131,17 +129,17 @@ public class UserRepository {
 
     public boolean update(User user) {
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_UPDATE)) {
-            ps.setString(1,  user.getFullName());
-            ps.setString(2,  user.getRole().name());
-            ps.setString(3,  user.getEmail());
-            ps.setString(4,  user.getPhone());
+                PreparedStatement ps = conn.prepareStatement(SQL_UPDATE)) {
+            ps.setString(1, user.getFullName());
+            ps.setString(2, user.getRole().name());
+            ps.setString(3, user.getEmail());
+            ps.setString(4, user.getPhone());
             ps.setBoolean(5, user.isActive());
-            ps.setInt(6,     user.getSessionTimeoutMinutes());
+            ps.setInt(6, user.getSessionTimeoutMinutes());
             ps.setBigDecimal(7, user.getCashLimit());
             ps.setBigDecimal(8, user.getDailySalesTarget());
-            ps.setString(9,  user.getThemePreference());
-            ps.setInt(10,    user.getId());
+            ps.setString(9, user.getThemePreference());
+            ps.setInt(10, user.getId());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             logger.error("update user error: {}", e.getMessage(), e);
@@ -151,7 +149,7 @@ public class UserRepository {
 
     public void updatePassword(int userId, String newHash) {
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_UPDATE_PASSWORD)) {
+                PreparedStatement ps = conn.prepareStatement(SQL_UPDATE_PASSWORD)) {
             ps.setString(1, newHash);
             ps.setInt(2, userId);
             ps.executeUpdate();
@@ -162,7 +160,7 @@ public class UserRepository {
 
     public void updateLoginSuccess(User user) {
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_UPDATE_LOGIN_SUCCESS)) {
+                PreparedStatement ps = conn.prepareStatement(SQL_UPDATE_LOGIN_SUCCESS)) {
             ps.setTimestamp(1, Timestamp.valueOf(user.getLastLogin()));
             ps.setInt(2, user.getId());
             ps.executeUpdate();
@@ -173,10 +171,11 @@ public class UserRepository {
 
     public void updateFailedLogin(User user) {
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_UPDATE_FAILED_LOGIN)) {
+                PreparedStatement ps = conn.prepareStatement(SQL_UPDATE_FAILED_LOGIN)) {
             ps.setInt(1, user.getFailedLoginAttempts());
             ps.setTimestamp(2, user.getLockedUntil() != null
-                               ? Timestamp.valueOf(user.getLockedUntil()) : null);
+                    ? Timestamp.valueOf(user.getLockedUntil())
+                    : null);
             ps.setInt(3, user.getId());
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -186,7 +185,7 @@ public class UserRepository {
 
     public void updateTheme(int userId, String theme) {
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_UPDATE_THEME)) {
+                PreparedStatement ps = conn.prepareStatement(SQL_UPDATE_THEME)) {
             ps.setString(1, theme);
             ps.setInt(2, userId);
             ps.executeUpdate();
@@ -200,7 +199,7 @@ public class UserRepository {
     public void loadPermissions(User user) {
         Set<Permission> perms = EnumSet.noneOf(Permission.class);
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_LOAD_PERMISSIONS)) {
+                PreparedStatement ps = conn.prepareStatement(SQL_LOAD_PERMISSIONS)) {
             ps.setInt(1, user.getId());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -248,7 +247,6 @@ public class UserRepository {
             logger.error("savePermissions error: {}", e.getMessage(), e);
         }
     }
-
 
     // ── Delete ────────────────────────────────────────────────────────────────
 
@@ -309,22 +307,27 @@ public class UserRepository {
         try {
             u.setThemePreference(rs.getString("theme_preference"));
             Timestamp themeTime = rs.getTimestamp("last_theme_change");
-            if (themeTime != null) u.setLastThemeChange(themeTime.toLocalDateTime());
+            if (themeTime != null)
+                u.setLastThemeChange(themeTime.toLocalDateTime());
         } catch (SQLException ignored) {
             // Theme fields may not exist yet
         }
 
         Timestamp locked = rs.getTimestamp("locked_until");
-        if (locked != null) u.setLockedUntil(locked.toLocalDateTime());
+        if (locked != null)
+            u.setLockedUntil(locked.toLocalDateTime());
 
         Timestamp lastLogin = rs.getTimestamp("last_login");
-        if (lastLogin != null) u.setLastLogin(lastLogin.toLocalDateTime());
+        if (lastLogin != null)
+            u.setLastLogin(lastLogin.toLocalDateTime());
 
         Timestamp created = rs.getTimestamp("created_at");
-        if (created != null) u.setCreatedAt(created.toLocalDateTime());
+        if (created != null)
+            u.setCreatedAt(created.toLocalDateTime());
 
         Timestamp updated = rs.getTimestamp("updated_at");
-        if (updated != null) u.setUpdatedAt(updated.toLocalDateTime());
+        if (updated != null)
+            u.setUpdatedAt(updated.toLocalDateTime());
 
         return u;
     }

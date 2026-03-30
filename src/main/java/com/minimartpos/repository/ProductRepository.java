@@ -18,62 +18,57 @@ public class ProductRepository {
 
     private static final Logger logger = LogManager.getLogger(ProductRepository.class);
 
-    private static final String SQL_FIND_ALL_ACTIVE =
-        "SELECT p.*, c.name AS category_name, s.name AS supplier_name " +
-        "FROM products p " +
-        "LEFT JOIN categories c ON p.category_id = c.id " +
-        "LEFT JOIN suppliers  s ON p.supplier_id  = s.id " +
-        "WHERE p.active = 1 ORDER BY p.name";
+    private static final String SQL_FIND_ALL_ACTIVE = "SELECT p.*, c.name AS category_name, s.name AS supplier_name " +
+            "FROM products p " +
+            "LEFT JOIN categories c ON p.category_id = c.id " +
+            "LEFT JOIN suppliers  s ON p.supplier_id  = s.id " +
+            "WHERE p.active = 1 ORDER BY p.name";
 
-    private static final String SQL_FIND_BY_ID =
-        "SELECT p.*, c.name AS category_name, s.name AS supplier_name " +
-        "FROM products p " +
-        "LEFT JOIN categories c ON p.category_id = c.id " +
-        "LEFT JOIN suppliers  s ON p.supplier_id  = s.id " +
-        "WHERE p.id = ? LIMIT 1";
+    private static final String SQL_FIND_BY_ID = "SELECT p.*, c.name AS category_name, s.name AS supplier_name " +
+            "FROM products p " +
+            "LEFT JOIN categories c ON p.category_id = c.id " +
+            "LEFT JOIN suppliers  s ON p.supplier_id  = s.id " +
+            "WHERE p.id = ? LIMIT 1";
 
-    private static final String SQL_FIND_BY_BARCODE =
-        "SELECT p.*, c.name AS category_name, s.name AS supplier_name " +
-        "FROM products p " +
-        "LEFT JOIN categories c ON p.category_id = c.id " +
-        "LEFT JOIN suppliers  s ON p.supplier_id  = s.id " +
-        "WHERE p.barcode = ? AND p.active = 1 LIMIT 1";
+    private static final String SQL_FIND_BY_BARCODE = "SELECT p.*, c.name AS category_name, s.name AS supplier_name " +
+            "FROM products p " +
+            "LEFT JOIN categories c ON p.category_id = c.id " +
+            "LEFT JOIN suppliers  s ON p.supplier_id  = s.id " +
+            "WHERE p.barcode = ? AND p.active = 1 LIMIT 1";
 
-    private static final String SQL_SEARCH =
-        "SELECT p.*, c.name AS category_name, s.name AS supplier_name " +
-        "FROM products p " +
-        "LEFT JOIN categories c ON p.category_id = c.id " +
-        "LEFT JOIN suppliers  s ON p.supplier_id  = s.id " +
-        "WHERE p.active = 1 AND (p.name LIKE ? OR p.barcode LIKE ? OR p.brand LIKE ?) " +
-        "ORDER BY p.name LIMIT 100";
+    private static final String SQL_SEARCH = "SELECT p.*, c.name AS category_name, s.name AS supplier_name " +
+            "FROM products p " +
+            "LEFT JOIN categories c ON p.category_id = c.id " +
+            "LEFT JOIN suppliers  s ON p.supplier_id  = s.id " +
+            "WHERE p.active = 1 AND (p.name LIKE ? OR p.barcode LIKE ? OR p.brand LIKE ?) " +
+            "ORDER BY p.name LIMIT 100";
 
-    private static final String SQL_LOW_STOCK =
-        "SELECT p.*, c.name AS category_name, s.name AS supplier_name " +
-        "FROM products p " +
-        "LEFT JOIN categories c ON p.category_id = c.id " +
-        "LEFT JOIN suppliers  s ON p.supplier_id  = s.id " +
-        "WHERE p.active = 1 AND p.stock_quantity <= p.reorder_level " +
-        "ORDER BY p.stock_quantity ASC";
+    private static final String SQL_LOW_STOCK = "SELECT p.*, c.name AS category_name, s.name AS supplier_name " +
+            "FROM products p " +
+            "LEFT JOIN categories c ON p.category_id = c.id " +
+            "LEFT JOIN suppliers  s ON p.supplier_id  = s.id " +
+            "WHERE p.active = 1 AND p.stock_quantity <= p.reorder_level " +
+            "ORDER BY p.stock_quantity ASC";
 
-    private static final String SQL_INSERT =
-        "INSERT INTO products (barcode, name, category_id, brand, size_weight, unit_price, cost_price, " +
-        "tax_rate, discount_allowed, max_discount_percent, stock_quantity, reorder_level, " +
-        "expiry_date, batch_number, supplier_id, location, active, image_path, description, " +
-        "is_weight_based, weight_unit, price_per_unit, default_weight, min_weight, max_weight) " +
-        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    private static final String SQL_INSERT = "INSERT INTO products (barcode, name, category_id, brand, size_weight, unit_price, cost_price, "
+            +
+            "tax_rate, discount_allowed, max_discount_percent, stock_quantity, damaged_quantity, reorder_level, " +
+            "expiry_date, batch_number, supplier_id, location, active, image_path, description, " +
+            "is_weight_based, weight_unit, price_per_unit, default_weight, min_weight, max_weight) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
-    private static final String SQL_UPDATE =
-        "UPDATE products SET barcode=?, name=?, category_id=?, brand=?, size_weight=?, unit_price=?, " +
-        "cost_price=?, tax_rate=?, discount_allowed=?, max_discount_percent=?, reorder_level=?, " +
-        "expiry_date=?, batch_number=?, supplier_id=?, location=?, active=?, image_path=?, " +
-        "description=?, is_weight_based=?, weight_unit=?, price_per_unit=?, default_weight=?, " +
-        "min_weight=?, max_weight=?, updated_at=NOW() WHERE id=?";
+    private static final String SQL_UPDATE = "UPDATE products SET barcode=?, name=?, category_id=?, brand=?, size_weight=?, unit_price=?, "
+            +
+            "cost_price=?, tax_rate=?, discount_allowed=?, max_discount_percent=?, reorder_level=?, " +
+            "expiry_date=?, batch_number=?, supplier_id=?, location=?, active=?, image_path=?, " +
+            "description=?, is_weight_based=?, weight_unit=?, price_per_unit=?, default_weight=?, " +
+            "min_weight=?, max_weight=?, updated_at=NOW() WHERE id=?";
 
-    private static final String SQL_UPDATE_STOCK =
-        "UPDATE products SET stock_quantity = stock_quantity + ?, updated_at=NOW() WHERE id=?";
+    private static final String SQL_UPDATE_STOCK = "UPDATE products SET stock_quantity = stock_quantity + ?, updated_at=NOW() WHERE id=?";
 
-    private static final String SQL_SET_STOCK =
-        "UPDATE products SET stock_quantity = ?, updated_at=NOW() WHERE id=?";
+    private static final String SQL_UPDATE_DAMAGED = "UPDATE products SET damaged_quantity = damaged_quantity + ?, updated_at=NOW() WHERE id=?";
+
+    private static final String SQL_SET_STOCK = "UPDATE products SET stock_quantity = ?, updated_at=NOW() WHERE id=?";
 
     // ── Public Methods ────────────────────────────────────────────────────────
 
@@ -83,10 +78,11 @@ public class ProductRepository {
 
     public Optional<Product> findById(int id) {
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_FIND_BY_ID)) {
+                PreparedStatement ps = conn.prepareStatement(SQL_FIND_BY_ID)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return Optional.of(mapRow(rs));
+                if (rs.next())
+                    return Optional.of(mapRow(rs));
             }
         } catch (SQLException e) {
             logger.error("findById error: {}", e.getMessage(), e);
@@ -96,10 +92,11 @@ public class ProductRepository {
 
     public Optional<Product> findByBarcode(String barcode) {
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_FIND_BY_BARCODE)) {
+                PreparedStatement ps = conn.prepareStatement(SQL_FIND_BY_BARCODE)) {
             ps.setString(1, barcode);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return Optional.of(mapRow(rs));
+                if (rs.next())
+                    return Optional.of(mapRow(rs));
             }
         } catch (SQLException e) {
             logger.error("findByBarcode error: {}", e.getMessage(), e);
@@ -110,13 +107,14 @@ public class ProductRepository {
     public List<Product> search(String query) {
         String like = "%" + query + "%";
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_SEARCH)) {
+                PreparedStatement ps = conn.prepareStatement(SQL_SEARCH)) {
             ps.setString(1, like);
             ps.setString(2, like);
             ps.setString(3, like);
             try (ResultSet rs = ps.executeQuery()) {
                 List<Product> results = new ArrayList<>();
-                while (rs.next()) results.add(mapRow(rs));
+                while (rs.next())
+                    results.add(mapRow(rs));
                 return results;
             }
         } catch (SQLException e) {
@@ -131,7 +129,7 @@ public class ProductRepository {
 
     public int insert(Product p) {
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS)) {
+                PreparedStatement ps = conn.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS)) {
             setInsertParams(ps, p);
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
@@ -149,7 +147,7 @@ public class ProductRepository {
 
     public boolean update(Product p) {
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_UPDATE)) {
+                PreparedStatement ps = conn.prepareStatement(SQL_UPDATE)) {
             setUpdateParams(ps, p);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -162,10 +160,10 @@ public class ProductRepository {
      * Adjusts stock by delta (positive = add, negative = subtract).
      * Uses atomic SQL to avoid race conditions in multi-machine env.
      */
-    public boolean adjustStock(int productId, int delta) {
+    public boolean adjustStock(int productId, BigDecimal delta) {
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_UPDATE_STOCK)) {
-            ps.setInt(1, delta);
+                PreparedStatement ps = conn.prepareStatement(SQL_UPDATE_STOCK)) {
+            ps.setBigDecimal(1, delta);
             ps.setInt(2, productId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -174,9 +172,21 @@ public class ProductRepository {
         return false;
     }
 
+    public boolean adjustDamagedStock(int productId, BigDecimal delta) {
+        try (Connection conn = DatabaseConfig.getConnection();
+                PreparedStatement ps = conn.prepareStatement(SQL_UPDATE_DAMAGED)) {
+            ps.setBigDecimal(1, delta);
+            ps.setInt(2, productId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            logger.error("adjustDamagedStock error: {}", e.getMessage(), e);
+        }
+        return false;
+    }
+
     public boolean setStock(int productId, int quantity) {
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_SET_STOCK)) {
+                PreparedStatement ps = conn.prepareStatement(SQL_SET_STOCK)) {
             ps.setInt(1, quantity);
             ps.setInt(2, productId);
             return ps.executeUpdate() > 0;
@@ -191,9 +201,10 @@ public class ProductRepository {
     private List<Product> query(String sql) {
         List<Product> list = new ArrayList<>();
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) list.add(mapRow(rs));
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+            while (rs.next())
+                list.add(mapRow(rs));
         } catch (SQLException e) {
             logger.error("query error [{}]: {}", sql, e.getMessage(), e);
         }
@@ -201,21 +212,25 @@ public class ProductRepository {
     }
 
     private void setInsertParams(PreparedStatement ps, Product p) throws SQLException {
-        ps.setString(1,  p.getBarcode());
-        ps.setString(2,  p.getName());
-        ps.setInt(3,     p.getCategoryId());
-        ps.setString(4,  p.getBrand());
-        ps.setString(5,  p.getSizeWeight());
-        ps.setBigDecimal(6,  p.getUnitPrice());
-        ps.setBigDecimal(7,  p.getCostPrice() != null ? p.getCostPrice() : BigDecimal.ZERO);
-        ps.setBigDecimal(8,  p.getTaxRate());
-        ps.setBoolean(9,     p.isDiscountAllowed());
+        ps.setString(1, p.getBarcode());
+        ps.setString(2, p.getName());
+        ps.setInt(3, p.getCategoryId());
+        ps.setString(4, p.getBrand());
+        ps.setString(5, p.getSizeWeight());
+        ps.setBigDecimal(6, p.getUnitPrice());
+        ps.setBigDecimal(7, p.getCostPrice() != null ? p.getCostPrice() : BigDecimal.ZERO);
+        ps.setBigDecimal(8, p.getTaxRate());
+        ps.setBoolean(9, p.isDiscountAllowed());
         ps.setBigDecimal(10, p.getMaxDiscountPercent());
         ps.setBigDecimal(11, p.getStockQuantity());
-        ps.setBigDecimal(12, p.getReorderLevel());
-        ps.setDate(13,   p.getExpiryDate() != null ? Date.valueOf(p.getExpiryDate()) : null);
+        ps.setBigDecimal(12, p.getDamagedQuantity() != null ? p.getDamagedQuantity() : BigDecimal.ZERO);
+        ps.setBigDecimal(13, p.getReorderLevel());
+        ps.setDate(14, p.getExpiryDate() != null ? Date.valueOf(p.getExpiryDate()) : null);
         ps.setString(14, p.getBatchNumber());
-        if (p.getSupplierId() > 0) ps.setInt(15, p.getSupplierId()); else ps.setNull(15, Types.INTEGER);
+        if (p.getSupplierId() > 0)
+            ps.setInt(15, p.getSupplierId());
+        else
+            ps.setNull(15, Types.INTEGER);
         ps.setString(16, p.getLocation());
         ps.setBoolean(17, p.isActive());
         ps.setString(18, p.getImagePath());
@@ -229,23 +244,26 @@ public class ProductRepository {
     }
 
     private void setUpdateParams(PreparedStatement ps, Product p) throws SQLException {
-        ps.setString(1,  p.getBarcode());
-        ps.setString(2,  p.getName());
-        ps.setInt(3,     p.getCategoryId());
-        ps.setString(4,  p.getBrand());
-        ps.setString(5,  p.getSizeWeight());
-        ps.setBigDecimal(6,  p.getUnitPrice());
-        ps.setBigDecimal(7,  p.getCostPrice() != null ? p.getCostPrice() : BigDecimal.ZERO);
-        ps.setBigDecimal(8,  p.getTaxRate());
-        ps.setBoolean(9,     p.isDiscountAllowed());
+        ps.setString(1, p.getBarcode());
+        ps.setString(2, p.getName());
+        ps.setInt(3, p.getCategoryId());
+        ps.setString(4, p.getBrand());
+        ps.setString(5, p.getSizeWeight());
+        ps.setBigDecimal(6, p.getUnitPrice());
+        ps.setBigDecimal(7, p.getCostPrice() != null ? p.getCostPrice() : BigDecimal.ZERO);
+        ps.setBigDecimal(8, p.getTaxRate());
+        ps.setBoolean(9, p.isDiscountAllowed());
         ps.setBigDecimal(10, p.getMaxDiscountPercent());
         ps.setBigDecimal(11, p.getReorderLevel());
-        ps.setDate(12,   p.getExpiryDate() != null ? Date.valueOf(p.getExpiryDate()) : null);
+        ps.setDate(12, p.getExpiryDate() != null ? Date.valueOf(p.getExpiryDate()) : null);
         ps.setString(13, p.getBatchNumber());
-        if (p.getSupplierId() > 0) ps.setInt(14, p.getSupplierId()); else ps.setNull(14, Types.INTEGER);
+        if (p.getSupplierId() > 0)
+            ps.setInt(14, p.getSupplierId());
+        else
+            ps.setNull(14, Types.INTEGER);
         ps.setString(15, p.getLocation());
-        ps.setBoolean(16, p.isActive());                           // was missing
-        ps.setString(17, p.getImagePath());                        // was missing
+        ps.setBoolean(16, p.isActive()); // was missing
+        ps.setString(17, p.getImagePath()); // was missing
         ps.setString(18, p.getDescription());
         ps.setBoolean(19, p.isWeightBased());
         ps.setString(20, p.getWeightUnit());
@@ -253,12 +271,12 @@ public class ProductRepository {
         ps.setBigDecimal(22, p.getDefaultWeight());
         ps.setBigDecimal(23, p.getMinWeight());
         ps.setBigDecimal(24, p.getMaxWeight());
-        ps.setInt(25,    p.getId());
+        ps.setInt(25, p.getId());
     }
 
     public boolean delete(int id) {
         try (Connection conn = DatabaseConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement("DELETE FROM products WHERE id=?")) {
+                PreparedStatement ps = conn.prepareStatement("DELETE FROM products WHERE id=?")) {
             ps.setInt(1, id);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -282,6 +300,15 @@ public class ProductRepository {
         p.setDiscountAllowed(rs.getBoolean("discount_allowed"));
         p.setMaxDiscountPercent(rs.getBigDecimal("max_discount_percent"));
         p.setStockQuantity(rs.getBigDecimal("stock_quantity"));
+
+        // Safety check for damaged_quantity column
+        try {
+            p.setDamagedQuantity(rs.getBigDecimal("damaged_quantity"));
+        } catch (SQLException e) {
+            logger.warn("damaged_quantity column missing, defaulting to 0. Error: {}", e.getMessage());
+            p.setDamagedQuantity(BigDecimal.ZERO);
+        }
+
         p.setReorderLevel(rs.getBigDecimal("reorder_level"));
         p.setActive(rs.getBoolean("active"));
         p.setImagePath(rs.getString("image_path"));
@@ -302,13 +329,16 @@ public class ProductRepository {
         }
 
         Date expiry = rs.getDate("expiry_date");
-        if (expiry != null) p.setExpiryDate(expiry.toLocalDate());
+        if (expiry != null)
+            p.setExpiryDate(expiry.toLocalDate());
 
         Timestamp created = rs.getTimestamp("created_at");
-        if (created != null) p.setCreatedAt(created.toLocalDateTime());
+        if (created != null)
+            p.setCreatedAt(created.toLocalDateTime());
 
         Timestamp updated = rs.getTimestamp("updated_at");
-        if (updated != null) p.setUpdatedAt(updated.toLocalDateTime());
+        if (updated != null)
+            p.setUpdatedAt(updated.toLocalDateTime());
 
         return p;
     }
