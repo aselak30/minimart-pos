@@ -36,14 +36,8 @@ public class PrinterManager {
 
     // ESC/POS command bytes
     private static final byte[] ESC_INIT = { 0x1B, 0x40 }; // Initialize
-    private static final byte[] ESC_BOLD_ON = { 0x1B, 0x45, 0x01 }; // Bold on
-    private static final byte[] ESC_BOLD_OFF = { 0x1B, 0x45, 0x00 }; // Bold off
-    private static final byte[] ESC_CENTER = { 0x1B, 0x61, 0x01 }; // Align center
     private static final byte[] ESC_LEFT = { 0x1B, 0x61, 0x00 }; // Align left
-    private static final byte[] ESC_DOUBLE_HEIGHT = { 0x1B, 0x21, 0x10 }; // Double height
-    private static final byte[] ESC_NORMAL_SIZE = { 0x1B, 0x21, 0x00 }; // Normal size
-    private static final byte[] ESC_FEED_CUT = { 0x1B, 0x64, 0x04, 0x1D, 0x56, 0x42, 0x00 }; // Feed 4 lines + partial
-                                                                                             // cut
+    private static final byte[] ESC_FEED_CUT = { 0x1B, 0x64, 0x04, 0x1D, 0x56, 0x42, 0x00 }; // Feed 4 lines + partial cut
 
     // ── Public API ────────────────────────────────────────────────────────────
 
@@ -116,14 +110,11 @@ public class PrinterManager {
         try {
             List<byte[]> chunks = new ArrayList<>();
             chunks.add(ESC_INIT);
-            chunks.add(ESC_CENTER);
-            chunks.add(ESC_BOLD_ON);
-            chunks.add(ESC_DOUBLE_HEIGHT);
-            // text as UTF-8 bytes
+            chunks.add(ESC_LEFT); // Default to left-align (PrintUtil handles internal spacing)
+            
+            // Send text as UTF-8 bytes (modern printers only; old ones will need the Graphic path)
             chunks.add(text.getBytes(Charset.forName("UTF-8")));
-            chunks.add(ESC_NORMAL_SIZE);
-            chunks.add(ESC_BOLD_OFF);
-            chunks.add(ESC_LEFT);
+            
             chunks.add(ESC_FEED_CUT);
 
             // Combine all byte arrays
@@ -162,23 +153,59 @@ public class PrinterManager {
 
     private boolean printText(PrintService printer, String text) {
         try {
-            if (printer == null) {
-                printer = PrintServiceLookup.lookupDefaultPrintService();
+            PrinterJob job = PrinterJob.getPrinterJob();
+            if (printer != null) {
+                job.setPrintService(printer);
+            } else {
+                logger.warn("Target printer is null, using default system printer.");
             }
-            if (printer == null) {
-                logger.error("No default printer found.");
-                return false;
-            }
-            DocFlavor flavor = DocFlavor.BYTE_ARRAY.TEXT_PLAIN_UTF_8;
-            byte[] bytes = text.getBytes(Charset.forName("UTF-8"));
-            Doc doc = new SimpleDoc(bytes, flavor, null);
-            DocPrintJob job = printer.createPrintJob();
-            job.print(doc, new HashPrintRequestAttributeSet());
-            logger.info("Receipt printed via text fallback on: {}", printer.getName());
+
+            PageFormat pf = job.defaultPage();
+            Paper paper = new Paper();
+            // Standard 80mm receipt: ~226 pts wide.
+            double width = 80 * 72 / 25.4; 
+            double height = job.defaultPage().getHeight(); 
+            paper.setSize(width, height);
+            paper.setImageableArea(5, 0, width - 10, height);
+            pf.setPaper(paper);
+
+            job.setPrintable(new ReceiptPrintable(text), pf);
+            job.print();
+            logger.info("Receipt printed via Graphics rendering fallback.");
             return true;
         } catch (Exception e) {
-            logger.error("printText error: {}", e.getMessage(), e);
+            logger.error("printGraphic error: {}", e.getMessage(), e);
             return false;
+        }
+    }
+
+    private static class ReceiptPrintable implements Printable {
+        private final String text;
+        
+        public ReceiptPrintable(String text) {
+            this.text = text;
+        }
+
+        @Override
+        public int print(java.awt.Graphics graphics, PageFormat pageFormat, int pageIndex) throws PrinterException {
+            if (pageIndex > 0) return NO_SUCH_PAGE;
+
+            java.awt.Graphics2D g2d = (java.awt.Graphics2D) graphics;
+            g2d.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
+            
+            // Modern Windows font that handles Sinhala well. "Iskoola Pota" or "Nirmala UI" are standard.
+            // Using "Nirmala UI" or "Serif" as fallback.
+            java.awt.Font font = new java.awt.Font("Nirmala UI", java.awt.Font.PLAIN, 9);
+            g2d.setFont(font);
+
+            int y = 12;
+            String[] lines = text.split("\n");
+            for (String line : lines) {
+                g2d.drawString(line, 0, y);
+                y += g2d.getFontMetrics().getHeight() - 2; // tight line spacing for receipts
+            }
+
+            return PAGE_EXISTS;
         }
     }
 
