@@ -54,17 +54,19 @@ public class PrinterManager {
         String phone = settingsService.phone();
         String footer = settingsService.receiptFooter();
 
-        // Build receipt text
         String receiptText = PrintUtil.buildReceipt(bill, company, address, phone, footer);
         logger.info("Printing receipt for bill: {}", bill.getBillNumber());
 
-        // Try raw ESC/POS first
+        // FORCE Graphics Mode if Sinhala or other non-ASCII characters are present.
+        // This avoids "Japanese/Garbage" text caused by raw byte encoding mismatches.
+        boolean hasNonAscii = !receiptText.chars().allMatch(c -> c < 128);
+        
         PrintService printer = findPrinter(printerName);
-        if (printer != null && supportsRaw(printer)) {
+        if (!hasNonAscii && printer != null && supportsRaw(printer)) {
             return printRaw(printer, receiptText);
         }
 
-        // Fallback: plain text via Java Print Service
+        // Use Graphics rendering for complex scripts (Sinhala) or non-raw printers.
         return printText(printer, receiptText);
     }
 
@@ -156,25 +158,29 @@ public class PrinterManager {
             PrinterJob job = PrinterJob.getPrinterJob();
             if (printer != null) {
                 job.setPrintService(printer);
-            } else {
-                logger.warn("Target printer is null, using default system printer.");
             }
 
             PageFormat pf = job.defaultPage();
             Paper paper = new Paper();
-            // Standard 80mm receipt: ~226 pts wide.
-            double width = 80 * 72 / 25.4; 
-            double height = job.defaultPage().getHeight(); 
-            paper.setSize(width, height);
-            paper.setImageableArea(5, 0, width - 10, height);
+            
+            // Standard 80mm (3.125 inch) paper = 226.7 pts
+            double totalWidth = 80 * 72 / 25.4; 
+            // Standard printable area for 80mm thermal is ~72mm = 204 pts
+            double printableWidth = 72 * 72 / 25.4;
+            // Center the printable area 
+            double leftMargin = (totalWidth - printableWidth) / 2;
+            
+            paper.setSize(totalWidth, pf.getHeight());
+            // Small margins for stability
+            paper.setImageableArea(leftMargin, 5, printableWidth, pf.getHeight() - 10);
             pf.setPaper(paper);
 
             job.setPrintable(new ReceiptPrintable(text), pf);
             job.print();
-            logger.info("Receipt printed via Graphics rendering fallback.");
+            logger.info("Receipt printed via Graphics rendering (Centered, 8.5pt, Sinhala support).");
             return true;
         } catch (Exception e) {
-            logger.error("printGraphic error: {}", e.getMessage(), e);
+            logger.error("printText error: {}", e.getMessage(), e);
             return false;
         }
     }
@@ -191,25 +197,51 @@ public class PrinterManager {
             if (pageIndex > 0) return NO_SUCH_PAGE;
 
             java.awt.Graphics2D g2d = (java.awt.Graphics2D) graphics;
+            g2d.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+            g2d.setRenderingHint(java.awt.RenderingHints.KEY_TEXT_ANTIALIASING, java.awt.RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            
             g2d.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
             
-            // Modern Windows font that handles Sinhala well. "Iskoola Pota" or "Nirmala UI" are standard.
-            // Using "Nirmala UI" or "Serif" as fallback.
-            java.awt.Font font = new java.awt.Font("Nirmala UI", java.awt.Font.PLAIN, 9);
-            g2d.setFont(font);
+            // SansSerif handles Sinhala characters perfectly by mapping to Nirmala UI on Windows.
+            // 8.5pt fits comfortably within 72mm for 42 characters.
+            java.awt.Font normalFont = new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 8);
+            java.awt.Font boldFont = new java.awt.Font("SansSerif", java.awt.Font.BOLD, 9);
+            g2d.setFont(normalFont);
 
-            int y = 12;
+            int y = 10;
+            double pageWidth = pageFormat.getImageableWidth();
             String[] lines = text.split("\n");
+
             for (String line : lines) {
-                g2d.drawString(line, 0, y);
-                y += g2d.getFontMetrics().getHeight() - 2; // tight line spacing for receipts
+                if (line.trim().isEmpty()) {
+                    y += 6;
+                    continue;
+                }
+
+                // Header/Footer centering logic
+                // If a line starts with leading spaces, it was meant to be centered by PrintUtil.
+                // We trim it and center it mathematically for consistent proportional font alignment.
+                if (line.startsWith("  ") && !line.trim().startsWith("-") && !line.trim().startsWith("*")) {
+                    String trimmed = line.trim();
+                    // Headers and specific keywords are bold
+                    boolean isMajor = y < 100 || trimmed.contains("TOTAL") || trimmed.contains("THANK YOU");
+                    g2d.setFont(isMajor ? boldFont : normalFont);
+                    
+                    int stringWidth = g2d.getFontMetrics().stringWidth(trimmed);
+                    int x = (int) ((pageWidth - stringWidth) / 2);
+                    g2d.drawString(trimmed, x, y);
+                    g2d.setFont(normalFont);
+                } else {
+                    // Regular item rows or separator lines
+                    g2d.drawString(line, 0, y);
+                }
+                
+                y += g2d.getFontMetrics().getHeight() - 1;
             }
 
             return PAGE_EXISTS;
         }
     }
-
-    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private PrintService findPrinter(String name) {
         if (name == null || name.isBlank()) {
@@ -217,7 +249,8 @@ public class PrinterManager {
         }
         PrintService[] services = PrintServiceLookup.lookupPrintServices(null, null);
         for (PrintService s : services) {
-            if (s.getName().equalsIgnoreCase(name.trim()))
+            String printerName = s.getName();
+            if (printerName.equalsIgnoreCase(name.trim()))
                 return s;
         }
         logger.warn("Printer '{}' not found. Using default.", name);
@@ -226,7 +259,6 @@ public class PrinterManager {
 
     private boolean supportsRaw(PrintService printer) {
         try {
-            printer.getSupportedDocFlavors();
             for (DocFlavor f : printer.getSupportedDocFlavors()) {
                 if (DocFlavor.BYTE_ARRAY.AUTOSENSE.equals(f))
                     return true;
