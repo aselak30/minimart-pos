@@ -59,6 +59,7 @@ public class AdminDashboardController implements Initializable {
     // ── FXML: Sidebar ─────────────────────────────────────────────────────────
     @FXML private Label    sidebarUserLabel;
     @FXML private Label    sidebarVersionLabel;
+    @FXML private Label    sidebarCompanyLabel;
     @FXML private Button   navDashboard;
     @FXML private Button   navUsers;
     @FXML private Button   navProducts;
@@ -118,6 +119,7 @@ public class AdminDashboardController implements Initializable {
 
     // ── State ─────────────────────────────────────────────────────────────────
     private final DashboardService dashboardService = new DashboardService();
+    private final com.minimartpos.service.SettingsService settingsService = new com.minimartpos.service.SettingsService();
     private Timeline clockTimeline;
     private Timeline autoRefreshTimeline;
     private int expiryDays = 30;
@@ -126,6 +128,7 @@ public class AdminDashboardController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        applyBranding();
         setupSidebar();
         setupClock();
         setupChartDatePicker();
@@ -573,5 +576,15 @@ public class AdminDashboardController implements Initializable {
             case "CREDIT"       -> "📋 Credit";
             default             -> raw;
         };
+    }
+
+    private void applyBranding() {
+        try {
+            String company = settingsService.company();
+            if (sidebarCompanyLabel != null) sidebarCompanyLabel.setText("🛒 " + company);
+            SceneManager.updateTitle(company + " POS Ultimate");
+        } catch (Exception e) {
+            logger.debug("Branding error: {}", e.getMessage());
+        }
     }
 }

@@ -226,20 +226,31 @@ public class ReturnController implements Initializable {
     }
 
     public void loadBill(Bill bill) {
+        if (bill == null)
+            return;
+        // Reset UI state
+        errorLabel.setVisible(false);
+        errorLabel.setManaged(false);
+        itemsSection.setVisible(false);
+        itemsSection.setManaged(false);
+        summarySection.setVisible(false);
+        summarySection.setManaged(false);
+        processBtn.setDisable(true);
+
         // Reload full bill with items
         Optional<Bill> fullBill = billRepo.findById(bill.getId());
         if (fullBill.isEmpty()) {
-            showError("Could not load bill details.");
+            showError("Could not load bill details from database (ID: " + bill.getId() + ").");
             return;
         }
         originalBill = fullBill.get();
 
         if (originalBill.getStatus() == Bill.Status.VOIDED) {
-            showError("Cannot return a voided bill.");
+            showError("Cannot return a bill that is already VOIDED.");
             return;
         }
         if (originalBill.getStatus() == Bill.Status.REFUNDED) {
-            showError("This bill has already been refunded.");
+            showError("This bill has already been fully REFUNDED.");
             return;
         }
 
@@ -255,12 +266,18 @@ public class ReturnController implements Initializable {
         returnItems.clear();
         for (BillItem item : originalBill.getItems()) {
             ReturnItem ri = new ReturnItem(item);
+            ri.setCondition("Stock"); // Default to Stock
+            BigDecimal qty = item.getQuantity();
+            if (qty == null)
+                qty = BigDecimal.ZERO;
+
             if (mode == Mode.VOID) {
-                ri.setReturnQty(item.getQuantity());
+                ri.setReturnQty(qty);
                 ri.setSelected(true);
             }
             returnItems.add(ri);
         }
+
         itemsTable.setItems(returnItems);
         itemsSection.setVisible(true);
         itemsSection.setManaged(true);
@@ -270,11 +287,13 @@ public class ReturnController implements Initializable {
         if (mode == Mode.VOID) {
             processItemLabel.setText("STEP 2 — Verify Items to Void");
             processBtn.setText("✔ Confirm Void");
-            reasonCombo.setDisable(true); // Void reason usually handled separately or inferred
-            refundMethodCombo.setDisable(true); // No refund method for void usually (full reversal)
+            reasonCombo.setDisable(true);
+            refundMethodCombo.setDisable(true);
         } else {
             processItemLabel.setText("STEP 2 — Select Items to Return");
             processBtn.setText("✔ Process Return");
+            reasonCombo.setDisable(false);
+            refundMethodCombo.setDisable(false);
         }
 
         processBtn.setDisable(returnItems.isEmpty());
@@ -351,6 +370,24 @@ public class ReturnController implements Initializable {
             ri.setSelected(false);
             ri.setReturnQty(BigDecimal.ZERO);
         });
+        itemsTable.refresh();
+        updateRefundTotal();
+    }
+
+    @FXML
+    private void markAllDamaged() {
+        for (ReturnItem ri : returnItems) {
+            ri.setCondition("Damaged");
+        }
+        itemsTable.refresh();
+        updateRefundTotal();
+    }
+
+    @FXML
+    private void markAllStock() {
+        for (ReturnItem ri : returnItems) {
+            ri.setCondition("Stock");
+        }
         itemsTable.refresh();
         updateRefundTotal();
     }

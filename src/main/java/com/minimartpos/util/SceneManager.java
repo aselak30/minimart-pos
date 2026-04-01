@@ -186,6 +186,12 @@ public final class SceneManager {
         fxmlCache.clear();
     }
 
+    public static void updateTitle(String title) {
+        if (primaryStage != null) {
+            primaryStage.setTitle(title);
+        }
+    }
+
     public static Stage getPrimaryStage() {
         return primaryStage;
     }

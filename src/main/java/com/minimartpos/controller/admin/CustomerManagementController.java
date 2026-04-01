@@ -3,9 +3,9 @@ package com.minimartpos.controller.admin;
 import com.minimartpos.model.Customer;
 import com.minimartpos.security.SessionManager;
 import com.minimartpos.service.CustomerService;
+import com.minimartpos.service.SettingsService;
 import com.minimartpos.util.AlertUtil;
 import com.minimartpos.util.CurrencyUtil;
-import com.minimartpos.util.SceneManager;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -15,8 +15,6 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.math.BigDecimal;
 import java.net.URL;
@@ -24,9 +22,8 @@ import java.util.ResourceBundle;
 
 public class CustomerManagementController implements Initializable {
 
-    private static final Logger logger = LogManager.getLogger(CustomerManagementController.class);
-
     @FXML private Label     sidebarUserLabel;
+    @FXML private Label     sidebarCompanyLabel;
     @FXML private TextField searchField;
     @FXML private Label     countLabel;
 
@@ -54,6 +51,7 @@ public class CustomerManagementController implements Initializable {
     @FXML private Label     formError;
 
     private final CustomerService customerService = new CustomerService();
+    private final SettingsService settingsService = new SettingsService();
     private final ObservableList<Customer> allCustomers    = FXCollections.observableArrayList();
     private FilteredList<Customer>         filteredCustomers;
     private Customer                       editingCustomer;
@@ -61,6 +59,7 @@ public class CustomerManagementController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         sidebarUserLabel.setText(SessionManager.getCurrentUser().getFullName());
+        sidebarCompanyLabel.setText("🛒 " + settingsService.company());
         setupColumns();
         refresh();
     }

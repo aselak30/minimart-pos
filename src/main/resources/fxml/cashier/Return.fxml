@@ -42,6 +42,11 @@
                         style="-fx-font-size:11px;" onAction="#selectAll"/>
                 <Button text="Clear" styleClass="btn-flat, button"
                         style="-fx-font-size:11px;" onAction="#clearSelection"/>
+                <Separator orientation="VERTICAL" style="-fx-padding:0 4;"/>
+                <Button text="Mark Damaged" styleClass="btn-flat, button"
+                        style="-fx-font-size:11px; -fx-text-fill:#e74c3c;" onAction="#markAllDamaged"/>
+                <Button text="Mark Stock" styleClass="btn-flat, button"
+                        style="-fx-font-size:11px; -fx-text-fill:#27ae60;" onAction="#markAllStock"/>
             </HBox>
             <TableView fx:id="itemsTable" VBox.vgrow="ALWAYS"
                        style="-fx-border-color:-pos-border; -fx-background-color:-pos-surface; -fx-border-radius:6;">

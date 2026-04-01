@@ -4,10 +4,10 @@ import com.minimartpos.security.SessionManager;
 import com.minimartpos.service.ExcelService;
 import com.minimartpos.service.PdfService;
 import com.minimartpos.service.ReportService;
+import com.minimartpos.service.SettingsService;
 import com.minimartpos.util.AlertUtil;
 import com.minimartpos.util.CurrencyUtil;
 import com.minimartpos.util.DateUtil;
-import com.minimartpos.util.SceneManager;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -50,6 +50,7 @@ public class ReportsController implements Initializable {
     private static final Logger logger = LogManager.getLogger(ReportsController.class);
 
     @FXML private Label       sidebarUserLabel;
+    @FXML private Label       sidebarCompanyLabel;
     @FXML private DatePicker  fromDate;
     @FXML private DatePicker  toDate;
     @FXML private ListView<String> reportTypeList;
@@ -71,6 +72,7 @@ public class ReportsController implements Initializable {
     @FXML private Label rowCountLabel;
 
     private final ReportService reportService = new ReportService();
+    private final SettingsService settingsService = new SettingsService();
 
     private static final List<String> REPORT_TYPES = List.of(
         "📊  Sales Summary",
@@ -84,6 +86,7 @@ public class ReportsController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         sidebarUserLabel.setText(SessionManager.getCurrentUser().getFullName());
+        sidebarCompanyLabel.setText("🛒 " + settingsService.company());
 
         // Date range: default to this month
         fromDate.setValue(LocalDate.now().withDayOfMonth(1));

@@ -55,7 +55,15 @@ public class SettingsService {
 
     // ── Convenience typed getters ─────────────────────────────────────────────
     public String company() {
-        return get("company_name", "MiniMart");
+        return get("company_name", "minimartpos");
+    }
+
+    public String logoPath() {
+        return get("company_logo", "images/logo.png");
+    }
+
+    public String receiptLogoPath() {
+        return get("receipt_logo", "images/logo.png");
     }
 
     public String currency() {

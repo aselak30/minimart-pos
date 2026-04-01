@@ -346,7 +346,12 @@ public class BillingService {
 
         bill.setStatus(Bill.Status.VOIDED);
         bill.setVoidReason(reason.trim());
-        billRepo.updateBillStatus(bill);
+        boolean statusUpdated = billRepo.updateBillStatus(bill);
+
+        if (!statusUpdated) {
+            logger.error("Failed to update status for voided bill: {}", bill.getBillNumber());
+            return BillResult.fail("Database update failed. Bill status could not be changed.");
+        }
 
         // Reverse stock deductions
         for (BillItem item : bill.getItems()) {

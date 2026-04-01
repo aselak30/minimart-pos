@@ -1,0 +1,6 @@
+--add-reads
+com.minimartpos=ALL-UNNAMED
+--patch-module
+com.minimartpos=_
+--add-reads
+com.minimartpos=ALL-UNNAMED

@@ -23,7 +23,7 @@
     <left>
         <VBox styleClass="sidebar" spacing="0" minWidth="220">
             <VBox styleClass="sidebar-logo" spacing="4">
-                <Label text="🛒 MiniMart POS" styleClass="sidebar-logo-text"/>
+                <Label fx:id="sidebarCompanyLabel" text="🛒 MiniMart POS" styleClass="sidebar-logo-text"/>
                 <Label text="Admin Console" style="-fx-text-fill:#5A6A7A; -fx-font-size:11px;"/>
             </VBox>
             <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"

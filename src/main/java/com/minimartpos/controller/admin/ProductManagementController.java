@@ -6,11 +6,10 @@ import com.minimartpos.model.Supplier;
 import com.minimartpos.security.SessionManager;
 import com.minimartpos.service.ExcelService;
 import com.minimartpos.service.ProductService;
+import com.minimartpos.service.SettingsService;
 import com.minimartpos.util.AlertUtil;
 import com.minimartpos.util.CurrencyUtil;
 import com.minimartpos.util.DateUtil;
-import com.minimartpos.util.BarcodeUtil;
-import com.minimartpos.util.ValidationUtil;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -28,7 +27,6 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.net.URL;
@@ -53,7 +51,11 @@ public class ProductManagementController implements Initializable {
 
     // ── FXML ─────────────────────────────────────────────────────────────────
     @FXML
+    private VBox sidebar;
+    @FXML
     private Label sidebarUserLabel;
+    @FXML
+    private Label sidebarCompanyLabel;
     @FXML
     private TextField searchField;
     @FXML
@@ -155,6 +157,7 @@ public class ProductManagementController implements Initializable {
 
     // ── State ─────────────────────────────────────────────────────────────────
     private final ProductService productService = new ProductService();
+    private final SettingsService settingsService = new SettingsService();
     private final ObservableList<Product> allProducts = FXCollections.observableArrayList();
     private FilteredList<Product> filteredProducts;
     private Product editingProduct = null;
@@ -164,11 +167,21 @@ public class ProductManagementController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         sidebarUserLabel.setText(SessionManager.getCurrentUser().getFullName());
+        sidebarCompanyLabel.setText("🛒 " + settingsService.company());
         setupFilters();
         setupTableColumns();
         loadReferenceData();
         refreshProducts();
+        checkPermissions();
         logger.info("ProductManagement screen initialized");
+    }
+
+    private void checkPermissions() {
+        // If cashier, they only entered via POS for a specific task, so "Back" should go to POS
+        if (SessionManager.getCurrentUser().getRole() == com.minimartpos.model.enums.Role.CASHIER) {
+            sidebar.setVisible(false);
+            sidebar.setManaged(false);
+        }
     }
 
     // ── Setup ─────────────────────────────────────────────────────────────────
@@ -904,7 +917,11 @@ public class ProductManagementController implements Initializable {
     // ── Navigation ────────────────────────────────────────────────────────────
     @FXML
     private void navigateToDashboard() {
-        com.minimartpos.util.SceneManager.navigateTo("admin/AdminDashboard.fxml");
+        if (com.minimartpos.security.SessionManager.getCurrentUser().getRole() == com.minimartpos.model.enums.Role.ADMIN) {
+            com.minimartpos.util.SceneManager.navigateTo("admin/AdminDashboard.fxml");
+        } else {
+            com.minimartpos.util.SceneManager.navigateTo("cashier/POSTerminal.fxml");
+        }
     }
 
     @FXML

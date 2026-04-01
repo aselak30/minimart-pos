@@ -6,6 +6,7 @@ import com.minimartpos.network.SyncEvent;
 import com.minimartpos.repository.BillRepository;
 import com.minimartpos.security.SessionManager;
 import com.minimartpos.service.CashierMonitorService;
+import com.minimartpos.service.SettingsService;
 import com.minimartpos.service.CashierMonitorService.CashierSnapshot;
 import com.minimartpos.util.CurrencyUtil;
 import com.minimartpos.util.DateUtil;
@@ -44,6 +45,7 @@ public class CashierMonitorController implements Initializable {
 
     // ── FXML ──────────────────────────────────────────────────────────────────
     @FXML private Label      sidebarUserLabel;
+    @FXML private Label      sidebarCompanyLabel;
     @FXML private Label      lastRefreshLabel;
     @FXML private Label      autoRefreshLabel;
     @FXML private HBox       alertBanner;
@@ -67,6 +69,7 @@ public class CashierMonitorController implements Initializable {
     @FXML private TableColumn<Bill, String> rbColPayment;
 
     private final CashierMonitorService monitorService  = new CashierMonitorService();
+    private final SettingsService       settingsService = new SettingsService();
     private final BillRepository        billRepository  = new BillRepository();
     private Timeline autoRefreshTimeline;
     private int      countdown = REFRESH_SECONDS;
@@ -76,6 +79,7 @@ public class CashierMonitorController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         sidebarUserLabel.setText(SessionManager.getCurrentUser().getFullName());
+        sidebarCompanyLabel.setText("🛒 " + settingsService.company());
         setupRecentBillsTable();
 
         autoRefreshTimeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {

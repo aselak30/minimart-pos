@@ -3,6 +3,7 @@
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.image.*?>
 
 <!--
   POS Terminal Layout
@@ -27,11 +28,21 @@
     <top>
         <HBox styleClass="topbar" alignment="CENTER_LEFT" spacing="10">
 
-            <VBox spacing="1">
-                <Label fx:id="cashierNameLabel" text="Cashier" styleClass="h4"/>
-                <Label fx:id="shiftLabel" text="Shift: —" styleClass="text-secondary"
-                       style="-fx-font-size:11px;"/>
-            </VBox>
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <StackPane>
+                    <ImageView fx:id="logoImageView" fitHeight="32" fitWidth="32" preserveRatio="true">
+                        <Image url="@../../images/logo.png"/>
+                    </ImageView>
+                    <Label fx:id="logoEmojiLabel" text="🛒" style="-fx-font-size:18px;" visible="false" managed="false"/>
+                </StackPane>
+                <VBox spacing="1">
+                    <Label fx:id="cashierNameLabel" text="Cashier" styleClass="h4"/>
+                    <Label fx:id="shiftLabel" text="Shift: —" styleClass="text-secondary"
+                           style="-fx-font-size:11px;"/>
+                </VBox>
+                <Region minWidth="10"/>
+                <Label fx:id="terminalLogoLabel" text="minimartpos" style="-fx-font-weight:bold; -fx-text-fill:-pos-primary; -fx-font-size:14px;"/>
+            </HBox>
 
             <Region HBox.hgrow="ALWAYS"/>
 
@@ -68,10 +79,22 @@
             <Separator orientation="VERTICAL" style="-fx-padding:0 6 0 6;"/>
 
             <!-- Quick product creation (permission gated — hidden if no permission) -->
+            <Button fx:id="addProductBtn" text="➕ Add Product"
+                    styleClass="btn-secondary, button"
+                    style="-fx-font-size:12px;"
+                    onAction="#openFullProductAdd"
+                    visible="false" managed="false"/>
+            
             <Button fx:id="quickProductBtn" text="⚡ Quick Product"
                     styleClass="btn-secondary, button"
                     style="-fx-font-size:12px;"
                     onAction="#openQuickProduct"
+                    visible="false" managed="false"/>
+
+            <Button fx:id="stockViewBtn" text="📉 View Stock"
+                    styleClass="btn-secondary, button"
+                    style="-fx-font-size:12px;"
+                    onAction="#openStockView"
                     visible="false" managed="false"/>
 
             <Button fx:id="adminBackBtn" text="← Dashboard"

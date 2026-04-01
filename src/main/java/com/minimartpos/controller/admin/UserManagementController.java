@@ -5,10 +5,10 @@ import com.minimartpos.model.enums.Permission;
 import com.minimartpos.model.enums.Role;
 import com.minimartpos.security.SessionManager;
 import com.minimartpos.service.AuthService;
+import com.minimartpos.service.SettingsService;
 import com.minimartpos.service.UserService;
 import com.minimartpos.util.AlertUtil;
 import com.minimartpos.util.DateUtil;
-import com.minimartpos.util.SceneManager;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -20,7 +20,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -44,6 +43,8 @@ public class UserManagementController implements Initializable {
     // ── FXML ─────────────────────────────────────────────────────────────────
     @FXML
     private Label sidebarUserLabel;
+    @FXML
+    private Label sidebarCompanyLabel;
     @FXML
     private TextField searchField;
     @FXML
@@ -113,6 +114,7 @@ public class UserManagementController implements Initializable {
 
     // ── State ─────────────────────────────────────────────────────────────────
     private final UserService userService = new UserService();
+    private final SettingsService settingsService = new SettingsService();
     private final AuthService authService = new AuthService();
     private final ObservableList<User> allUsers = FXCollections.observableArrayList();
     private FilteredList<User> filteredUsers;
@@ -148,6 +150,7 @@ public class UserManagementController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         sidebarUserLabel.setText(SessionManager.getCurrentUser().getFullName());
+        sidebarCompanyLabel.setText("🛒 " + settingsService.company());
         setupRoleFilter();
         setupTableColumns();
         buildPermissionMatrix();

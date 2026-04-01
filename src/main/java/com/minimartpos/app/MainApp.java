@@ -81,6 +81,13 @@ public class MainApp extends Application {
 
         // Navigate to login screen
         if (DatabaseConfig.isConnected()) {
+            // Update title from settings
+            try {
+                com.minimartpos.service.SettingsService settings = new com.minimartpos.service.SettingsService();
+                SceneManager.updateTitle(settings.company() + " POS Ultimate");
+            } catch (Exception e) {
+                logger.debug("Failed to load title from settings: {}", e.getMessage());
+            }
             SceneManager.navigateTo("shared/Login.fxml");
         } else {
             SceneManager.navigateTo("shared/DatabaseSetup.fxml");

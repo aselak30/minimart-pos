@@ -17,6 +17,7 @@ import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -43,8 +44,14 @@ public class LoginController implements Initializable {
     @FXML private Label         lockoutCountdown;
     @FXML private VBox          captchaPane;
     @FXML private VBox          lockoutPane;
+    
+    // Branding
+    @FXML private javafx.scene.image.ImageView logoImageView;
+    @FXML private Label         logoEmojiLabel;
+    @FXML private Label         loginTitleLabel;
 
     private final AuthService authService = new AuthService();
+    private final com.minimartpos.service.SettingsService settingsService = new com.minimartpos.service.SettingsService();
 
     private int     captchaAnswer   = 0;
     private Timeline lockoutTimer;
@@ -55,6 +62,7 @@ public class LoginController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        applyBranding();
         versionLabel.setText("v" + AppConfig.APP_VERSION);
 
         passwordField.setOnAction(e -> handleLogin());
@@ -299,5 +307,69 @@ public class LoginController implements Initializable {
     private void clearError() {
         errorLabel.setVisible(false);
         errorLabel.setManaged(false);
+    }
+
+    private void applyBranding() {
+        try {
+            String company = settingsService.company();
+            if (loginTitleLabel != null) loginTitleLabel.setText(company + " POS");
+            SceneManager.updateTitle(company + " POS Ultimate");
+
+            // Check for uploaded logo path first
+            String logoPath = settingsService.logoPath();
+            javafx.scene.image.Image img = null;
+
+            if (logoPath != null && !logoPath.equals("images/logo.png")) {
+                try {
+                    File logoFile = new File(logoPath);
+                    if (logoFile.exists() && logoFile.isFile()) {
+                        img = new javafx.scene.image.Image(logoFile.toURI().toString());
+                    }
+                } catch (Exception e) {
+                    logger.debug("Could not load external logo: {}", e.getMessage());
+                }
+            }
+
+            // Fallback to default resource logo if no custom one or error loading it
+            if (img == null || img.isError()) {
+                URL res = getClass().getResource("/images/logo.png");
+                if (res != null) {
+                    img = new javafx.scene.image.Image(res.toExternalForm());
+                }
+            }
+
+            if (img != null && !img.isError()) {
+                if (logoImageView != null) {
+                    logoImageView.setImage(img);
+                    logoImageView.setVisible(true);
+                    logoImageView.setManaged(true);
+                }
+                if (logoEmojiLabel != null) {
+                    logoEmojiLabel.setVisible(false);
+                    logoEmojiLabel.setManaged(false);
+                }
+            } else {
+                // Fallback to emoji if logo.png is missing
+                if (logoImageView != null) {
+                    logoImageView.setVisible(false);
+                    logoImageView.setManaged(false);
+                }
+                if (logoEmojiLabel != null) {
+                    logoEmojiLabel.setVisible(true);
+                    logoEmojiLabel.setManaged(true);
+                }
+            }
+
+        } catch (Exception e) {
+            logger.warn("Branding load error: {}", e.getMessage());
+            if (logoImageView != null) {
+                logoImageView.setVisible(false);
+                logoImageView.setManaged(false);
+            }
+            if (logoEmojiLabel != null) {
+                logoEmojiLabel.setVisible(true);
+                logoEmojiLabel.setManaged(true);
+            }
+        }
     }
 }

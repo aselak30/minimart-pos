@@ -496,8 +496,8 @@ public class BillRepository {
         i.setProductId(rs.getInt("product_id"));
         i.setProductName(rs.getString("product_name"));
         i.setProductBarcode(rs.getString("product_barcode"));
-        i.setQuantity(rs.getBigDecimal("quantity"));
         i.setUnitPrice(rs.getBigDecimal("unit_price"));
+        i.setQuantity(rs.getBigDecimal("quantity"));
         i.setOriginalPrice(rs.getBigDecimal("original_price"));
         i.setCostPrice(rs.getBigDecimal("cost_price"));
         i.setDiscountPercent(rs.getBigDecimal("discount_percent"));

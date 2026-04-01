@@ -78,6 +78,12 @@ public class POSTerminalController implements Initializable {
     private Button customerBtn;
     @FXML
     private Button clearCustomerBtn;
+    @FXML
+    private javafx.scene.image.ImageView logoImageView;
+    @FXML
+    private Label logoEmojiLabel;
+    @FXML
+    private Label terminalLogoLabel;
 
     // ── FXML: Left Panel ──────────────────────────────────────────────────────
     @FXML
@@ -147,7 +153,11 @@ public class POSTerminalController implements Initializable {
     @FXML
     private Button retrieveBtn;
     @FXML
+    private Button addProductBtn;
+    @FXML
     private Button quickProductBtn;
+    @FXML
+    private Button stockViewBtn;
     @FXML
     private Button adminBackBtn; // visible only when admin enters POS
     @FXML
@@ -169,6 +179,7 @@ public class POSTerminalController implements Initializable {
     private final ObservableList<BillItem> cartItems = FXCollections.observableArrayList();
     private final BillingService billingService = new BillingService();
     private final ProductService productService = new ProductService();
+    private final com.minimartpos.service.SettingsService settingsService = new com.minimartpos.service.SettingsService();
     private Timeline clockTimeline;
     private String activeCategory = null; // null = All
 
@@ -180,6 +191,7 @@ public class POSTerminalController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        applyBranding();
         setupTopBar();
         setupCartTable();
         setupSearchField();
@@ -525,11 +537,19 @@ public class POSTerminalController implements Initializable {
     }
 
     private void setupSearchField() {
-        searchField.textProperty().addListener((obs, old, text) -> {
-            if (text == null || text.trim().isEmpty()) {
+        searchField.textProperty().addListener((obs, oldV, newV) -> {
+            if (newV == null || newV.trim().isEmpty()) {
                 showQuickGrid();
             } else {
-                performSearch(text.trim());
+                // If it looks like a barcode was pasted (numeric, length > 5, and jumped in size)
+                if (oldV != null && newV.length() - oldV.length() > 5 && newV.matches("\\d+")) {
+                    Product p = productService.findByBarcode(newV.trim()).orElse(null);
+                    if (p != null) {
+                        Platform.runLater(() -> handleProductSelected(p, searchField));
+                        return;
+                    }
+                }
+                performSearch(newV.trim());
             }
         });
 
@@ -548,6 +568,13 @@ public class POSTerminalController implements Initializable {
         barcodeField.setOnKeyPressed(e -> {
             if (e.getCode() == KeyCode.ESCAPE)
                 barcodeField.clear();
+        });
+
+        // Detect paste: if length increases by > 1 character at once, auto-submit
+        barcodeField.textProperty().addListener((obs, oldV, newV) -> {
+            if (newV != null && oldV != null && newV.length() - oldV.length() > 1) {
+                Platform.runLater(this::onBarcodeEntered);
+            }
         });
     }
 
@@ -642,17 +669,7 @@ public class POSTerminalController implements Initializable {
             tile.setOpacity(0.45);
             tile.setDisable(true);
         } else {
-            tile.setOnMouseClicked(e -> {
-                if (product.isWeightBased()) {
-                    addProductToCart(product, BigDecimal.ONE);
-                } else {
-                    BigDecimal qty = AlertUtil.promptBigDecimal(
-                            "Quantity", "Enter quantity for " + product.getName() + ":", BigDecimal.ONE);
-                    if (qty != null && qty.compareTo(BigDecimal.ZERO) > 0) {
-                        addProductToCart(product, qty);
-                    }
-                }
-            });
+            tile.setOnMouseClicked(e -> handleProductSelected(product, null));
         }
 
         // Low stock badge
@@ -686,10 +703,22 @@ public class POSTerminalController implements Initializable {
                 Permission.APPLY_FIXED_DISCOUNT);
         discountBtn.setDisable(!canDiscount);
 
+        // Main product addition button — only shown to users with this permission
+        if (SessionManager.hasPermission(Permission.ADD_PRODUCT_DURING_BILLING)) {
+            addProductBtn.setVisible(true);
+            addProductBtn.setManaged(true);
+        }
+
         // Quick product button — only shown to users with this permission
         if (SessionManager.hasPermission(Permission.CREATE_QUICK_PRODUCT)) {
             quickProductBtn.setVisible(true);
             quickProductBtn.setManaged(true);
+        }
+
+        // Stock View button — only shown to users with this permission
+        if (SessionManager.hasPermission(Permission.VIEW_STOCK_LEVELS)) {
+            stockViewBtn.setVisible(true);
+            stockViewBtn.setManaged(true);
         }
     }
 
@@ -765,21 +794,7 @@ public class POSTerminalController implements Initializable {
         searchResultsList.setOnMouseClicked(e -> {
             if (e.getClickCount() >= 1) {
                 Product selected = searchResultsList.getSelectionModel().getSelectedItem();
-                if (selected != null && !selected.isOutOfStock()) {
-                    if (selected.isWeightBased()) {
-                        addProductToCart(selected, BigDecimal.ONE);
-                        searchField.clear();
-                        showQuickGrid();
-                    } else {
-                        BigDecimal qty = AlertUtil.promptBigDecimal(
-                                "Quantity", "Enter quantity for " + selected.getName() + ":", BigDecimal.ONE);
-                        if (qty != null && qty.compareTo(BigDecimal.ZERO) > 0) {
-                            addProductToCart(selected, qty);
-                            searchField.clear();
-                            showQuickGrid();
-                        }
-                    }
-                }
+                handleProductSelected(selected, searchField);
             }
         });
 
@@ -821,11 +836,10 @@ public class POSTerminalController implements Initializable {
             return;
 
         new Thread(() -> {
-            var product = productService.findByBarcode(barcode);
+            var productOpt = productService.findByBarcode(barcode);
             Platform.runLater(() -> {
-                if (product.isPresent()) {
-                    addProductToCart(product.get(), BigDecimal.ONE);
-                    setStatus("Added: " + product.get().getName());
+                if (productOpt.isPresent()) {
+                    handleProductSelected(productOpt.get(), barcodeField);
                 } else {
                     setStatus("⚠ Product not found for barcode: " + barcode);
                     // Offer quick create if cashier has permission
@@ -839,13 +853,44 @@ public class POSTerminalController implements Initializable {
                         AlertUtil.showWarning("Not Found",
                                 "No product found for barcode: " + barcode);
                     }
+                    barcodeField.clear();
+                    barcodeField.requestFocus();
                 }
-                barcodeField.clear();
-                barcodeField.requestFocus();
             });
         }).start();
 
         SessionManager.touch();
+    }
+
+    private void handleProductSelected(Product product, TextField sourceField) {
+        if (product == null || product.isOutOfStock())
+            return;
+
+        if (product.isWeightBased()) {
+            addProductToCart(product, BigDecimal.ONE);
+            if (sourceField != null) {
+                sourceField.clear();
+                if (sourceField == searchField)
+                    showQuickGrid();
+            }
+            setStatus("Added: " + product.getName());
+        } else {
+            BigDecimal qty = AlertUtil.promptBigDecimal(
+                    "Quantity", "Enter quantity for " + product.getName() + ":", BigDecimal.ONE);
+            if (qty != null && qty.compareTo(BigDecimal.ZERO) > 0) {
+                addProductToCart(product, qty);
+                if (sourceField != null) {
+                    sourceField.clear();
+                    if (sourceField == searchField)
+                        showQuickGrid();
+                }
+                setStatus("Added: " + product.getName());
+            } else {
+                if (sourceField != null)
+                    sourceField.requestFocus();
+            }
+        }
+        barcodeField.requestFocus();
     }
 
     // ── Cart Operations ───────────────────────────────────────────────────────
@@ -1262,8 +1307,11 @@ public class POSTerminalController implements Initializable {
                 }
             }
         } catch (Exception e) {
-            logger.error("Failed to open detailed void dialog", e);
-            AlertUtil.showError("Error", "Could not open void dialog: " + e.getMessage());
+            logger.error("Failed to open detailed void dialog for bill {}: {}", bill.getBillNumber(), e.getMessage(), e);
+            AlertUtil.showError("System Error",
+                    "Could not open the void/return window.\n\n" +
+                            "Error: " + e.getClass().getSimpleName() + ": " + e.getMessage() + "\n\n" +
+                            "Please check the system logs for more details.");
         }
     }
 
@@ -1374,10 +1422,32 @@ public class POSTerminalController implements Initializable {
 
     // ── Quick Product ─────────────────────────────────────────────────────────
 
+    @FXML
+    private void openFullProductAdd() {
+        if (!SessionManager.hasPermission(Permission.ADD_PRODUCT_DURING_BILLING)) {
+            AlertUtil.showWarning("Permission Denied",
+                    "You do not have permission to add full products during billing.");
+            return;
+        }
+        // Instead of a dialog, we navigate to the full Product Management screen.
+        // ProductManagementController is now updated to show a back button to POS for cashiers.
+        SceneManager.navigateTo("admin/ProductManagement.fxml");
+    }
+
     /** Called by the ⚡ Quick Product topbar button. */
     @FXML
     private void openQuickProduct() {
         openQuickProductDialog(null, null);
+    }
+
+    @FXML
+    private void openStockView() {
+        if (!SessionManager.hasPermission(Permission.VIEW_STOCK_LEVELS)) {
+            AlertUtil.showWarning("Permission Denied",
+                    "You do not have permission to view stock levels.");
+            return;
+        }
+        SceneManager.navigateTo("admin/StockAdjustment.fxml");
     }
 
     /**
@@ -1553,13 +1623,64 @@ public class POSTerminalController implements Initializable {
         taxLabel.setText(CurrencyUtil.formatPlain(activeBill.getTaxAmount()));
         totalLabel.setText(CurrencyUtil.format(activeBill.getTotalAmount()));
 
-        if (SessionManager.hasPermission(Permission.VIEW_BILL_PROFIT)) {
+        if (SessionManager.hasPermission(com.minimartpos.model.enums.Permission.VIEW_BILL_PROFIT)) {
             profitLabel.setText(CurrencyUtil.formatPlain(activeBill.getProfitTotal()));
         }
     }
 
     private void setStatus(String message) {
-        Platform.runLater(() -> statusLabel.setText(message));
+        if (statusLabel != null) {
+            statusLabel.setText(message);
+        }
+    }
+
+    private void applyBranding() {
+        try {
+            String company = settingsService.company();
+            if (terminalLogoLabel != null) terminalLogoLabel.setText(company);
+            SceneManager.updateTitle(company + " POS Ultimate");
+
+            // Always use the default logo for internal UI
+            String resPath = "/images/logo.png";
+            URL res = getClass().getResource(resPath);
+            javafx.scene.image.Image img = null;
+            if (res != null) {
+                img = new javafx.scene.image.Image(res.toExternalForm());
+            }
+
+            if (img != null && !img.isError()) {
+                if (logoImageView != null) {
+                    logoImageView.setImage(img);
+                    logoImageView.setVisible(true);
+                    logoImageView.setManaged(true);
+                }
+                if (logoEmojiLabel != null) {
+                    logoEmojiLabel.setVisible(false);
+                    logoEmojiLabel.setManaged(false);
+                }
+            } else {
+                // Fallback to emoji if logo.png is missing
+                if (logoImageView != null) {
+                    logoImageView.setVisible(false);
+                    logoImageView.setManaged(false);
+                }
+                if (logoEmojiLabel != null) {
+                    logoEmojiLabel.setVisible(true);
+                    logoEmojiLabel.setManaged(true);
+                }
+            }
+
+        } catch (Exception e) {
+            logger.debug("Branding error: {}", e.getMessage());
+            if (logoImageView != null) {
+                logoImageView.setVisible(false);
+                logoImageView.setManaged(false);
+            }
+            if (logoEmojiLabel != null) {
+                logoEmojiLabel.setVisible(true);
+                logoEmojiLabel.setManaged(true);
+            }
+        }
     }
 
     /**

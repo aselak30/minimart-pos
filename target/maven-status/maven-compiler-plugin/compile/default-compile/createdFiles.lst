@@ -2,6 +2,7 @@ com\minimartpos\service\BackupScheduler.class
 com\minimartpos\controller\admin\ProductManagementController$3.class
 com\minimartpos\network\SyncEvent.class
 com\minimartpos\network\MachineInfo.class
+com\minimartpos\controller\cashier\ReturnController$Mode.class
 com\minimartpos\repository\UserRepository.class
 com\minimartpos\controller\admin\AdminDashboardController.class
 com\minimartpos\controller\cashier\CustomerSearchController$1.class
@@ -9,6 +10,7 @@ com\minimartpos\repository\PriceHistoryRepository.class
 com\minimartpos\util\ThemeManager.class
 com\minimartpos\util\CurrencyUtil.class
 com\minimartpos\controller\cashier\PaymentController.class
+com\minimartpos\controller\cashier\ReturnController$2.class
 com\minimartpos\app\Launcher.class
 com\minimartpos\controller\admin\CashierMonitorController.class
 com\minimartpos\controller\admin\ReportsController.class
@@ -40,6 +42,7 @@ com\minimartpos\controller\admin\ProductManagementController$1.class
 com\minimartpos\repository\CustomerRepository.class
 com\minimartpos\model\enums\PaymentType.class
 com\minimartpos\util\BarcodeUtil$Format.class
+com\minimartpos\util\PasswordGenerator.class
 com\minimartpos\model\DashboardStats.class
 module-info.class
 com\minimartpos\repository\CategoryRepository.class
@@ -122,6 +125,7 @@ com\minimartpos\controller\shared\DatabaseSetupController.class
 com\minimartpos\network\SyncManager$2.class
 com\minimartpos\model\Product.class
 com\minimartpos\controller\admin\StockAdjustmentController$3.class
+com\minimartpos\hardware\PrinterManager$ReceiptPrintable.class
 com\minimartpos\controller\shared\LoginController.class
 com\minimartpos\service\AuthService.class
 com\minimartpos\model\Setting.class

@@ -4,6 +4,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.chart.*?>
+<?import javafx.scene.image.*?>
 
 <!--
   Admin Dashboard Layout
@@ -28,9 +29,8 @@
     <left>
         <VBox styleClass="sidebar" spacing="0" minWidth="220">
 
-            <!-- Logo -->
             <VBox styleClass="sidebar-logo" spacing="4">
-                <Label text="🛒 MiniMart POS" styleClass="sidebar-logo-text"/>
+                <Label fx:id="sidebarCompanyLabel" text="🛒 MiniMart POS" styleClass="sidebar-logo-text"/>
                 <Label text="Admin Console" style="-fx-text-fill:#5A6A7A; -fx-font-size:11px;"/>
             </VBox>
 

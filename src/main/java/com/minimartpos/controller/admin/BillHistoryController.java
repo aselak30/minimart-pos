@@ -5,6 +5,7 @@ import com.minimartpos.model.enums.Permission;
 import com.minimartpos.repository.BillRepository;
 import com.minimartpos.security.SessionManager;
 import com.minimartpos.service.BillingService;
+import com.minimartpos.service.SettingsService;
 import com.minimartpos.util.AlertUtil;
 import com.minimartpos.util.CurrencyUtil;
 import com.minimartpos.util.DateUtil;
@@ -35,6 +36,7 @@ public class BillHistoryController implements Initializable {
     private static final Logger logger = LogManager.getLogger(BillHistoryController.class);
 
     @FXML private Label    sidebarUserLabel;
+    @FXML private Label    sidebarCompanyLabel;
     @FXML private TextField searchField;
     @FXML private ComboBox<String> statusFilter;
     @FXML private DatePicker fromDate;
@@ -60,6 +62,7 @@ public class BillHistoryController implements Initializable {
     @FXML private Button editBillBtn;
 
     private final BillRepository billRepo     = new BillRepository();
+    private final SettingsService settingsService = new SettingsService();
     private final BillingService billingService = new BillingService();
     private final ObservableList<Map<String, Object>> allBills = FXCollections.observableArrayList();
     private FilteredList<Map<String, Object>> filtered;
@@ -68,6 +71,7 @@ public class BillHistoryController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         sidebarUserLabel.setText(SessionManager.getCurrentUser().getFullName());
+        sidebarCompanyLabel.setText("🛒 " + settingsService.company());
         fromDate.setValue(LocalDate.now().minusDays(7));
         toDate.setValue(LocalDate.now());
         statusFilter.setItems(FXCollections.observableArrayList(

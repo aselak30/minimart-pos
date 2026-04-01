@@ -4,8 +4,8 @@ import com.minimartpos.model.Supplier;
 import com.minimartpos.repository.SupplierRepository;
 import com.minimartpos.security.SessionManager;
 import com.minimartpos.service.AuditService;
+import com.minimartpos.service.SettingsService;
 import com.minimartpos.util.AlertUtil;
-import com.minimartpos.util.SceneManager;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -15,18 +15,14 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
 
 public class SupplierManagementController implements Initializable {
 
-    private static final Logger logger = LogManager.getLogger(SupplierManagementController.class);
-
     @FXML private Label     sidebarUserLabel;
+    @FXML private Label     sidebarCompanyLabel;
     @FXML private TextField searchField;
     @FXML private Label     countLabel;
 
@@ -49,6 +45,7 @@ public class SupplierManagementController implements Initializable {
     @FXML private Label     formError;
 
     private final SupplierRepository supplierRepo = new SupplierRepository();
+    private final SettingsService    settingsService = new SettingsService();
     private final AuditService       auditService = new AuditService();
     private final ObservableList<Supplier> allSuppliers    = FXCollections.observableArrayList();
     private FilteredList<Supplier>         filteredSuppliers;
@@ -57,6 +54,7 @@ public class SupplierManagementController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         sidebarUserLabel.setText(SessionManager.getCurrentUser().getFullName());
+        sidebarCompanyLabel.setText("🛒 " + settingsService.company());
         setupColumns();
         refresh();
     }

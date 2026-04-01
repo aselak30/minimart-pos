@@ -4,6 +4,7 @@ import com.minimartpos.config.DatabaseConfig;
 import com.minimartpos.model.AuditLog;
 import com.minimartpos.security.SessionManager;
 import com.minimartpos.util.DateUtil;
+import com.minimartpos.service.SettingsService;
 import com.minimartpos.util.SceneManager;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
@@ -26,6 +27,7 @@ public class AuditLogController implements Initializable {
     private static final Logger logger = LogManager.getLogger(AuditLogController.class);
 
     @FXML private Label    sidebarUserLabel;
+    @FXML private Label    sidebarCompanyLabel;
     @FXML private TextField searchField;
     @FXML private ComboBox<String> actionFilter;
     @FXML private DatePicker fromDate;
@@ -41,12 +43,14 @@ public class AuditLogController implements Initializable {
     @FXML private TableColumn<AuditLog, String>  colOld;
     @FXML private TableColumn<AuditLog, String>  colNew;
 
+    private final SettingsService settingsService = new SettingsService();
     private final ObservableList<AuditLog> allRows    = FXCollections.observableArrayList();
     private FilteredList<AuditLog>         filtered;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         sidebarUserLabel.setText(SessionManager.getCurrentUser().getFullName());
+        sidebarCompanyLabel.setText("🛒 " + settingsService.company());
         fromDate.setValue(LocalDate.now().minusDays(7));
         toDate.setValue(LocalDate.now());
         setupColumns();

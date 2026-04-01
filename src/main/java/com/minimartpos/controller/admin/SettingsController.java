@@ -35,6 +35,8 @@ public class SettingsController implements Initializable {
     @FXML
     private Label sidebarUserLabel;
     @FXML
+    private Label sidebarCompanyLabel;
+    @FXML
     private TextField companyName;
     @FXML
     private TextField companyPhone;
@@ -50,6 +52,16 @@ public class SettingsController implements Initializable {
     private CheckBox taxInclusiveCheck;
     @FXML
     private TextField receiptPrinter;
+    @FXML
+    private TextField companyLogoField;
+    @FXML
+    private TextField receiptLogoField;
+    @FXML
+    private TextArea receiptTemplateArea;
+    @FXML
+    private ComboBox<String> receiptFontChoice;
+    @FXML
+    private CheckBox receiptForceBold;
     @FXML
     private TextField expiryWarningDays;
     @FXML
@@ -109,6 +121,12 @@ public class SettingsController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         sidebarUserLabel.setText(SessionManager.getCurrentUser().getFullName());
+        sidebarCompanyLabel.setText("🛒 " + settingsService.company());
+        if (receiptFontChoice != null) {
+            receiptFontChoice.setItems(javafx.collections.FXCollections.observableArrayList(
+                "Monospaced", "Consolas", "Courier New", "SansSerif", "Arial"
+            ));
+        }
         loadSettings();
         populateSysInfo();
         buildThemePicker();
@@ -127,6 +145,19 @@ public class SettingsController implements Initializable {
         receiptFooter.setText(s.getOrDefault("receipt_footer", "Thank you for your visit!"));
         taxInclusiveCheck.setSelected("1".equals(s.getOrDefault("tax_inclusive", "0")));
         receiptPrinter.setText(s.getOrDefault("receipt_printer", ""));
+        if (companyLogoField != null)
+            companyLogoField.setText(s.getOrDefault("company_logo", "images/logo.png"));
+        if (receiptLogoField != null)
+            receiptLogoField.setText(s.getOrDefault("receipt_logo", "images/logo.png"));
+        if (receiptTemplateArea != null) {
+            String template = s.getOrDefault("receipt_template", com.minimartpos.util.PrintUtil.DEFAULT_TEMPLATE);
+            if (template.isEmpty()) template = com.minimartpos.util.PrintUtil.DEFAULT_TEMPLATE;
+            receiptTemplateArea.setText(template);
+        }
+        if (receiptFontChoice != null)
+            receiptFontChoice.setValue(s.getOrDefault("receipt_font", "Monospaced"));
+        if (receiptForceBold != null)
+            receiptForceBold.setSelected("1".equals(s.getOrDefault("receipt_force_bold", "0")));
         expiryWarningDays.setText(s.getOrDefault("expiry_warning_days", "30"));
         sessionTimeout.setText(s.getOrDefault("session_timeout", "30"));
         lowStockAlertCheck.setSelected("1".equals(s.getOrDefault("low_stock_alert", "1")));
@@ -184,6 +215,16 @@ public class SettingsController implements Initializable {
         settings.put("receipt_footer", receiptFooter.getText().trim());
         settings.put("tax_inclusive", taxInclusiveCheck.isSelected() ? "1" : "0");
         settings.put("receipt_printer", receiptPrinter.getText().trim());
+        if (companyLogoField != null)
+            settings.put("company_logo", companyLogoField.getText().trim());
+        if (receiptLogoField != null)
+            settings.put("receipt_logo", receiptLogoField.getText().trim());
+        if (receiptFontChoice != null && receiptFontChoice.getValue() != null)
+            settings.put("receipt_font", receiptFontChoice.getValue());
+        if (receiptForceBold != null)
+            settings.put("receipt_force_bold", receiptForceBold.isSelected() ? "1" : "0");
+        if (receiptTemplateArea != null)
+            settings.put("receipt_template", receiptTemplateArea.getText());
         settings.put("expiry_warning_days", expiryWarningDays.getText().trim());
         settings.put("session_timeout", sessionTimeout.getText().trim());
         settings.put("low_stock_alert", lowStockAlertCheck.isSelected() ? "1" : "0");
@@ -207,6 +248,52 @@ public class SettingsController implements Initializable {
     }
 
     // ── Database actions ──────────────────────────────────────────────────────
+
+    @FXML
+    private void browseCompanyLogo() {
+        javafx.stage.FileChooser fc = new javafx.stage.FileChooser();
+        fc.setTitle("Select Application Logo");
+        fc.getExtensionFilters().addAll(
+                new javafx.stage.FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.bmp")
+        );
+        java.io.File file = fc.showOpenDialog(companyName.getScene().getWindow());
+        if (file != null) {
+            companyLogoField.setText(file.getAbsolutePath());
+        }
+    }
+
+    @FXML
+    private void clearCompanyLogo() {
+        companyLogoField.clear();
+    }
+
+    @FXML
+    private void browseLogo() {
+        javafx.stage.FileChooser fc = new javafx.stage.FileChooser();
+        fc.setTitle("Select Bill Logo");
+        fc.getExtensionFilters().addAll(
+                new javafx.stage.FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.bmp")
+        );
+        java.io.File file = fc.showOpenDialog(companyName.getScene().getWindow());
+        if (file != null) {
+            receiptLogoField.setText(file.getAbsolutePath());
+        }
+    }
+
+    @FXML
+    private void clearLogo() {
+        receiptLogoField.clear();
+    }
+
+    @FXML
+    private void resetReceiptTemplate() {
+        if (receiptTemplateArea != null) {
+            boolean confirm = AlertUtil.confirm("Reset Template", "Are you sure you want to reset the receipt layout to the standard default format?\n\nAny unsaved custom formatting will be lost.");
+            if (confirm) {
+                receiptTemplateArea.setText(com.minimartpos.util.PrintUtil.DEFAULT_TEMPLATE);
+            }
+        }
+    }
 
     @FXML
     private void testConnection() {

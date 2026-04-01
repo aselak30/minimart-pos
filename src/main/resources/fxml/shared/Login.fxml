@@ -16,8 +16,13 @@
 
         <!-- Logo / App name -->
         <VBox alignment="CENTER" spacing="4">
-            <Label text="🛒" style="-fx-font-size:40px;"/>
-            <Label text="MiniMart POS" styleClass="login-title"/>
+            <StackPane>
+                <ImageView fx:id="logoImageView" fitHeight="80" fitWidth="80" preserveRatio="true">
+                    <Image url="@../../images/logo.png"/>
+                </ImageView>
+                <Label fx:id="logoEmojiLabel" text="🛒" style="-fx-font-size:40px;" visible="false" managed="false"/>
+            </StackPane>
+            <Label fx:id="loginTitleLabel" text="minimartpos POS" styleClass="login-title"/>
             <Label text="Please sign in to continue" styleClass="login-subtitle"/>
         </VBox>
 

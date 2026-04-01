@@ -35,6 +35,7 @@ public class BackupManagerController implements Initializable {
     private static final Logger logger = LogManager.getLogger(BackupManagerController.class);
 
     @FXML private Label     sidebarUserLabel;
+    @FXML private Label     sidebarCompanyLabel;
     @FXML private Label     schedulerStatusLabel;
     @FXML private CheckBox  autoBackupCheck;
     @FXML private TextField backupTimeField;
@@ -64,6 +65,7 @@ public class BackupManagerController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         sidebarUserLabel.setText(SessionManager.getCurrentUser().getFullName());
+        sidebarCompanyLabel.setText("🛒 " + settingsService.company());
         setupColumns();
         loadSettings();
         refreshHistory();

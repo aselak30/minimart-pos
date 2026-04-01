@@ -9,9 +9,9 @@ public final class AppConfig {
     private AppConfig() {}
 
     // ── Application Identity ──────────────────────────────────────────────────
-    public static final String APP_NAME        = "MiniMart POS Ultimate";
+    public static final String APP_NAME        = "minimartpos POS Ultimate";
     public static final String APP_VERSION     = "1.6.0";
-    public static final String APP_TITLE       = APP_NAME + " v" + APP_VERSION;
+    public static final String APP_TITLE       = "minimartpos POS v" + APP_VERSION;
 
     // ── Window Dimensions ─────────────────────────────────────────────────────
     public static final double MIN_WIDTH       = 1024;

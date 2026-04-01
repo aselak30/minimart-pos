@@ -82,7 +82,7 @@ public final class SessionManager {
      */
     public static boolean hasPermission(Permission permission) {
         if (currentUser == null) return false;
-        if (currentUser.getRole() == Role.ADMIN) return true;
+        if (currentUser.getRole() == Role.ADMIN || currentUser.getRole() == Role.SUPER_ADMIN) return true;
         return currentUser.getPermissions().contains(permission);
     }
 

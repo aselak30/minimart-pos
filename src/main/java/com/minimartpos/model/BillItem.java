@@ -53,6 +53,7 @@ public class BillItem {
     // ── Computed ──────────────────────────────────────────────────────────────
 
     public void recalculate() {
+        if (unitPrice == null) return; // Prevent NPE if called before unitPrice is set
         BigDecimal baseQty = isWeightBased ? weight : quantity;
         if (baseQty == null) baseQty = BigDecimal.ZERO;
         BigDecimal gross   = unitPrice.multiply(baseQty);

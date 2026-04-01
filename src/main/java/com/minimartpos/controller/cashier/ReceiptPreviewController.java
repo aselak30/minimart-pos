@@ -53,19 +53,27 @@ public class ReceiptPreviewController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        // Printer status shown at top
-        PrinterManager pm = new PrinterManager();
-        String configured = settingsService.get("receipt_printer", "");
-        boolean hasPrinter = pm.testPrinter(configured);
-        if (hasPrinter) {
-            String name = configured.isBlank() ? "Default printer" : configured;
-            printerStatusLabel.setText("🖨 Printer ready: " + name);
-            printerStatusLabel.setStyle("-fx-text-fill:-pos-success; -fx-font-size:11px;");
-        } else {
-            printerStatusLabel.setText("⚠ No printer configured — go to Settings → Receipt Printer");
-            printerStatusLabel.setStyle("-fx-text-fill:-pos-warning; -fx-font-size:11px;");
-            printBtn.setDisable(false); // still allow attempt — some printers detect late
-        }
+        // Start printer status check in background to avoid freezing the UI
+        printerStatusLabel.setText("⏳ Checking printer status...");
+        printerStatusLabel.setStyle("-fx-text-fill:-pos-text-secondary; -fx-font-size:11px;");
+
+        new Thread(() -> {
+            PrinterManager pm = new PrinterManager();
+            String configured = settingsService.get("receipt_printer", "");
+            boolean hasPrinter = pm.testPrinter(configured);
+            
+            Platform.runLater(() -> {
+                if (hasPrinter && printerStatusLabel != null) {
+                    String name = (configured == null || configured.isBlank()) ? "Default printer" : configured;
+                    printerStatusLabel.setText("🖨 Printer ready: " + name);
+                    printerStatusLabel.setStyle("-fx-text-fill:-pos-success; -fx-font-size:11px;");
+                } else if (printerStatusLabel != null) {
+                    printerStatusLabel.setText("⚠ No printer configured — go to Settings → Receipt Printer");
+                    printerStatusLabel.setStyle("-fx-text-fill:-pos-warning; -fx-font-size:11px;");
+                    if (printBtn != null) printBtn.setDisable(false);
+                }
+            });
+        }, "printer-check-thread").start();
     }
 
     /**
@@ -78,12 +86,24 @@ public class ReceiptPreviewController implements Initializable {
         String address = settingsService.get("company_address", "");
         String phone = settingsService.get("company_phone", "");
         String footer = settingsService.get("receipt_footer", "Thank you for your visit!");
+        String template = settingsService.get("receipt_template", "");
 
-        this.receiptText = PrintUtil.buildReceipt(bill, company, address, phone, footer);
+        this.receiptText = PrintUtil.buildReceipt(bill, company, address, phone, footer, template);
+
+        // 2. Prep preview UI with settings styles
+        String fontFamily = settingsService.get("receipt_font", "Courier New");
+        boolean forceBold = "1".equals(settingsService.get("receipt_force_bold", "0"));
+
+        // Strip [B] markers for the on-screen TextArea (which doesn't support per-line bolding)
+        String previewText = receiptText.replace("[B]", "");
 
         billNumberLabel.setText("Bill #" + bill.getBillNumber());
         totalLabel.setText("Total: " + com.minimartpos.util.CurrencyUtil.format(bill.getTotalAmount()));
-        receiptPreview.setText(receiptText);
+        
+        receiptPreview.setText(previewText);
+        receiptPreview.setStyle("-fx-font-family: '" + fontFamily + "'; " +
+                               "-fx-font-size: 11px; " +
+                               "-fx-font-weight: " + (forceBold ? "bold" : "normal") + ";");
         receiptPreview.positionCaret(0);
     }
 

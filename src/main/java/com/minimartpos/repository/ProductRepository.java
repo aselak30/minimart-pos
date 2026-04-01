@@ -50,16 +50,17 @@ public class ProductRepository {
             "WHERE p.active = 1 AND p.stock_quantity <= p.reorder_level " +
             "ORDER BY p.stock_quantity ASC";
 
-    private static final String SQL_INSERT = "INSERT INTO products (barcode, name, category_id, brand, size_weight, unit_price, cost_price, "
-            +
-            "tax_rate, discount_allowed, max_discount_percent, stock_quantity, damaged_quantity, reorder_level, " +
-            "expiry_date, batch_number, supplier_id, location, active, image_path, description, " +
-            "is_weight_based, weight_unit, price_per_unit, default_weight, min_weight, max_weight) " +
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    private static final String SQL_INSERT = "INSERT INTO products (" +
+            "barcode, name, category_id, brand, size_weight, unit_price, cost_price, " +
+            "tax_rate, discount_allowed, max_discount_percent, stock_quantity, damaged_quantity, " +
+            "reorder_level, expiry_date, batch_number, supplier_id, location, active, " +
+            "image_path, description, is_weight_based, weight_unit, price_per_unit, " +
+            "default_weight, min_weight, max_weight" +
+            ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
     private static final String SQL_UPDATE = "UPDATE products SET barcode=?, name=?, category_id=?, brand=?, size_weight=?, unit_price=?, "
             +
-            "cost_price=?, tax_rate=?, discount_allowed=?, max_discount_percent=?, reorder_level=?, " +
+            "cost_price=?, tax_rate=?, discount_allowed=?, max_discount_percent=?, stock_quantity=?, damaged_quantity=?, reorder_level=?, " +
             "expiry_date=?, batch_number=?, supplier_id=?, location=?, active=?, image_path=?, " +
             "description=?, is_weight_based=?, weight_unit=?, price_per_unit=?, default_weight=?, " +
             "min_weight=?, max_weight=?, updated_at=NOW() WHERE id=?";
@@ -212,66 +213,74 @@ public class ProductRepository {
     }
 
     private void setInsertParams(PreparedStatement ps, Product p) throws SQLException {
-        ps.setString(1, p.getBarcode());
-        ps.setString(2, p.getName());
-        ps.setInt(3, p.getCategoryId());
-        ps.setString(4, p.getBrand());
-        ps.setString(5, p.getSizeWeight());
-        ps.setBigDecimal(6, p.getUnitPrice());
-        ps.setBigDecimal(7, p.getCostPrice() != null ? p.getCostPrice() : BigDecimal.ZERO);
-        ps.setBigDecimal(8, p.getTaxRate());
-        ps.setBoolean(9, p.isDiscountAllowed());
-        ps.setBigDecimal(10, p.getMaxDiscountPercent());
-        ps.setBigDecimal(11, p.getStockQuantity());
-        ps.setBigDecimal(12, p.getDamagedQuantity() != null ? p.getDamagedQuantity() : BigDecimal.ZERO);
-        ps.setBigDecimal(13, p.getReorderLevel());
-        ps.setDate(14, p.getExpiryDate() != null ? Date.valueOf(p.getExpiryDate()) : null);
-        ps.setString(14, p.getBatchNumber());
+        int i = 1;
+
+        ps.setString(i++, p.getBarcode());
+        ps.setString(i++, p.getName());
+        ps.setInt(i++, p.getCategoryId());
+        ps.setString(i++, p.getBrand());
+        ps.setString(i++, p.getSizeWeight());
+        ps.setBigDecimal(i++, p.getUnitPrice());
+        ps.setBigDecimal(i++, p.getCostPrice() != null ? p.getCostPrice() : BigDecimal.ZERO);
+        ps.setBigDecimal(i++, p.getTaxRate());
+        ps.setBoolean(i++, p.isDiscountAllowed());
+        ps.setBigDecimal(i++, p.getMaxDiscountPercent());
+        ps.setBigDecimal(i++, p.getStockQuantity());
+        ps.setBigDecimal(i++, p.getDamagedQuantity() != null ? p.getDamagedQuantity() : BigDecimal.ZERO);
+        ps.setBigDecimal(i++, p.getReorderLevel());
+
+        ps.setDate(i++, p.getExpiryDate() != null ? Date.valueOf(p.getExpiryDate()) : null);
+        ps.setString(i++, p.getBatchNumber());
+
         if (p.getSupplierId() > 0)
-            ps.setInt(15, p.getSupplierId());
+            ps.setInt(i++, p.getSupplierId());
         else
-            ps.setNull(15, Types.INTEGER);
-        ps.setString(16, p.getLocation());
-        ps.setBoolean(17, p.isActive());
-        ps.setString(18, p.getImagePath());
-        ps.setString(19, p.getDescription());
-        ps.setBoolean(20, p.isWeightBased());
-        ps.setString(21, p.getWeightUnit());
-        ps.setBigDecimal(22, p.getPricePerUnit());
-        ps.setBigDecimal(23, p.getDefaultWeight());
-        ps.setBigDecimal(24, p.getMinWeight());
-        ps.setBigDecimal(25, p.getMaxWeight());
+            ps.setNull(i++, Types.INTEGER);
+
+        ps.setString(i++, p.getLocation());
+        ps.setBoolean(i++, p.isActive());
+        ps.setString(i++, p.getImagePath());
+        ps.setString(i++, p.getDescription());
+        ps.setBoolean(i++, p.isWeightBased());
+        ps.setString(i++, p.getWeightUnit());
+        ps.setBigDecimal(i++, p.getPricePerUnit());
+        ps.setBigDecimal(i++, p.getDefaultWeight());
+        ps.setBigDecimal(i++, p.getMinWeight());
+        ps.setBigDecimal(i++, p.getMaxWeight());
     }
 
     private void setUpdateParams(PreparedStatement ps, Product p) throws SQLException {
-        ps.setString(1, p.getBarcode());
-        ps.setString(2, p.getName());
-        ps.setInt(3, p.getCategoryId());
-        ps.setString(4, p.getBrand());
-        ps.setString(5, p.getSizeWeight());
-        ps.setBigDecimal(6, p.getUnitPrice());
-        ps.setBigDecimal(7, p.getCostPrice() != null ? p.getCostPrice() : BigDecimal.ZERO);
-        ps.setBigDecimal(8, p.getTaxRate());
-        ps.setBoolean(9, p.isDiscountAllowed());
-        ps.setBigDecimal(10, p.getMaxDiscountPercent());
-        ps.setBigDecimal(11, p.getReorderLevel());
-        ps.setDate(12, p.getExpiryDate() != null ? Date.valueOf(p.getExpiryDate()) : null);
-        ps.setString(13, p.getBatchNumber());
+        int i = 1;
+        ps.setString(i++, p.getBarcode());
+        ps.setString(i++, p.getName());
+        ps.setInt(i++, p.getCategoryId());
+        ps.setString(i++, p.getBrand());
+        ps.setString(i++, p.getSizeWeight());
+        ps.setBigDecimal(i++, p.getUnitPrice());
+        ps.setBigDecimal(i++, p.getCostPrice() != null ? p.getCostPrice() : BigDecimal.ZERO);
+        ps.setBigDecimal(i++, p.getTaxRate());
+        ps.setBoolean(i++, p.isDiscountAllowed());
+        ps.setBigDecimal(i++, p.getMaxDiscountPercent());
+        ps.setBigDecimal(i++, p.getStockQuantity());
+        ps.setBigDecimal(i++, p.getDamagedQuantity() != null ? p.getDamagedQuantity() : BigDecimal.ZERO);
+        ps.setBigDecimal(i++, p.getReorderLevel());
+        ps.setDate(i++, p.getExpiryDate() != null ? Date.valueOf(p.getExpiryDate()) : null);
+        ps.setString(i++, p.getBatchNumber());
         if (p.getSupplierId() > 0)
-            ps.setInt(14, p.getSupplierId());
+            ps.setInt(i++, p.getSupplierId());
         else
-            ps.setNull(14, Types.INTEGER);
-        ps.setString(15, p.getLocation());
-        ps.setBoolean(16, p.isActive()); // was missing
-        ps.setString(17, p.getImagePath()); // was missing
-        ps.setString(18, p.getDescription());
-        ps.setBoolean(19, p.isWeightBased());
-        ps.setString(20, p.getWeightUnit());
-        ps.setBigDecimal(21, p.getPricePerUnit());
-        ps.setBigDecimal(22, p.getDefaultWeight());
-        ps.setBigDecimal(23, p.getMinWeight());
-        ps.setBigDecimal(24, p.getMaxWeight());
-        ps.setInt(25, p.getId());
+            ps.setNull(i++, Types.INTEGER);
+        ps.setString(i++, p.getLocation());
+        ps.setBoolean(i++, p.isActive());
+        ps.setString(i++, p.getImagePath());
+        ps.setString(i++, p.getDescription());
+        ps.setBoolean(i++, p.isWeightBased());
+        ps.setString(i++, p.getWeightUnit());
+        ps.setBigDecimal(i++, p.getPricePerUnit());
+        ps.setBigDecimal(i++, p.getDefaultWeight());
+        ps.setBigDecimal(i++, p.getMinWeight());
+        ps.setBigDecimal(i++, p.getMaxWeight());
+        ps.setInt(i++, p.getId());
     }
 
     public boolean delete(int id) {

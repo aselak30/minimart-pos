@@ -1,10 +1,12 @@
 package com.minimartpos.controller.admin;
 
 import com.minimartpos.model.Product;
+import com.minimartpos.model.enums.Permission;
 import com.minimartpos.security.SessionManager;
 import com.minimartpos.service.ExcelService;
 import com.minimartpos.service.ProductService;
 import com.minimartpos.service.StockService;
+import com.minimartpos.service.SettingsService;
 import com.minimartpos.util.AlertUtil;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -15,8 +17,6 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.math.BigDecimal;
 import java.net.URL;
@@ -25,13 +25,15 @@ import java.util.ResourceBundle;
 
 public class StockAdjustmentController implements Initializable {
 
-    private static final Logger logger = LogManager.getLogger(StockAdjustmentController.class);
 
+    @FXML private VBox      sidebar;
     @FXML private Label    sidebarUserLabel;
+    @FXML private Label    sidebarCompanyLabel;
     @FXML private TextField searchField;
     @FXML private ComboBox<String> stockFilter;
     @FXML private Label    productCountLabel;
     @FXML private Label    lowStockBadge;
+    @FXML private Button   exportStockBtn;
 
     @FXML private TableView<Product>            stockTable;
     @FXML private TableColumn<Product, String>  colBarcode;
@@ -53,6 +55,7 @@ public class StockAdjustmentController implements Initializable {
     @FXML private Label      adjustErrorLabel;
 
     private final ProductService productService = new ProductService();
+    private final SettingsService settingsService = new SettingsService();
     private final StockService   stockService   = new StockService();
     private final ObservableList<Product> allProducts    = FXCollections.observableArrayList();
     private FilteredList<Product>         filteredProducts;
@@ -61,6 +64,7 @@ public class StockAdjustmentController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         sidebarUserLabel.setText(SessionManager.getCurrentUser().getFullName());
+        sidebarCompanyLabel.setText("🛒 " + settingsService.company());
         stockFilter.setItems(FXCollections.observableArrayList(
             "All Products", "Low Stock Only", "Out of Stock"));
         stockFilter.getSelectionModel().selectFirst();
@@ -72,6 +76,20 @@ public class StockAdjustmentController implements Initializable {
         adjustTypeCombo.getSelectionModel().selectFirst();
         setupColumns();
         refreshProducts();
+        checkPermissions();
+    }
+
+    private void checkPermissions() {
+        boolean canAdjust = SessionManager.hasPermission(Permission.UPDATE_STOCK_MANUALLY);
+        colActions.setVisible(canAdjust);
+        
+        // If cashier, they only entered via POS, so "Back" should go to POS
+        if (SessionManager.getCurrentUser().getRole() == com.minimartpos.model.enums.Role.CASHIER) {
+            sidebar.setVisible(false);
+            sidebar.setManaged(false);
+            exportStockBtn.setVisible(false);
+            exportStockBtn.setManaged(false);
+        }
     }
 
     private void setupColumns() {
@@ -132,7 +150,7 @@ public class StockAdjustmentController implements Initializable {
         stockTable.setRowFactory(tv -> {
             TableRow<Product> row = new TableRow<>();
             row.setOnMouseClicked(e -> {
-                if (e.getClickCount() == 2 && !row.isEmpty()) {
+                if (e.getClickCount() == 2 && !row.isEmpty() && SessionManager.hasPermission(Permission.UPDATE_STOCK_MANUALLY)) {
                     selectedProduct = row.getItem();
                     openAdjustPanel(selectedProduct);
                 }
@@ -310,6 +328,14 @@ public class StockAdjustmentController implements Initializable {
     // ── Navigation ────────────────────────────────────────────────────────────
     @FXML private void navigateToDashboard()      { com.minimartpos.util.SceneManager.navigateTo("admin/AdminDashboard.fxml"); }
     @FXML private void navigateToPOS()            { com.minimartpos.util.SceneManager.navigateTo("cashier/POSTerminal.fxml"); }
+    
+    @FXML private void back() {
+        if (SessionManager.getCurrentUser().getRole() == com.minimartpos.model.enums.Role.ADMIN) {
+            navigateToDashboard();
+        } else {
+            navigateToPOS();
+        }
+    }
     @FXML private void navigateToUsers()          { com.minimartpos.util.SceneManager.navigateTo("admin/UserManagement.fxml"); }
     @FXML private void navigateToProducts()       { com.minimartpos.util.SceneManager.navigateTo("admin/ProductManagement.fxml"); }
     @FXML private void navigateToCustomers()      { com.minimartpos.util.SceneManager.navigateTo("admin/CustomerManagement.fxml"); }
